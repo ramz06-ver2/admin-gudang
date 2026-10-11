@@ -1,50 +1,139 @@
-import {
-  Refine,
-  GitHubBanner,
-  WelcomePage,
-  Authenticated,
-  AuthPage,
-  ErrorComponent,
-} from "@refinedev/core";
-import { DevtoolsPanel, DevtoolsProvider } from "@refinedev/devtools";
-import { RefineKbar, RefineKbarProvider } from "@refinedev/kbar";
+import { Refine, Authenticated } from "@refinedev/core";
+import { RefineKbarProvider } from "@refinedev/kbar";
 
-import { BrowserRouter, Route, Routes, Outlet } from "react-router";
+// ⬇️ PENTING: dari @refinedev/react-router-v6 (bukan @refinedev/react-router)
 import routerProvider, {
   NavigateToResource,
-  CatchAllNavigate,
   UnsavedChangesNotifier,
   DocumentTitleHandler,
-} from "@refinedev/react-router";
-import { Layout } from "./components/layout";
-import "./App.css";
-import { dataProvider } from "./providers/data";
+  CatchAllNavigate,
+} from "@refinedev/react-router-v6";
+
+import { dataProvider, liveProvider } from "@refinedev/supabase";
+import { BrowserRouter, Route, Routes, Outlet } from "react-router-dom";
+import {
+  ThemedLayoutV2,
+  useNotificationProvider,
+  ErrorComponent,
+} from "@refinedev/antd";
+import { App as AntdApp, ConfigProvider } from "antd";
+import { DashboardOutlined, PlusCircleOutlined } from "@ant-design/icons";
+import "@refinedev/antd/dist/reset.css";
+
+import { supabaseClient } from "./utility/supabaseClient";
+import { USE_MOCK } from "./utility/config";
+import { DashboardPage } from "./pages/dashboard";
+import { LoginPage } from "./pages/login";
+import { StockEntryCreatePage } from "./pages/stock-entries/create";
+import { authProvider } from "./authProvider";
+
+// ============================================
+// Mock data provider (untuk mode USE_MOCK)
+// ============================================
+const mockDataProvider = {
+  getList: async () => ({ data: [], total: 0 }),
+  getOne: async () => ({ data: {} }),
+  create: async () => ({ data: {} }),
+  update: async () => ({ data: {} }),
+  deleteOne: async () => ({ data: {} }),
+  getApiUrl: () => "",
+  custom: async () => ({ data: {} }),
+} as never;
 
 function App() {
+  const dataProviderConfig = USE_MOCK
+    ? mockDataProvider
+    : dataProvider(supabaseClient);
+
+  const liveProviderConfig = USE_MOCK
+    ? undefined
+    : liveProvider(supabaseClient);
+
   return (
     <BrowserRouter>
-      <GitHubBanner />
-      <RefineKbarProvider>
-        <DevtoolsProvider>
-          <Refine
-            dataProvider={dataProvider}
-            routerProvider={routerProvider}
-            options={{
-              syncWithLocation: true,
-              warnWhenUnsavedChanges: true,
-              projectId: "uwy7aF-anhoMh-WLoODW",
-            }}
-          >
-            <Routes>
-              <Route index element={<WelcomePage />} />
-            </Routes>
-            <RefineKbar />
-            <UnsavedChangesNotifier />
-            <DocumentTitleHandler />
-          </Refine>
-          <DevtoolsPanel />
-        </DevtoolsProvider>
-      </RefineKbarProvider>
+      <ConfigProvider
+        theme={{
+          token: { borderRadius: 8, colorPrimary: "#1677ff" },
+        }}
+      >
+        <AntdApp>
+          <RefineKbarProvider>
+            <Refine
+              dataProvider={dataProviderConfig}
+              liveProvider={liveProviderConfig}
+              routerProvider={routerProvider}
+              notificationProvider={useNotificationProvider}
+              authProvider={authProvider}
+              options={{
+                syncWithLocation: true,
+                warnWhenUnsavedChanges: true,
+                projectId: "admin-stock",
+              }}
+              resources={[
+                {
+                  name: "dashboard",
+                  list: "/dashboard",
+                  meta: {
+                    label: "Dashboard",
+                    icon: <DashboardOutlined />,
+                  },
+                },
+                {
+                  name: "stock-entries",
+                  create: "/stock-entries/create",
+                  meta: {
+                    label: "Input Barang Masuk",
+                    icon: <PlusCircleOutlined />,
+                  },
+                },
+              ]}
+            >
+              <Routes>
+                {/* Area yang butuh login */}
+                <Route
+                  element={
+                    <Authenticated
+                      key="app"
+                      fallback={<CatchAllNavigate to="/login" />}
+                    >
+                      <ThemedLayoutV2>
+                        <Outlet />
+                      </ThemedLayoutV2>
+                    </Authenticated>
+                  }
+                >
+                  <Route
+                    index
+                    element={<NavigateToResource resource="dashboard" />}
+                  />
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route
+                    path="/stock-entries/create"
+                    element={<StockEntryCreatePage />}
+                  />
+                </Route>
+
+                {/* Login */}
+                <Route
+                  element={
+                    <Authenticated key="auth" fallback={<Outlet />}>
+                      <NavigateToResource resource="dashboard" />
+                    </Authenticated>
+                  }
+                >
+                  <Route path="/login" element={<LoginPage />} />
+                </Route>
+
+                {/* 404 */}
+                <Route path="*" element={<ErrorComponent />} />
+              </Routes>
+
+              <UnsavedChangesNotifier />
+              <DocumentTitleHandler />
+            </Refine>
+          </RefineKbarProvider>
+        </AntdApp>
+      </ConfigProvider>
     </BrowserRouter>
   );
 }
