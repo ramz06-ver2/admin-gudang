@@ -1,0 +1,3593 @@
+[
+  {
+    "kode": "BRG-001",
+    "nama": "Printer",
+    "ukuran": "A3",
+    "satuan": "unit",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-002",
+    "nama": "Laptop",
+    "ukuran": null,
+    "satuan": "unit",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-003",
+    "nama": "Komputer / PC",
+    "ukuran": null,
+    "satuan": "unit",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-004",
+    "nama": "Meja Kerja",
+    "ukuran": "1/2 biro",
+    "satuan": "unit",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-005",
+    "nama": "Kursi Kerja / besi",
+    "ukuran": null,
+    "satuan": "unit",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-006",
+    "nama": "Kursi Kerja / Plastik",
+    "ukuran": null,
+    "satuan": "unit",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-007",
+    "nama": "AC Split Wall c/w Pipa Refrigerant",
+    "ukuran": "1 PK",
+    "satuan": "unit",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-008",
+    "nama": "Mobil Operasional",
+    "ukuran": "Calya",
+    "satuan": "unit",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-009",
+    "nama": "Box Panel Listrik Temporary",
+    "ukuran": "40 cm X 60 cm",
+    "satuan": "unit",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-010",
+    "nama": "MCB",
+    "ukuran": "40 A - 3 Phase",
+    "satuan": "bh",
+    "stok": 4
+  },
+  {
+    "kode": "BRG-011",
+    "nama": "MCB",
+    "ukuran": "25 A - 3 Phase",
+    "satuan": "bh",
+    "stok": 4
+  },
+  {
+    "kode": "BRG-012",
+    "nama": "MCB",
+    "ukuran": "16 A - 1 Phase",
+    "satuan": "bh",
+    "stok": 4
+  },
+  {
+    "kode": "BRG-013",
+    "nama": "Kabel NYM",
+    "ukuran": "2 X 2,5 mm",
+    "satuan": "roll",
+    "stok": 3
+  },
+  {
+    "kode": "BRG-014",
+    "nama": "Kabel NYMHY",
+    "ukuran": "2 x 1.5 mm",
+    "satuan": "roll",
+    "stok": 5
+  },
+  {
+    "kode": "BRG-015",
+    "nama": "Kabel Twisted",
+    "ukuran": "4 x 10 mm",
+    "satuan": "m",
+    "stok": 200
+  },
+  {
+    "kode": "BRG-016",
+    "nama": "Conector kabel Twister",
+    "ukuran": "10 mm",
+    "satuan": "pcs",
+    "stok": 12
+  },
+  {
+    "kode": "BRG-017",
+    "nama": "Stop Kontak Outbow",
+    "ukuran": "4 Lubang",
+    "satuan": "bh",
+    "stok": 13
+  },
+  {
+    "kode": "BRG-018",
+    "nama": "Steker ( Colokan )",
+    "ukuran": "1 Ph",
+    "satuan": "bh",
+    "stok": 13
+  },
+  {
+    "kode": "BRG-019",
+    "nama": "Lampu TL8 LED",
+    "ukuran": "1 x 18 Watt",
+    "satuan": "set",
+    "stok": 8
+  },
+  {
+    "kode": "BRG-020",
+    "nama": "Lampu Sorot LED",
+    "ukuran": "100 Watt",
+    "satuan": "bh",
+    "stok": 10
+  },
+  {
+    "kode": "BRG-021",
+    "nama": "SAKLAR Outbow",
+    "ukuran": "seri",
+    "satuan": "bh",
+    "stok": 4
+  },
+  {
+    "kode": "BRG-022",
+    "nama": "Kabel ties",
+    "ukuran": "30 cm",
+    "satuan": "pack",
+    "stok": 5
+  },
+  {
+    "kode": "BRG-023",
+    "nama": "Apar",
+    "ukuran": "3 Kg",
+    "satuan": "bh",
+    "stok": 3
+  },
+  {
+    "kode": "BRG-024",
+    "nama": "Helm Proyek",
+    "ukuran": "Standar",
+    "satuan": "bh",
+    "stok": 30
+  },
+  {
+    "kode": "BRG-025",
+    "nama": "Helm Proyek",
+    "ukuran": "Fastrack",
+    "satuan": "bh",
+    "stok": 10
+  },
+  {
+    "kode": "BRG-026",
+    "nama": "Sarung Tangan Kain",
+    "ukuran": null,
+    "satuan": "pack",
+    "stok": 10
+  },
+  {
+    "kode": "BRG-027",
+    "nama": "Masker Medis",
+    "ukuran": null,
+    "satuan": "pak",
+    "stok": 5
+  },
+  {
+    "kode": "BRG-028",
+    "nama": "Sepatu Boot Safety",
+    "ukuran": "Standar",
+    "satuan": "pak",
+    "stok": 5
+  },
+  {
+    "kode": "BRG-029",
+    "nama": "Kain Majun",
+    "ukuran": null,
+    "satuan": "kg",
+    "stok": 10
+  },
+  {
+    "kode": "BRG-030",
+    "nama": "Gembok",
+    "ukuran": "50 mm",
+    "satuan": "bh",
+    "stok": 5
+  },
+  {
+    "kode": "BRG-031",
+    "nama": "Rantai Kecil",
+    "ukuran": "6 mm",
+    "satuan": "mtr",
+    "stok": 10
+  },
+  {
+    "kode": "BRG-032",
+    "nama": "Mesin Travo Las c/w kabel+Stang Las",
+    "ukuran": "200 A",
+    "satuan": "unit",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-033",
+    "nama": "Kedok Las",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-034",
+    "nama": "Kaca Las bening",
+    "ukuran": null,
+    "satuan": "pcs",
+    "stok": 10
+  },
+  {
+    "kode": "BRG-035",
+    "nama": "Kaca Las Hitam",
+    "ukuran": null,
+    "satuan": "pcs",
+    "stok": 10
+  },
+  {
+    "kode": "BRG-036",
+    "nama": "Kawat Las",
+    "ukuran": "RB.26",
+    "satuan": "pack",
+    "stok": 9
+  },
+  {
+    "kode": "BRG-037",
+    "nama": "Kawat Las",
+    "ukuran": "LB 52",
+    "satuan": "pack",
+    "stok": 9
+  },
+  {
+    "kode": "BRG-038",
+    "nama": "Sarung tangan LAS",
+    "ukuran": "std",
+    "satuan": "psg",
+    "stok": 4
+  },
+  {
+    "kode": "BRG-039",
+    "nama": "Tangga Aluminium",
+    "ukuran": "2 Meter",
+    "satuan": "bh",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-040",
+    "nama": "Tangga Aluminium",
+    "ukuran": "3 Meter",
+    "satuan": "bh",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-041",
+    "nama": "Terpal Plastik",
+    "ukuran": "4 m x 6 m",
+    "satuan": "lmbr",
+    "stok": 5
+  },
+  {
+    "kode": "BRG-042",
+    "nama": "Merger Grounding Test",
+    "ukuran": null,
+    "satuan": "unit",
+    "stok": 1
+  },
+  {
+    "kode": "BRG-043",
+    "nama": "Multitester",
+    "ukuran": null,
+    "satuan": "unit",
+    "stok": 4
+  },
+  {
+    "kode": "BRG-044",
+    "nama": "Mesin Jack Hammer Heavy",
+    "ukuran": "20 - 30 kg",
+    "satuan": "unit",
+    "stok": 1
+  },
+  {
+    "kode": "BRG-045",
+    "nama": "Mesin Bor Beton",
+    "ukuran": "22 mm",
+    "satuan": "unit",
+    "stok": 1
+  },
+  {
+    "kode": "BRG-046",
+    "nama": "Mesin Bor Besi",
+    "ukuran": "16 mm",
+    "satuan": "unit",
+    "stok": 1
+  },
+  {
+    "kode": "BRG-047",
+    "nama": "Mesin Bor Besi ( Duduk )",
+    "ukuran": "16 mm",
+    "satuan": "unit",
+    "stok": 1
+  },
+  {
+    "kode": "BRG-048",
+    "nama": "Mesin Gerinda tangan",
+    "ukuran": "4\"",
+    "satuan": "unit",
+    "stok": 3
+  },
+  {
+    "kode": "BRG-049",
+    "nama": "Mesin Gerinda potong",
+    "ukuran": "14\"",
+    "satuan": "unit",
+    "stok": 1
+  },
+  {
+    "kode": "BRG-050",
+    "nama": "Mata Bor Beton",
+    "ukuran": "6 mm",
+    "satuan": "pcs",
+    "stok": 10
+  },
+  {
+    "kode": "BRG-051",
+    "nama": "Mata Bor Beton",
+    "ukuran": "8 mm",
+    "satuan": "pcs",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-052",
+    "nama": "Mata Bor Beton",
+    "ukuran": "10 mm",
+    "satuan": "pcs",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-053",
+    "nama": "Mata bor Besi",
+    "ukuran": "8 mm",
+    "satuan": "pcs",
+    "stok": 3
+  },
+  {
+    "kode": "BRG-054",
+    "nama": "Mata bor Besi",
+    "ukuran": "10 mm",
+    "satuan": "pcs",
+    "stok": 3
+  },
+  {
+    "kode": "BRG-055",
+    "nama": "Mata bor Besi",
+    "ukuran": "12 mm",
+    "satuan": "pcs",
+    "stok": 3
+  },
+  {
+    "kode": "BRG-056",
+    "nama": "Mata Gerinda potong",
+    "ukuran": "4\"",
+    "satuan": "pack",
+    "stok": 69
+  },
+  {
+    "kode": "BRG-057",
+    "nama": "Mata Gerinda potong",
+    "ukuran": "14\"",
+    "satuan": "Pcs",
+    "stok": 24
+  },
+  {
+    "kode": "BRG-058",
+    "nama": "Besi UNP",
+    "ukuran": "100 mm",
+    "satuan": "btg",
+    "stok": 10
+  },
+  {
+    "kode": "BRG-059",
+    "nama": "Besi UNP",
+    "ukuran": "80 mm",
+    "satuan": "btg",
+    "stok": 20
+  },
+  {
+    "kode": "BRG-060",
+    "nama": "Besi UNP",
+    "ukuran": "50 mm",
+    "satuan": "btg",
+    "stok": 30
+  },
+  {
+    "kode": "BRG-061",
+    "nama": "Besi Siku",
+    "ukuran": "50 x 50 mm",
+    "satuan": "btg",
+    "stok": 50
+  },
+  {
+    "kode": "BRG-062",
+    "nama": "Besi Siku",
+    "ukuran": "40 x 40 mm",
+    "satuan": "btg",
+    "stok": 60
+  },
+  {
+    "kode": "BRG-063",
+    "nama": "Plat Strip",
+    "ukuran": "L: 50 mm - Tebal : 0.8mm",
+    "satuan": "btg",
+    "stok": 40
+  },
+  {
+    "kode": "BRG-064",
+    "nama": "Besi Longdrat",
+    "ukuran": "12 mm",
+    "satuan": "btg",
+    "stok": 200
+  },
+  {
+    "kode": "BRG-065",
+    "nama": "Besi Longdrat",
+    "ukuran": "10 mm",
+    "satuan": "btg",
+    "stok": 300
+  },
+  {
+    "kode": "BRG-066",
+    "nama": "Besi Longdrat",
+    "ukuran": "8 mm",
+    "satuan": "btg",
+    "stok": 300
+  },
+  {
+    "kode": "BRG-067",
+    "nama": "Mur Longdrat",
+    "ukuran": "12 mm",
+    "satuan": "pcs",
+    "stok": 400
+  },
+  {
+    "kode": "BRG-068",
+    "nama": "Mur Longdrat",
+    "ukuran": "10 mm",
+    "satuan": "pcs",
+    "stok": 500
+  },
+  {
+    "kode": "BRG-069",
+    "nama": "Mur Longdrat",
+    "ukuran": "8 mm",
+    "satuan": "pcs",
+    "stok": 600
+  },
+  {
+    "kode": "BRG-070",
+    "nama": "Clamp Omega Galvanis",
+    "ukuran": "4\"",
+    "satuan": "bh",
+    "stok": 30
+  },
+  {
+    "kode": "BRG-071",
+    "nama": "U-bolt",
+    "ukuran": "6\"",
+    "satuan": "bh",
+    "stok": 100
+  },
+  {
+    "kode": "BRG-072",
+    "nama": "U-bolt",
+    "ukuran": "4\"",
+    "satuan": "bh",
+    "stok": 200
+  },
+  {
+    "kode": "BRG-073",
+    "nama": "U-bolt",
+    "ukuran": "3\"",
+    "satuan": "bh",
+    "stok": 200
+  },
+  {
+    "kode": "BRG-074",
+    "nama": "U-bolt",
+    "ukuran": "2\"",
+    "satuan": "bh",
+    "stok": 300
+  },
+  {
+    "kode": "BRG-075",
+    "nama": "U-bolt",
+    "ukuran": "1.1/2\"",
+    "satuan": "bh",
+    "stok": 100
+  },
+  {
+    "kode": "BRG-076",
+    "nama": "Dynabolt",
+    "ukuran": "M12 x 60",
+    "satuan": "bh",
+    "stok": 500
+  },
+  {
+    "kode": "BRG-077",
+    "nama": "Dynabolt",
+    "ukuran": "M10 x 50",
+    "satuan": "bh",
+    "stok": 1000
+  },
+  {
+    "kode": "BRG-078",
+    "nama": "Dynaset",
+    "ukuran": "M8",
+    "satuan": "bh",
+    "stok": 1000
+  },
+  {
+    "kode": "BRG-079",
+    "nama": "Sekrup Ruping",
+    "ukuran": "12 x 20 mm",
+    "satuan": "bh",
+    "stok": 1000
+  },
+  {
+    "kode": "BRG-080",
+    "nama": "Scaffolding c/w Cross & Joint",
+    "ukuran": "2 m",
+    "satuan": "set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-081",
+    "nama": "Catwalk Scaffolding",
+    "ukuran": "Standar",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-082",
+    "nama": "Roda Scaffolding",
+    "ukuran": "4\"",
+    "satuan": "set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-083",
+    "nama": "Thinner Cat",
+    "ukuran": "@ 20 L/ Jerigen",
+    "satuan": "Jrg",
+    "stok": 5
+  },
+  {
+    "kode": "BRG-084",
+    "nama": "Cat Zinkromate Primer ( Abu )",
+    "ukuran": "@ 20 Kg",
+    "satuan": "pail",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-085",
+    "nama": "Wrapping Tape",
+    "ukuran": "100 mm x 10 m",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-086",
+    "nama": "Kuas Cat",
+    "ukuran": "3\"",
+    "satuan": "bh",
+    "stok": 18
+  },
+  {
+    "kode": "BRG-087",
+    "nama": "Roll Cat Minyak",
+    "ukuran": "4\"",
+    "satuan": "bh",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-088",
+    "nama": "Semen Grouting",
+    "ukuran": "25 kg",
+    "satuan": "sak",
+    "stok": 14
+  },
+  {
+    "kode": "BRG-089",
+    "nama": "Damdex",
+    "ukuran": "@ 5 liter",
+    "satuan": "Jrg",
+    "stok": 15
+  },
+  {
+    "kode": "BRG-090",
+    "nama": "Kunci L",
+    "ukuran": "Komplit",
+    "satuan": "set",
+    "stok": 1
+  },
+  {
+    "kode": "BRG-091",
+    "nama": "Kunci Pipa",
+    "ukuran": "12\"",
+    "satuan": "bh",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-092",
+    "nama": "Kunci Ring Pas",
+    "ukuran": "Komplit",
+    "satuan": "set",
+    "stok": 1
+  },
+  {
+    "kode": "BRG-093",
+    "nama": "Kunci Shock Roofing",
+    "ukuran": "8 mm",
+    "satuan": "bh",
+    "stok": 5
+  },
+  {
+    "kode": "BRG-094",
+    "nama": "Tang kombinasi",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-095",
+    "nama": "Obeng ( + )",
+    "ukuran": "10\"",
+    "satuan": "pcs",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-096",
+    "nama": "Obeng ( - )",
+    "ukuran": "10\"",
+    "satuan": "pcs",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-097",
+    "nama": "Isolasi Listrik",
+    "ukuran": null,
+    "satuan": "roll",
+    "stok": 50
+  },
+  {
+    "kode": "BRG-098",
+    "nama": "Isolasi Listrik",
+    "ukuran": null,
+    "satuan": "roll",
+    "stok": 19
+  },
+  {
+    "kode": "BRG-099",
+    "nama": "Isolasi Listrik",
+    "ukuran": null,
+    "satuan": "roll",
+    "stok": 20
+  },
+  {
+    "kode": "BRG-100",
+    "nama": "Isolasi Listrik",
+    "ukuran": null,
+    "satuan": "roll",
+    "stok": 20
+  },
+  {
+    "kode": "BRG-101",
+    "nama": "Isolasi Kertas",
+    "ukuran": "1 in",
+    "satuan": "roll",
+    "stok": 50
+  },
+  {
+    "kode": "BRG-102",
+    "nama": "Isolasi Rubber",
+    "ukuran": null,
+    "satuan": "roll",
+    "stok": 10
+  },
+  {
+    "kode": "BRG-103",
+    "nama": "Lasdop",
+    "ukuran": "4 mm",
+    "satuan": "pak",
+    "stok": 10
+  },
+  {
+    "kode": "BRG-104",
+    "nama": "Sealtape",
+    "ukuran": "@ 72 bh",
+    "satuan": "dus",
+    "stok": 5
+  },
+  {
+    "kode": "BRG-105",
+    "nama": "Resin",
+    "ukuran": "@ 1 kg",
+    "satuan": "kg",
+    "stok": 5
+  },
+  {
+    "kode": "BRG-106",
+    "nama": "Hardener",
+    "ukuran": "@ 1 kg",
+    "satuan": "kg",
+    "stok": 5
+  },
+  {
+    "kode": "BRG-107",
+    "nama": "Benang Nilon",
+    "ukuran": null,
+    "satuan": "roll",
+    "stok": 8
+  },
+  {
+    "kode": "BRG-108",
+    "nama": "Tabung Oksigen + Isi",
+    "ukuran": null,
+    "satuan": "Tbg",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-109",
+    "nama": "Tabung LPG",
+    "ukuran": "12 kg",
+    "satuan": "Set",
+    "stok": 1
+  },
+  {
+    "kode": "BRG-110",
+    "nama": "Selang  Las double",
+    "ukuran": "1/4 x 3/8",
+    "satuan": "m",
+    "stok": 12
+  },
+  {
+    "kode": "BRG-111",
+    "nama": "Regulator laS ( Oxigent )",
+    "ukuran": null,
+    "satuan": "pcs",
+    "stok": 1
+  },
+  {
+    "kode": "BRG-112",
+    "nama": "PVC AW dia. 150",
+    "ukuran": "6\"",
+    "satuan": "btg",
+    "stok": 20
+  },
+  {
+    "kode": "BRG-113",
+    "nama": "PVC AW dia. 100",
+    "ukuran": "4\"",
+    "satuan": "btg",
+    "stok": 48
+  },
+  {
+    "kode": "BRG-114",
+    "nama": "PVC AW dia. 80",
+    "ukuran": "3\"",
+    "satuan": "btg",
+    "stok": 46
+  },
+  {
+    "kode": "BRG-115",
+    "nama": "PVC AW dia. 65",
+    "ukuran": "21/2\"",
+    "satuan": "btg",
+    "stok": 28
+  },
+  {
+    "kode": "BRG-116",
+    "nama": "PVC AW dia. 50",
+    "ukuran": "2\"",
+    "satuan": "btg",
+    "stok": 42
+  },
+  {
+    "kode": "BRG-117",
+    "nama": "PVC AW dia. 40",
+    "ukuran": "11/2\"",
+    "satuan": "btg",
+    "stok": 30
+  },
+  {
+    "kode": "BRG-118",
+    "nama": "PVC AW dia. 32",
+    "ukuran": "11/4\"",
+    "satuan": "btg",
+    "stok": 4
+  },
+  {
+    "kode": "BRG-119",
+    "nama": "PVC AW dia. 25",
+    "ukuran": "1'",
+    "satuan": "btg",
+    "stok": 7
+  },
+  {
+    "kode": "BRG-120",
+    "nama": "PVC AW dia. 20",
+    "ukuran": "3/4\"",
+    "satuan": "btg",
+    "stok": 8
+  },
+  {
+    "kode": "BRG-121",
+    "nama": "PVC D",
+    "ukuran": "4\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-122",
+    "nama": "ELBOW PVC 45",
+    "ukuran": "6\"",
+    "satuan": "bh",
+    "stok": 10
+  },
+  {
+    "kode": "BRG-123",
+    "nama": "ELBOW PVC 45",
+    "ukuran": "4\"",
+    "satuan": "bh",
+    "stok": 38
+  },
+  {
+    "kode": "BRG-124",
+    "nama": "ELBOW PVC 45",
+    "ukuran": "3\"",
+    "satuan": "bh",
+    "stok": 30
+  },
+  {
+    "kode": "BRG-125",
+    "nama": "ELBOW PVC 45",
+    "ukuran": "21/2\"",
+    "satuan": "bh",
+    "stok": 38
+  },
+  {
+    "kode": "BRG-126",
+    "nama": "ELBOW PVC 45",
+    "ukuran": "2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-127",
+    "nama": "ELBOW PVC 90",
+    "ukuran": "6\"",
+    "satuan": "bh",
+    "stok": 10
+  },
+  {
+    "kode": "BRG-128",
+    "nama": "ELBOW PVC 90",
+    "ukuran": "4\"",
+    "satuan": "bh",
+    "stok": 31
+  },
+  {
+    "kode": "BRG-129",
+    "nama": "ELBOW PVC 90",
+    "ukuran": "3\"",
+    "satuan": "bh",
+    "stok": 12
+  },
+  {
+    "kode": "BRG-130",
+    "nama": "ELBOW PVC 90",
+    "ukuran": "2 1/2\"",
+    "satuan": "bh",
+    "stok": 3
+  },
+  {
+    "kode": "BRG-131",
+    "nama": "ELBOW PVC 90",
+    "ukuran": "2\"",
+    "satuan": "bh",
+    "stok": 22
+  },
+  {
+    "kode": "BRG-132",
+    "nama": "ELBOW PVC 90",
+    "ukuran": "11/2\"",
+    "satuan": "bh",
+    "stok": 9
+  },
+  {
+    "kode": "BRG-133",
+    "nama": "ELBOW PVC 90",
+    "ukuran": "11/4\"",
+    "satuan": "bh",
+    "stok": 11
+  },
+  {
+    "kode": "BRG-134",
+    "nama": "ELBOW PVC 90",
+    "ukuran": "1\"",
+    "satuan": "bh",
+    "stok": 4
+  },
+  {
+    "kode": "BRG-135",
+    "nama": "ELBOW PVC 90",
+    "ukuran": "3/4\"",
+    "satuan": "bh",
+    "stok": 10
+  },
+  {
+    "kode": "BRG-136",
+    "nama": "ELBOW PVC D 90",
+    "ukuran": "4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-137",
+    "nama": "ELBOW PVC D 45",
+    "ukuran": "4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-138",
+    "nama": "Tee  pvc aw",
+    "ukuran": "2\" X 2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-139",
+    "nama": "Tee  pvc aw",
+    "ukuran": "1 1/2\" X 1 1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-140",
+    "nama": "Tee  pvc aw",
+    "ukuran": "1 1/2\" X 1 1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-141",
+    "nama": "Tee  pvc aw",
+    "ukuran": "1\" X 1\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-142",
+    "nama": "Tee  pvc aw",
+    "ukuran": "3/4\" X 3/4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-143",
+    "nama": "Tee- Y 90°  pvc",
+    "ukuran": "4\" X 4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-144",
+    "nama": "Tee- Y 90°  pvc",
+    "ukuran": "2\" X 2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-145",
+    "nama": "REDUCER PVC",
+    "ukuran": "6x4 \"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-146",
+    "nama": "REDUCER PVC",
+    "ukuran": "4x3\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-147",
+    "nama": "REDUCER PVC",
+    "ukuran": "4x2 \"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-148",
+    "nama": "REDUCER PVC",
+    "ukuran": "3x2 \"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-149",
+    "nama": "REDUCER PVC AW",
+    "ukuran": "2\" X 1 1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-150",
+    "nama": "REDUCER PVC AW",
+    "ukuran": "1 1/2\" X 1\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-151",
+    "nama": "REDUCER PVC AW",
+    "ukuran": "1\" X 3/4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-152",
+    "nama": "REDUCER PVC AW",
+    "ukuran": "1 1/2\" X 1\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-153",
+    "nama": "Shock joint  pvc aw",
+    "ukuran": "1\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-154",
+    "nama": "Shock joint  pvc aw",
+    "ukuran": "3/4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-155",
+    "nama": "SOK DRAT DALAM",
+    "ukuran": "11/2\"",
+    "satuan": "bh",
+    "stok": 20
+  },
+  {
+    "kode": "BRG-156",
+    "nama": "SOK DRAT DALAM",
+    "ukuran": "2\"",
+    "satuan": "bh",
+    "stok": 10
+  },
+  {
+    "kode": "BRG-157",
+    "nama": "LEM PVC",
+    "ukuran": "400 gr",
+    "satuan": "klg",
+    "stok": 137
+  },
+  {
+    "kode": "BRG-158",
+    "nama": "Pipa Conduit",
+    "ukuran": "20 mm",
+    "satuan": "btg",
+    "stok": 1025
+  },
+  {
+    "kode": "BRG-159",
+    "nama": "Tee Doos Conduit cab 3",
+    "ukuran": "20 mm",
+    "satuan": "bh",
+    "stok": 500
+  },
+  {
+    "kode": "BRG-160",
+    "nama": "Cross Doos Conduit cab 4",
+    "ukuran": "20 mm",
+    "satuan": "bh",
+    "stok": 200
+  },
+  {
+    "kode": "BRG-161",
+    "nama": "Shock conduit",
+    "ukuran": "20 mm",
+    "satuan": "bh",
+    "stok": 1000
+  },
+  {
+    "kode": "BRG-162",
+    "nama": "Clamp conduit",
+    "ukuran": "20 mm",
+    "satuan": "pcs",
+    "stok": 2200
+  },
+  {
+    "kode": "BRG-163",
+    "nama": "Fleksibel conduit",
+    "ukuran": "20 mm",
+    "satuan": "roll",
+    "stok": 20
+  },
+  {
+    "kode": "BRG-164",
+    "nama": "Fisher",
+    "ukuran": "S 6",
+    "satuan": "pack",
+    "stok": 20
+  },
+  {
+    "kode": "BRG-165",
+    "nama": "Stapping screw",
+    "ukuran": "S 6",
+    "satuan": "dos",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-166",
+    "nama": "Inbow doos",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 200
+  },
+  {
+    "kode": "BRG-167",
+    "nama": "PIPA BS sch 40 dia. 150 mm",
+    "ukuran": "6\"",
+    "satuan": "btg",
+    "stok": 17
+  },
+  {
+    "kode": "BRG-168",
+    "nama": "PIPA BS sch 40 dia. 100 mm",
+    "ukuran": "4\"",
+    "satuan": "btg",
+    "stok": 20
+  },
+  {
+    "kode": "BRG-169",
+    "nama": "PIPA BS sch 40 dia. 80 mm",
+    "ukuran": "3\"",
+    "satuan": "btg",
+    "stok": 6
+  },
+  {
+    "kode": "BRG-170",
+    "nama": "PIPA BS sch 40 dia. 65 mm",
+    "ukuran": "21/2\"",
+    "satuan": "btg",
+    "stok": 27
+  },
+  {
+    "kode": "BRG-171",
+    "nama": "PIPA BS sch 40 dia. 50 mm",
+    "ukuran": "2\"",
+    "satuan": "btg",
+    "stok": 9
+  },
+  {
+    "kode": "BRG-172",
+    "nama": "PIPA BS sch 40 dia. 40 mm",
+    "ukuran": "11/2\"",
+    "satuan": "btg",
+    "stok": 16
+  },
+  {
+    "kode": "BRG-173",
+    "nama": "Pipa BS SCH 40",
+    "ukuran": "1 1/4\"",
+    "satuan": "btg",
+    "stok": 18
+  },
+  {
+    "kode": "BRG-174",
+    "nama": "Pipa BS SCH 40",
+    "ukuran": "1\"",
+    "satuan": "btg",
+    "stok": 55
+  },
+  {
+    "kode": "BRG-175",
+    "nama": "PIPA BS medium class dia. 25 mm",
+    "ukuran": "1\"",
+    "satuan": "btg",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-176",
+    "nama": "ELBOW BS 90 Las",
+    "ukuran": "6\"",
+    "satuan": "bh",
+    "stok": 14
+  },
+  {
+    "kode": "BRG-177",
+    "nama": "ELBOW BS 90 Las",
+    "ukuran": "4\"",
+    "satuan": "bh",
+    "stok": 24
+  },
+  {
+    "kode": "BRG-178",
+    "nama": "Elbow BS las",
+    "ukuran": "3\"",
+    "satuan": "bh",
+    "stok": 4
+  },
+  {
+    "kode": "BRG-179",
+    "nama": "Elbow BS las",
+    "ukuran": "2 1/2\"",
+    "satuan": "bh",
+    "stok": 7
+  },
+  {
+    "kode": "BRG-180",
+    "nama": "ELBOW BS 90 Drat",
+    "ukuran": "2\"",
+    "satuan": "bh",
+    "stok": 38
+  },
+  {
+    "kode": "BRG-181",
+    "nama": "REDUCER BS Las",
+    "ukuran": "6x4  \"",
+    "satuan": "bh",
+    "stok": 5
+  },
+  {
+    "kode": "BRG-182",
+    "nama": "REDUCER BS Las",
+    "ukuran": "4x3  \"",
+    "satuan": "bh",
+    "stok": 13
+  },
+  {
+    "kode": "BRG-183",
+    "nama": "REDUCER BS Las",
+    "ukuran": "4x21/2  \"",
+    "satuan": "bh",
+    "stok": 5
+  },
+  {
+    "kode": "BRG-184",
+    "nama": "REDUCER BS Las",
+    "ukuran": "4x2  \"",
+    "satuan": "bh",
+    "stok": 5
+  },
+  {
+    "kode": "BRG-185",
+    "nama": "REDUCER BS Las",
+    "ukuran": "3x21/2  \"",
+    "satuan": "bh",
+    "stok": 9
+  },
+  {
+    "kode": "BRG-186",
+    "nama": "REDUCER BS Las",
+    "ukuran": "3x2  \"",
+    "satuan": "bh",
+    "stok": 5
+  },
+  {
+    "kode": "BRG-187",
+    "nama": "REDUCER BS Las",
+    "ukuran": "21/2x2  \"",
+    "satuan": "bh",
+    "stok": 31
+  },
+  {
+    "kode": "BRG-188",
+    "nama": "TEE BS Las",
+    "ukuran": "6\"",
+    "satuan": "bh",
+    "stok": 3
+  },
+  {
+    "kode": "BRG-189",
+    "nama": "TEE BS Las",
+    "ukuran": "4\"",
+    "satuan": "bh",
+    "stok": 3
+  },
+  {
+    "kode": "BRG-190",
+    "nama": "TEE BS Las",
+    "ukuran": "3\"",
+    "satuan": "bh",
+    "stok": 3
+  },
+  {
+    "kode": "BRG-191",
+    "nama": "TEE BS Las",
+    "ukuran": "21/2  \"",
+    "satuan": "bh",
+    "stok": 5
+  },
+  {
+    "kode": "BRG-192",
+    "nama": "TEE BS Drat",
+    "ukuran": "2\"",
+    "satuan": "bh",
+    "stok": 24
+  },
+  {
+    "kode": "BRG-193",
+    "nama": "Tee BS screw",
+    "ukuran": "2x1 1/2\"",
+    "satuan": "bh",
+    "stok": 4
+  },
+  {
+    "kode": "BRG-194",
+    "nama": "Tee BS screw",
+    "ukuran": "2x 1 1/4\"",
+    "satuan": "bh",
+    "stok": 8
+  },
+  {
+    "kode": "BRG-195",
+    "nama": "TEE BS Drat",
+    "ukuran": "11/2  \"",
+    "satuan": "bh",
+    "stok": 36
+  },
+  {
+    "kode": "BRG-196",
+    "nama": "Tee BS screw",
+    "ukuran": "11/2\"x1 1/4\"",
+    "satuan": "bh",
+    "stok": 8
+  },
+  {
+    "kode": "BRG-197",
+    "nama": "Tee BS screw",
+    "ukuran": "11/2\"x1\"",
+    "satuan": "bh",
+    "stok": 16
+  },
+  {
+    "kode": "BRG-198",
+    "nama": "Tee BS screw",
+    "ukuran": "11/4\"x1\"",
+    "satuan": "bh",
+    "stok": 24
+  },
+  {
+    "kode": "BRG-199",
+    "nama": "TEE BS Drat",
+    "ukuran": "1\"",
+    "satuan": "bh",
+    "stok": 120
+  },
+  {
+    "kode": "BRG-200",
+    "nama": "Reduser BS screw",
+    "ukuran": "2 x 1 1/2\"",
+    "satuan": "bh",
+    "stok": 8
+  },
+  {
+    "kode": "BRG-201",
+    "nama": "Reduser BS screw",
+    "ukuran": "1 1/2\"x1 1/4\"",
+    "satuan": "bh",
+    "stok": 24
+  },
+  {
+    "kode": "BRG-202",
+    "nama": "Reduser BS screw",
+    "ukuran": "1 1/4\" x 1\"",
+    "satuan": "bh",
+    "stok": 32
+  },
+  {
+    "kode": "BRG-203",
+    "nama": "Reduser BS screw",
+    "ukuran": "1 x 1/2\"",
+    "satuan": "bh",
+    "stok": 100
+  },
+  {
+    "kode": "BRG-204",
+    "nama": "Bushing BS",
+    "ukuran": "1 x 1/2\"",
+    "satuan": "bh",
+    "stok": 120
+  },
+  {
+    "kode": "BRG-205",
+    "nama": "Double neple BS screw",
+    "ukuran": "1\"",
+    "satuan": "bh",
+    "stok": 100
+  },
+  {
+    "kode": "BRG-206",
+    "nama": "Water mur bs",
+    "ukuran": "1\"",
+    "satuan": "bh",
+    "stok": 10
+  },
+  {
+    "kode": "BRG-207",
+    "nama": "Kabel NYM",
+    "ukuran": "4 x 2.5 mm",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-208",
+    "nama": "Kabel NYMHY",
+    "ukuran": "2 x 2.5 mm",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-209",
+    "nama": "Kabel NYA",
+    "ukuran": "1x 2.5 mm",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-210",
+    "nama": "Kabel NYA",
+    "ukuran": "1x 2.5 mm",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-211",
+    "nama": "Kabel NYA",
+    "ukuran": "1x 2.5 mm",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-212",
+    "nama": "Laser Level",
+    "ukuran": "16 Line",
+    "satuan": "bh",
+    "stok": 1
+  },
+  {
+    "kode": "BRG-213",
+    "nama": "Mesin Coring",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 1
+  },
+  {
+    "kode": "BRG-214",
+    "nama": "Mata coring",
+    "ukuran": "8\"",
+    "satuan": "bh",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-215",
+    "nama": "Mata coring",
+    "ukuran": "5\"",
+    "satuan": "bh",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-216",
+    "nama": "Mata coring",
+    "ukuran": "4\"",
+    "satuan": "bh",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-217",
+    "nama": "Mata coring",
+    "ukuran": "3\"",
+    "satuan": "bh",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-218",
+    "nama": "Mesin Las PVC",
+    "ukuran": "std",
+    "satuan": "unit",
+    "stok": 1
+  },
+  {
+    "kode": "BRG-219",
+    "nama": "Kawat Las PVC",
+    "ukuran": "std",
+    "satuan": "kg",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-220",
+    "nama": "Kabel NYM",
+    "ukuran": "3 x 2.5 mm",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-221",
+    "nama": "Kabel NYMHY",
+    "ukuran": "2 x 2.5 mm",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-222",
+    "nama": "Kabel NYMHY",
+    "ukuran": "2 x 1.5 mm",
+    "satuan": "roll",
+    "stok": 5
+  },
+  {
+    "kode": "BRG-223",
+    "nama": "Kabel NYA",
+    "ukuran": "1x 1.5 mm",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-224",
+    "nama": "Kabel NYA",
+    "ukuran": "1x 1.5 mm",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-225",
+    "nama": "Kabel NYA",
+    "ukuran": "1x 2.5 mm",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-226",
+    "nama": "Kabel NYA",
+    "ukuran": "1x 2.5 mm",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-227",
+    "nama": "Kabel NYA",
+    "ukuran": "1x 2.5 mm",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-228",
+    "nama": "Kabel NYA",
+    "ukuran": "1x 1.5 mm",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-229",
+    "nama": "Kabel NYA",
+    "ukuran": "1x 1.5 mm",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-230",
+    "nama": "Stang las karbit",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 1
+  },
+  {
+    "kode": "BRG-231",
+    "nama": "Main Drain kolam renang",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-232",
+    "nama": "GUtter Drain kolam renang",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-233",
+    "nama": "Fitting Inlet kolam renang",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-234",
+    "nama": "Skimer kolam renang",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-235",
+    "nama": "Heat pump water to water",
+    "ukuran": null,
+    "satuan": "unit",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-236",
+    "nama": "Circulation pump",
+    "ukuran": null,
+    "satuan": "unit",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-237",
+    "nama": "Pompa jet",
+    "ukuran": null,
+    "satuan": "pcs",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-238",
+    "nama": "Sand filter",
+    "ukuran": null,
+    "satuan": "unit",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-239",
+    "nama": "sand silica",
+    "ukuran": null,
+    "satuan": "kg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-240",
+    "nama": "sand silica",
+    "ukuran": null,
+    "satuan": "kg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-241",
+    "nama": "Chemical Pump",
+    "ukuran": null,
+    "satuan": "set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-242",
+    "nama": "Chemical Tank",
+    "ukuran": null,
+    "satuan": "set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-243",
+    "nama": "Skimmer",
+    "ukuran": "2''",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-244",
+    "nama": "Inlet fitting 40mm",
+    "ukuran": "1,5''",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-245",
+    "nama": "Vacuum fitting suction 50mm",
+    "ukuran": "2''",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-246",
+    "nama": "Gutter drain 80mm",
+    "ukuran": "3''",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-247",
+    "nama": "Main drain+body 100 (Sparing 6\")",
+    "ukuran": "6\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-248",
+    "nama": "Lampu kolam renang",
+    "ukuran": "3''",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-249",
+    "nama": "Trafo",
+    "ukuran": "2,5''",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-250",
+    "nama": "Circulation pump",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-251",
+    "nama": "Sand filter",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-252",
+    "nama": "sand silica",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-253",
+    "nama": "sand silica",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-254",
+    "nama": "Chemical Pump",
+    "ukuran": null,
+    "satuan": "unit",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-255",
+    "nama": "Chemical Tank",
+    "ukuran": null,
+    "satuan": "unit",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-256",
+    "nama": "Inlet fitting",
+    "ukuran": "40 mm",
+    "satuan": "kg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-257",
+    "nama": "Main drain ( Cover saja)",
+    "ukuran": "80 mm",
+    "satuan": "kg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-258",
+    "nama": "Gutter drain",
+    "ukuran": "50 mm",
+    "satuan": "unit",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-259",
+    "nama": "Vacuum fitting suction",
+    "ukuran": "50 mm",
+    "satuan": "unit",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-260",
+    "nama": "Lampu  kolam renang",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-261",
+    "nama": "Trafo",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-262",
+    "nama": "Circulation pump",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-263",
+    "nama": "Circulation pump",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-264",
+    "nama": "Chemical pump, centrifugal end suction",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-265",
+    "nama": "Chemical tank",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-266",
+    "nama": "Swim filter, Hi-Rate sand filter",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-267",
+    "nama": "Swim filter, Hi-Rate sand filter",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-268",
+    "nama": "sand silica",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-269",
+    "nama": "sand silica",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-270",
+    "nama": "Main drain (cover saja)",
+    "ukuran": "80 mm",
+    "satuan": "unit",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-271",
+    "nama": "Inlet fitting",
+    "ukuran": "40 mm",
+    "satuan": "unit",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-272",
+    "nama": "Gutter drain",
+    "ukuran": "50 mm",
+    "satuan": "set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-273",
+    "nama": "Vacuum fitting suction",
+    "ukuran": "50 mm",
+    "satuan": "set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-274",
+    "nama": "Lampu kolam renang",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-275",
+    "nama": "Trafo",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-276",
+    "nama": "Swimming pool pump",
+    "ukuran": null,
+    "satuan": "kg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-277",
+    "nama": "Chemical pump, centrifugal end suction",
+    "ukuran": null,
+    "satuan": "kg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-278",
+    "nama": "Chemical tank",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-279",
+    "nama": "Swim filter,Hi-Rate sand filter",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-280",
+    "nama": "sand silica",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-281",
+    "nama": "sand silica",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-282",
+    "nama": "Inlet fitting",
+    "ukuran": "40mm",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-283",
+    "nama": "Vacuum fitting suction",
+    "ukuran": "50mm",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-284",
+    "nama": "Gutter drain",
+    "ukuran": "50mm",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-285",
+    "nama": "Main drain (cover saja)",
+    "ukuran": "80mm",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-286",
+    "nama": "Leaf Raket Pro",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-287",
+    "nama": "Flexible Vacuum Hose",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-288",
+    "nama": "Flexible Vacuum Hose",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-289",
+    "nama": "Telescopic Handle",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-290",
+    "nama": "Lampu kolam renang",
+    "ukuran": null,
+    "satuan": "kg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-291",
+    "nama": "Trafo",
+    "ukuran": null,
+    "satuan": "kg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-292",
+    "nama": "Isolasi pipa PVC",
+    "ukuran": "1\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-293",
+    "nama": "Isolasi pipa PVC",
+    "ukuran": "1 1/2\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-294",
+    "nama": "Lem Isolasi",
+    "ukuran": "1kg",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-295",
+    "nama": "Insulation tape",
+    "ukuran": "1\"",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-296",
+    "nama": "Mata Gergaji Besi",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 15
+  },
+  {
+    "kode": "BRG-297",
+    "nama": "Tackel/Cainlock",
+    "ukuran": "5 ton",
+    "satuan": "unit",
+    "stok": 1
+  },
+  {
+    "kode": "BRG-298",
+    "nama": "Tackel/Cainlock",
+    "ukuran": "3 ton",
+    "satuan": "unit",
+    "stok": 1
+  },
+  {
+    "kode": "BRG-299",
+    "nama": "Tambang dadung kain",
+    "ukuran": "16mm",
+    "satuan": "m",
+    "stok": 10
+  },
+  {
+    "kode": "BRG-300",
+    "nama": "Kunci Pipa",
+    "ukuran": "14\"",
+    "satuan": "bh",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-301",
+    "nama": "Webbing sling belt",
+    "ukuran": "3 ton",
+    "satuan": "bh",
+    "stok": 2
+  },
+  {
+    "kode": "BRG-302",
+    "nama": "Mesin senai",
+    "ukuran": "1/2 ~ 2 \"",
+    "satuan": "unit",
+    "stok": 1
+  },
+  {
+    "kode": "BRG-303",
+    "nama": "Mata senai",
+    "ukuran": "1/2 ~ 2 \"",
+    "satuan": "set",
+    "stok": 1
+  },
+  {
+    "kode": "BRG-304",
+    "nama": "klem gantung",
+    "ukuran": "Ø 1\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-305",
+    "nama": "klem gantung",
+    "ukuran": "Ø 3/4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-306",
+    "nama": "dyna set",
+    "ukuran": "10mm",
+    "satuan": "pcs",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-307",
+    "nama": "dyna set",
+    "ukuran": "8mm",
+    "satuan": "pcs",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-308",
+    "nama": "Test pump electrical",
+    "ukuran": "60 BAR",
+    "satuan": "Set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-309",
+    "nama": "Hand pump manual test",
+    "ukuran": "50 BAR",
+    "satuan": "Set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-310",
+    "nama": "Selang air (Serat benang )",
+    "ukuran": "46150",
+    "satuan": "meter",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-311",
+    "nama": "pressure gauge",
+    "ukuran": "25bar/psi",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-312",
+    "nama": "Gate valve",
+    "ukuran": "1\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-313",
+    "nama": "Gate valve",
+    "ukuran": "1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-314",
+    "nama": "Double neple BS",
+    "ukuran": "1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-315",
+    "nama": "Double neple BS",
+    "ukuran": "1\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-316",
+    "nama": "Bushing neple",
+    "ukuran": "1\"x1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-317",
+    "nama": "Tee bs screw",
+    "ukuran": "1\"x 1\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-318",
+    "nama": "Elbow bs screw",
+    "ukuran": "1\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-319",
+    "nama": "Plug bs",
+    "ukuran": "1\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-320",
+    "nama": "Plug bs",
+    "ukuran": "1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-321",
+    "nama": "Copper rod",
+    "ukuran": "5/8mm",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-322",
+    "nama": "Shock copper rod",
+    "ukuran": "5/8mm",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-323",
+    "nama": "Clamp copper rod",
+    "ukuran": "5/8mm",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-324",
+    "nama": "Meteran roll ( kain )",
+    "ukuran": "100 m",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-325",
+    "nama": "Cramping tool",
+    "ukuran": "Cat 6",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-326",
+    "nama": "Cramping tool",
+    "ukuran": "Cat 5",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-327",
+    "nama": "Lamp test UTP",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-328",
+    "nama": "Track pair ( pancingan kabel )",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-329",
+    "nama": "Stang gergaji besi",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-330",
+    "nama": "Mata gerinda poles",
+    "ukuran": null,
+    "satuan": "pack",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-331",
+    "nama": "Kacamata safety",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-332",
+    "nama": "Kabel ladder",
+    "ukuran": "200x100mm",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-333",
+    "nama": "Kabel ladder",
+    "ukuran": "400x100mm",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-334",
+    "nama": "Kabel ladder",
+    "ukuran": "600x100mm",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-335",
+    "nama": "Kabel  cage",
+    "ukuran": "100x100mm",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-336",
+    "nama": "Kabel  cage",
+    "ukuran": "200x100mm",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-337",
+    "nama": "Kabel  cage",
+    "ukuran": "300x100mm",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-338",
+    "nama": "Kabel  cage",
+    "ukuran": "400x100mm",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-339",
+    "nama": "Kabel  cage",
+    "ukuran": "600x100mm",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-340",
+    "nama": "Kabel ITC",
+    "ukuran": "2 x 2 x 0.6m2",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-341",
+    "nama": "Kabel UTP",
+    "ukuran": "Cat 6",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-342",
+    "nama": "RJ 11",
+    "ukuran": null,
+    "satuan": "pcs",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-343",
+    "nama": "RJ 45",
+    "ukuran": "Cat 6",
+    "satuan": "pcs",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-344",
+    "nama": "RJ 45",
+    "ukuran": "Cat 5e",
+    "satuan": "pcs",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-345",
+    "nama": "Gate Valve + Flange + Mur baut",
+    "ukuran": "6\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-346",
+    "nama": "Gate Valve + Flange + Mur baut",
+    "ukuran": "4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-347",
+    "nama": "Karet Packing",
+    "ukuran": "4mm",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-348",
+    "nama": "Wrapping Tape",
+    "ukuran": "6\"",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-349",
+    "nama": "BCV Set",
+    "ukuran": "3\"",
+    "satuan": "set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-350",
+    "nama": "BCV Set - Indicator Butterfly Valve",
+    "ukuran": "3\"",
+    "satuan": "set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-351",
+    "nama": "BCV Set - Water Flow Switch",
+    "ukuran": "3\"",
+    "satuan": "set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-352",
+    "nama": "BCV Set - Test Drain Valve c/w Sigh glass",
+    "ukuran": "3\"",
+    "satuan": "set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-353",
+    "nama": "BCV Set",
+    "ukuran": "2 1/2\"",
+    "satuan": "set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-354",
+    "nama": "BCV Set - Indicator Butterfly Valve",
+    "ukuran": "2 1/2\"",
+    "satuan": "set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-355",
+    "nama": "BCV Set - Water Flow Switch",
+    "ukuran": "2 1/2\"",
+    "satuan": "set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-356",
+    "nama": "BCV Set - Test Drain Valve c/w Sigh glass",
+    "ukuran": "2 1/2\"",
+    "satuan": "set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-357",
+    "nama": "MCV ( Main Control Valve )",
+    "ukuran": "4\"",
+    "satuan": "set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-358",
+    "nama": "Automatic Air Vent",
+    "ukuran": "16 K",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-359",
+    "nama": "Analizer",
+    "ukuran": "410",
+    "satuan": "set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-360",
+    "nama": "Selang analizer",
+    "ukuran": null,
+    "satuan": "set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-361",
+    "nama": "Charging valve",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-362",
+    "nama": "Cutter pipa refrigent",
+    "ukuran": "VTC 32",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-363",
+    "nama": "Flaring",
+    "ukuran": "VFT-808E",
+    "satuan": "set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-364",
+    "nama": "Mesin Vacum ac+oli vakum",
+    "ukuran": "VE2100N",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-365",
+    "nama": "Merger Instalasi Test",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-366",
+    "nama": "Termometer laser",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-367",
+    "nama": "Kawat las tembaga ac",
+    "ukuran": null,
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-368",
+    "nama": "Pentil pipa AC",
+    "ukuran": "1/4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-369",
+    "nama": "Klem cincin",
+    "ukuran": "1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-370",
+    "nama": "Pompa Test pressure  Elektrik",
+    "ukuran": "DSY-100",
+    "satuan": "unit",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-371",
+    "nama": "Bending pipa conduit",
+    "ukuran": "20 mm",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-372",
+    "nama": "Vinyl lem",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-373",
+    "nama": "Vinyl non lem",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-374",
+    "nama": "Borax",
+    "ukuran": null,
+    "satuan": "kg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-375",
+    "nama": "Tang Skun Manual",
+    "ukuran": "1.25 -16mm",
+    "satuan": "unit",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-376",
+    "nama": "Tang Skun Hydrolik",
+    "ukuran": "16-500mm",
+    "satuan": "set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-377",
+    "nama": "Tang ampere",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-378",
+    "nama": "Kunci T",
+    "ukuran": "mata sok 8mm",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-379",
+    "nama": "Kunci T",
+    "ukuran": "mata sok 10mm",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-380",
+    "nama": "Kunci T",
+    "ukuran": "mata sok 14mm",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-381",
+    "nama": "Kunci Shock",
+    "ukuran": "8-32mm",
+    "satuan": "set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-382",
+    "nama": "Kunci inggris",
+    "ukuran": "8\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-383",
+    "nama": "Kunci inggris",
+    "ukuran": "10\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-384",
+    "nama": "Kunci inggris",
+    "ukuran": "12\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-385",
+    "nama": "Kunci pipa",
+    "ukuran": "36\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-386",
+    "nama": "Elbow tembaga",
+    "ukuran": "1 1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-387",
+    "nama": "Elbow tembaga",
+    "ukuran": "1 1/4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-388",
+    "nama": "Elbow tembaga",
+    "ukuran": "1 1/8\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-389",
+    "nama": "Elbow tembaga",
+    "ukuran": "7/8\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-390",
+    "nama": "Thinner Cat",
+    "ukuran": "@ 20 L/ Jerigen",
+    "satuan": "Jrg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-391",
+    "nama": "Cat Zinkromate Primer ( Abu )",
+    "ukuran": "@ 25 Kg",
+    "satuan": "Pail",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-392",
+    "nama": "Cat ftalit permanent red 143",
+    "ukuran": "@ 25Kg",
+    "satuan": "Pail",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-393",
+    "nama": "Kuas cat",
+    "ukuran": "2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-394",
+    "nama": "Roll Cat Minyak",
+    "ukuran": "4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-395",
+    "nama": "Reffil Kuas Cat Minyak",
+    "ukuran": "4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-396",
+    "nama": "Sarung tangan LAS",
+    "ukuran": "14\"",
+    "satuan": "psg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-397",
+    "nama": "Face shield ( masker transparan )",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-398",
+    "nama": "Kaca las bening",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-399",
+    "nama": "Kaca las hitam",
+    "ukuran": null,
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-400",
+    "nama": "Kawat Las",
+    "ukuran": "RB.26",
+    "satuan": "Pack",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-401",
+    "nama": "Kawat Las",
+    "ukuran": "LB 52",
+    "satuan": "Pack",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-402",
+    "nama": "Kawat Las PVC",
+    "ukuran": null,
+    "satuan": "Kg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-403",
+    "nama": "Mata bor besi",
+    "ukuran": "8\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-404",
+    "nama": "Waterpass magnet",
+    "ukuran": "30cm",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-405",
+    "nama": "Waterpass magnet",
+    "ukuran": "9\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-406",
+    "nama": "Siku magnet las",
+    "ukuran": "3\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-407",
+    "nama": "Mata bor besi",
+    "ukuran": "10\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-408",
+    "nama": "Mata bor besi",
+    "ukuran": "12\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-409",
+    "nama": "Mata bor beton",
+    "ukuran": "10\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-410",
+    "nama": "Mesin bor CHARGER battery",
+    "ukuran": "DF 333 DWY",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-411",
+    "nama": "Sepatu Safety",
+    "ukuran": "41",
+    "satuan": "psg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-412",
+    "nama": "Sepatu Safety",
+    "ukuran": "42",
+    "satuan": "psg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-413",
+    "nama": "Sepatu Safety",
+    "ukuran": "43",
+    "satuan": "psg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-414",
+    "nama": "Sepatu boots",
+    "ukuran": "41",
+    "satuan": "psg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-415",
+    "nama": "Sepatu boots",
+    "ukuran": "43",
+    "satuan": "psg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-416",
+    "nama": "PIPA BS medium class",
+    "ukuran": "2\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-417",
+    "nama": "PIPA BS medium class",
+    "ukuran": "1 1/4\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-418",
+    "nama": "PIPA BS medium class",
+    "ukuran": "1\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-419",
+    "nama": "ELBOW BS Las dia. 50mm",
+    "ukuran": "2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-420",
+    "nama": "ELBOW BS Las dia. 32mm",
+    "ukuran": "1 1/4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-421",
+    "nama": "ELBOW BS LAS dia. 25mm",
+    "ukuran": "1\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-422",
+    "nama": "PIPA PVC Class AW",
+    "ukuran": "2 1/2\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-423",
+    "nama": "PIPA PVC Class AW",
+    "ukuran": "2\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-424",
+    "nama": "PIPA PVC Class AW",
+    "ukuran": "1 1/2\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-425",
+    "nama": "PIPA PVC Class AW",
+    "ukuran": "1\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-426",
+    "nama": "PIPA PVC Class AW",
+    "ukuran": "3/4\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-427",
+    "nama": "ELBOW PVC AW 90ᵒ",
+    "ukuran": "4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-428",
+    "nama": "ELBOW PVC AW 90ᵒ",
+    "ukuran": "3\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-429",
+    "nama": "ELBOW PVC AW 90ᵒ",
+    "ukuran": "2 1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-430",
+    "nama": "ELBOW PVC AW 90ᵒ",
+    "ukuran": "2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-431",
+    "nama": "ELBOW PVC AW 90ᵒ",
+    "ukuran": "1 1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-432",
+    "nama": "ELBOW PVC AW 90ᵒ",
+    "ukuran": "1\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-433",
+    "nama": "ELBOW PVC AW 90ᵒ",
+    "ukuran": "3/4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-434",
+    "nama": "ELBOW PVC AW 45ᵒ",
+    "ukuran": "4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-435",
+    "nama": "ELBOW PVC AW 45ᵒ",
+    "ukuran": "3\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-436",
+    "nama": "ELBOW PVC AW 45ᵒ",
+    "ukuran": "2 1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-437",
+    "nama": "ELBOW PVC AW 45ᵒ",
+    "ukuran": "2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-438",
+    "nama": "ELBOW PVC AW 45ᵒ",
+    "ukuran": "1 1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-439",
+    "nama": "Tee pvc aw",
+    "ukuran": "1\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-440",
+    "nama": "Tee pvc aw",
+    "ukuran": "3/4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-441",
+    "nama": "Tee-way pvc aw 90o",
+    "ukuran": "4\"x 4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-442",
+    "nama": "Tee-way pvc aw 90o",
+    "ukuran": "4\"x3\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-443",
+    "nama": "Tee-way pvc aw 90o",
+    "ukuran": "3\"x3\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-444",
+    "nama": "Tee-way pvc aw 90o",
+    "ukuran": "2 1/2\"x2 1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-445",
+    "nama": "Tee-way pvc aw 90o",
+    "ukuran": "1 1/2\"x1 1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-446",
+    "nama": "Tee-Y pvc aw 45o",
+    "ukuran": "4\"x 4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-447",
+    "nama": "Tee-Y pvc aw 45o",
+    "ukuran": "4\"x 3\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-448",
+    "nama": "Tee-Y pvc aw 45o",
+    "ukuran": "3\"x 3\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-449",
+    "nama": "Tee-Y pvc aw 45o",
+    "ukuran": "2 1/2\"x 2 1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-450",
+    "nama": "Tee-Y pvc aw 45o",
+    "ukuran": "2\"x 2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-451",
+    "nama": "Tee-Y pvc aw 45o",
+    "ukuran": "1 1/2\"x1 1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-452",
+    "nama": "REDUCER PVC AW",
+    "ukuran": "6\"X4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-453",
+    "nama": "REDUCER PVC AW",
+    "ukuran": "3\"X2 1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-454",
+    "nama": "REDUCER PVC AW",
+    "ukuran": "3\"X2 1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-455",
+    "nama": "REDUCER PVC AW",
+    "ukuran": "2 1/2\"X2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-456",
+    "nama": "REDUCER PVC AW",
+    "ukuran": "2\"X1 1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-457",
+    "nama": "Dop/cap pvc aw",
+    "ukuran": "4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-458",
+    "nama": "SHOCK PVC AW",
+    "ukuran": "1\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-459",
+    "nama": "SHOCK PVC AW",
+    "ukuran": "3/4\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-460",
+    "nama": "Pipa refrigent dia. 38.1mm",
+    "ukuran": "1 1/2\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-461",
+    "nama": "Pipa refrigent dia. 31.8mm",
+    "ukuran": "1 1/4\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-462",
+    "nama": "Pipa refrigent dia. 28.6mm",
+    "ukuran": "1 1/8\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-463",
+    "nama": "Pipa refrigent dia. 22.2mm",
+    "ukuran": "7/8\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-464",
+    "nama": "Pipa refrigent dia. 19.1mm",
+    "ukuran": "3/4\"",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-465",
+    "nama": "Pipa refrigent dia. 15.9mm",
+    "ukuran": "5/8\"",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-466",
+    "nama": "Pipa refrigent dia. 12.7mm",
+    "ukuran": "1/2\"",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-467",
+    "nama": "Pipa refrigent dia. 9.5mm",
+    "ukuran": "3/8\"",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-468",
+    "nama": "Pipa refrigent dia. 6.4mm",
+    "ukuran": "1/4\"",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-469",
+    "nama": "Isolasi pipa refrigent",
+    "ukuran": "1 1/2\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-470",
+    "nama": "Isolasi pipa refrigent",
+    "ukuran": "1 1/4\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-471",
+    "nama": "Isolasi pipa refrigent",
+    "ukuran": "1 1/8\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-472",
+    "nama": "Isolasi pipa refrigent",
+    "ukuran": "7/8\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-473",
+    "nama": "Isolasi pipa refrigent",
+    "ukuran": "3/4\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-474",
+    "nama": "Isolasi pipa refrigent",
+    "ukuran": "5/8\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-475",
+    "nama": "Isolasi pipa refrigent",
+    "ukuran": "1/2\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-476",
+    "nama": "Isolasi pipa refrigent",
+    "ukuran": "3/8\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-477",
+    "nama": "Isolasi pipa refrigent",
+    "ukuran": "1/4\"",
+    "satuan": "btg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-478",
+    "nama": "Per bending pipa tembaga",
+    "ukuran": "1/4\" - 5/8\"",
+    "satuan": "set",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-479",
+    "nama": "Lem isolasi",
+    "ukuran": "1 kg",
+    "satuan": "klg",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-480",
+    "nama": "Insulation Tape",
+    "ukuran": "1\"",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-481",
+    "nama": "Mesin Jack Hammer",
+    "ukuran": "30kg",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-482",
+    "nama": "Tee-way pvc aw 90o",
+    "ukuran": "2\"x2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-483",
+    "nama": "Tee pvc aw",
+    "ukuran": "4\"x2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-484",
+    "nama": "Tee pvc aw",
+    "ukuran": "4\"x2 1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-485",
+    "nama": "Tee pvc aw",
+    "ukuran": "4\"x3\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-486",
+    "nama": "Tee pvc aw",
+    "ukuran": "2\"x1 1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-487",
+    "nama": "Reducer pvc",
+    "ukuran": "2\"x1 1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-488",
+    "nama": "Ball valve pvc",
+    "ukuran": "2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-489",
+    "nama": "Ball valve pvc",
+    "ukuran": "2 1/2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-490",
+    "nama": "Ball valve pvc",
+    "ukuran": "1\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-491",
+    "nama": "Water mur pvc",
+    "ukuran": "2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-492",
+    "nama": "Check valve pvc",
+    "ukuran": "2\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-493",
+    "nama": "Floating valve",
+    "ukuran": "1\"",
+    "satuan": "bh",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-494",
+    "nama": "Kabel NYA",
+    "ukuran": "1x1,5mm2",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-495",
+    "nama": "Kabel NYA",
+    "ukuran": "1x1,5mm2",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-496",
+    "nama": "Kabel FRC",
+    "ukuran": "2x1,5mm2",
+    "satuan": "meter",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-497",
+    "nama": "Kabel FRC STP",
+    "ukuran": "16 AWG",
+    "satuan": "meter",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-498",
+    "nama": "Kabel NYMHY",
+    "ukuran": "2x2,5mm2",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-499",
+    "nama": "Kabel NYMHY",
+    "ukuran": "2x1,5mm2",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-500",
+    "nama": "Kabel NYA",
+    "ukuran": "1 x 1,5mm2",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-501",
+    "nama": "Kabel NYA",
+    "ukuran": "1 x 1,5mm2",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-502",
+    "nama": "Kabel NYA",
+    "ukuran": "1 x 1,5mm2",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-503",
+    "nama": "Kabel NYA",
+    "ukuran": "1 x 2,5mm2",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-504",
+    "nama": "Kabel NYA",
+    "ukuran": "1 x 2,5mm2",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-505",
+    "nama": "Kabel NYA",
+    "ukuran": "1 x 2,5mm2",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-506",
+    "nama": "Kabel NYA",
+    "ukuran": "1 x 2,5mm2",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-507",
+    "nama": "Kabel NYA",
+    "ukuran": "1 x 2,5mm2",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-508",
+    "nama": "Kabel NYA",
+    "ukuran": "1 x 2,5mm2",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-509",
+    "nama": "Kabel NYA",
+    "ukuran": "1 x 2,5mm2",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-510",
+    "nama": "Kabel NYA",
+    "ukuran": "1 x 2,5mm2",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-511",
+    "nama": "Kabel NYA",
+    "ukuran": "1 x 2,5mm2",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-512",
+    "nama": "Kabel NYA",
+    "ukuran": "1 x 2,5mm2",
+    "satuan": "roll",
+    "stok": 0
+  },
+  {
+    "kode": "BRG-513",
+    "nama": "Kabel NYA",
+    "ukuran": "1 x 2,5mm2",
+    "satuan": "roll",
+    "stok": 0
+  }
+]

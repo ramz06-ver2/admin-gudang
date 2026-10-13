@@ -19,6 +19,7 @@ export interface Product {
   id: number;
   code: string;
   name: string;
+  size: string | null;
   categoryId: number | null;
   categoryName?: string | null;
   unit: string;
@@ -87,6 +88,14 @@ export interface Workplace {
 }
 
 export type SetupStep = "team" | "person" | "workplace" | "done";
+
+// ✅ TAMBAH INI — dipakai oleh useEntryFlow
+export interface EntryLine {
+  itemId: number;
+  itemName: string;
+  unit: string;
+  quantity: number;
+}
 
 // ============================================
 // Charts

@@ -1,7 +1,6 @@
 import { useCallback, useState } from "react";
 import { mockTeams, mockPersons, mockWorkplaces } from "../mocks/entry";
-import type { Person, SetupStep, Team, Workplace } from "../types";
-import type { EntryLine } from "../types/entry";
+import type { EntryLine, Person, SetupStep, Team, Workplace } from "../types";
 import type { Product } from "../types";
 
 export type EntryPhase = "search" | "quantity";
@@ -15,6 +14,9 @@ export const useEntryFlow = () => {
   const [person, setPerson] = useState<Person | null>(null);
   const [workplace, setWorkplace] = useState<Workplace | null>(null);
 
+  // ✅ BARU: wizard open/close control
+  const [wizardOpen, setWizardOpen] = useState(true);
+
   // ==========================================
   // Board state
   // ==========================================
@@ -24,7 +26,7 @@ export const useEntryFlow = () => {
   const [lines, setLines] = useState<EntryLine[]>([]);
 
   // ==========================================
-  // Wizard actions
+  // Wizard data
   // ==========================================
   const wizardData = {
     team: {
@@ -47,11 +49,16 @@ export const useEntryFlow = () => {
     },
   } as const;
 
-  // ✅ FIX: guard saat step === "done"
   const currentWizardData =
     step === "done"
       ? { value: null, title: "", placeholder: "", options: [] }
       : wizardData[step as "team" | "person" | "workplace"];
+
+  // ==========================================
+  // Wizard actions
+  // ==========================================
+  const openWizard = useCallback(() => setWizardOpen(true), []);
+  const closeWizard = useCallback(() => setWizardOpen(false), []);
 
   const selectWizardValue = useCallback(
     (value: Team | Person | Workplace) => {
@@ -65,6 +72,8 @@ export const useEntryFlow = () => {
       } else if (step === "workplace") {
         setWorkplace(value as Workplace);
         setStep("done");
+        // ✅ Auto-close wizard saat selesai
+        setWizardOpen(false);
       }
     },
     [step],
@@ -79,6 +88,8 @@ export const useEntryFlow = () => {
     setActiveItem(null);
     setActiveQty(1);
     setLines([]);
+    // ✅ Auto-buka wizard untuk sesi berikutnya
+    setWizardOpen(true);
   }, []);
 
   const backWizard = useCallback(() => {
@@ -149,6 +160,9 @@ export const useEntryFlow = () => {
     currentWizardData,
     selectWizardValue,
     backWizard,
+    wizardOpen,
+    openWizard,
+    closeWizard,
     // board
     phase,
     activeItem,
