@@ -1,14 +1,11 @@
 import { Refine, Authenticated } from "@refinedev/core";
 import { RefineKbarProvider } from "@refinedev/kbar";
-
-// ⬇️ PENTING: dari @refinedev/react-router-v6 (bukan @refinedev/react-router)
 import routerProvider, {
   NavigateToResource,
   UnsavedChangesNotifier,
   DocumentTitleHandler,
   CatchAllNavigate,
 } from "@refinedev/react-router-v6";
-
 import { dataProvider, liveProvider } from "@refinedev/supabase";
 import { BrowserRouter, Route, Routes, Outlet } from "react-router-dom";
 import {
@@ -17,7 +14,11 @@ import {
   ErrorComponent,
 } from "@refinedev/antd";
 import { App as AntdApp, ConfigProvider } from "antd";
-import { DashboardOutlined, PlusCircleOutlined } from "@ant-design/icons";
+import {
+  DashboardOutlined,
+  PlusCircleOutlined,
+  ThunderboltOutlined,
+} from "@ant-design/icons";
 import "@refinedev/antd/dist/reset.css";
 
 import { supabaseClient } from "./utility/supabaseClient";
@@ -25,11 +26,9 @@ import { USE_MOCK } from "./utility/config";
 import { DashboardPage } from "./pages/dashboard";
 import { LoginPage } from "./pages/login";
 import { StockEntryCreatePage } from "./pages/stock-entries/create";
+import { EntryPage } from "./pages/entry";
 import { authProvider } from "./authProvider";
 
-// ============================================
-// Mock data provider (untuk mode USE_MOCK)
-// ============================================
 const mockDataProvider = {
   getList: async () => ({ data: [], total: 0 }),
   getOne: async () => ({ data: {} }),
@@ -68,6 +67,7 @@ function App() {
                 syncWithLocation: true,
                 warnWhenUnsavedChanges: true,
                 projectId: "admin-stock",
+                title: { text: "Admin Stock" },
               }}
               resources={[
                 {
@@ -76,6 +76,14 @@ function App() {
                   meta: {
                     label: "Dashboard",
                     icon: <DashboardOutlined />,
+                  },
+                },
+                {
+                  name: "entry",
+                  list: "/entry",
+                  meta: {
+                    label: "Entry Cepat",
+                    icon: <ThunderboltOutlined />,
                   },
                 },
                 {
@@ -89,7 +97,6 @@ function App() {
               ]}
             >
               <Routes>
-                {/* Area yang butuh login */}
                 <Route
                   element={
                     <Authenticated
@@ -107,13 +114,13 @@ function App() {
                     element={<NavigateToResource resource="dashboard" />}
                   />
                   <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/entry" element={<EntryPage />} />
                   <Route
                     path="/stock-entries/create"
                     element={<StockEntryCreatePage />}
                   />
                 </Route>
 
-                {/* Login */}
                 <Route
                   element={
                     <Authenticated key="auth" fallback={<Outlet />}>
@@ -124,7 +131,6 @@ function App() {
                   <Route path="/login" element={<LoginPage />} />
                 </Route>
 
-                {/* 404 */}
                 <Route path="*" element={<ErrorComponent />} />
               </Routes>
 

@@ -1,7 +1,3 @@
-// ============================================
-// Master entities
-// ============================================
-
 export interface Category {
   id: number;
   name: string;
@@ -33,10 +29,6 @@ export interface Product {
   createdAt: string;
 }
 
-// ============================================
-// Transactions
-// ============================================
-
 export interface StockEntry {
   id: number;
   entryNumber: string;
@@ -52,27 +44,53 @@ export interface StockEntry {
   supplier?: Pick<Supplier, "id" | "name">;
 }
 
+// ============================================
+// Stock Exit — log pengeluaran barang
+// ============================================
+
+export interface StockExitItem {
+  itemId: number;
+  itemName: string;
+  unit: string;
+  quantity: number;
+}
+
 export interface StockExit {
   id: number;
-  exitNumber: string;
-  productId: number;
-  quantity: number;
-  destination: string | null;
+  timestamp: string;
   date: string;
-  note: string | null;
-  createdAt: string;
+  time: string;
+  team: string;
+  person: string;
+  workplace: string;
+  items: StockExitItem[];
 }
 
 // ============================================
-// Dashboard / Reports
+// Wizard setup
 // ============================================
 
-export interface DashboardStats {
-  totalProducts: number;
-  totalStock: number;
-  todayInbound: number;
-  lowStockCount: number;
+export interface Team {
+  id: string;
+  name: string;
 }
+
+export interface Person {
+  id: string;
+  name: string;
+  teamId: string;
+}
+
+export interface Workplace {
+  id: string;
+  name: string;
+}
+
+export type SetupStep = "team" | "person" | "workplace" | "done";
+
+// ============================================
+// Charts
+// ============================================
 
 export interface StockInChartItem {
   date: string;
@@ -88,14 +106,6 @@ export interface CreateStockEntryInput {
   supplierId: number | null;
   quantity: number;
   unitPrice: number;
-  date: string;
-  note?: string | null;
-}
-
-export interface CreateStockExitInput {
-  productId: number;
-  quantity: number;
-  destination?: string | null;
   date: string;
   note?: string | null;
 }

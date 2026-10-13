@@ -1,0 +1,16 @@
+FROM node:20-alpine
+
+# Install tools dasar
+RUN apk add --no-cache \
+    git \
+    bash \
+    curl \
+    openssh-client
+
+WORKDIR /app
+
+# Set timezone
+ENV TZ=Asia/Jakarta
+
+# Default command (container tetap hidup)
+CMD ["sleep", "infinity"]

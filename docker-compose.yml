@@ -1,0 +1,24 @@
+services:
+  admin-gudang:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: admin-gudang:latest
+    container_name: admin-gudang
+    restart: unless-stopped
+    ports:
+      - "8080:3000"
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - admin-gudang-network
+
+networks:
+  admin-gudang-network:
+    driver: bridge

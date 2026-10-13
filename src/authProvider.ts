@@ -1,4 +1,8 @@
-import type { AuthProvider, AuthActionResponse } from "@refinedev/core";
+import type {
+  AuthProvider,
+  AuthActionResponse,
+  CheckResponse,
+} from "@refinedev/core";
 import { supabaseClient } from "./utility/supabaseClient";
 import { USE_MOCK } from "./utility/config";
 
@@ -7,6 +11,7 @@ const MOCK_USER = {
   password: "admin123",
   name: "Administrator",
 };
+
 const STORAGE_KEY = "mock-auth-user";
 
 const getMockUser = () => {
@@ -31,7 +36,10 @@ export const authProvider: AuthProvider = {
       }
       return {
         success: false,
-        error: { name: "LoginError", message: "Email atau password salah" },
+        error: {
+          name: "LoginError",
+          message: "Email atau password salah",
+        },
       };
     }
 
@@ -70,7 +78,8 @@ export const authProvider: AuthProvider = {
     return { success: true, redirectTo: "/login" };
   },
 
-  check: async (): Promise<AuthActionResponse> => {
+  // ⬇️ INI YANG DIPERBAIKI: return type CheckResponse, bukan AuthActionResponse
+  check: async (): Promise<CheckResponse> => {
     if (USE_MOCK) {
       const user = getMockUser();
       return user

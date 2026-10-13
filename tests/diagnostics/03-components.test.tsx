@@ -46,7 +46,7 @@ vi.mock("@ant-design/plots", () => ({
 function Wrapper({ children }: { children: ReactNode }) {
   const queryClient = new QueryClient({
     defaultOptions: {
-      queries: { retry: false, gcTime: 0 },
+      queries: { retry: false, cacheTime: 0 },
       mutations: { retry: false },
     },
   });

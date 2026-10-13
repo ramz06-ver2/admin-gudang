@@ -1,0 +1,47 @@
+{
+  "name": "Admin Gudang Dev",
+
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22-bookworm",
+
+  "workspaceFolder": "/workspaces/admin-gudang",
+
+  "mounts": [
+    "source=admin-gudang-node-modules,target=/workspaces/admin-gudang/node_modules,type=volume"
+  ],
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "vitest.explorer",
+        "ms-azuretools.vscode-docker"
+      ],
+      "settings": {
+        "typescript.tsdk": "node_modules/typescript/lib",
+        "typescript.enablePromptUseWorkspaceTsdk": true,
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        },
+        "files.watcherExclude": {
+          "**/node_modules/**": true,
+          "**/dist/**": true
+        }
+      }
+    }
+  },
+
+  "forwardPorts": [5173],
+  "portsAttributes": {
+    "5173": {
+      "label": "Vite Dev Server",
+      "onAutoForward": "notify"
+    }
+  },
+
+  "postCreateCommand": "sudo chown -R node:node node_modules 2>/dev/null; npm install",
+
+  "remoteUser": "node"
+}
