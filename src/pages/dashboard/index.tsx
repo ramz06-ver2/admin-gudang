@@ -13,7 +13,7 @@ import { StockExitList } from "../../components/dashboard/StockExitList";
 import { useQuickEntry } from "../../hooks/useQuickEntry";
 import { useProducts } from "../../hooks/useProducts";
 import { mockStockExits } from "../../mocks/stockExitList";
-import { formatFullDate, formatNumber } from "../../utility/format";
+import { formatFullDate } from "../../utility/format";
 import { COLORS } from "../../utility/constants";
 import type { Product, StockExit } from "../../types";
 

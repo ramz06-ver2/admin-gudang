@@ -18,7 +18,7 @@ import {
 } from "@ant-design/icons";
 import { formatNumber } from "../../utility/format";
 import { COLORS } from "../../utility/constants";
-import type { Product } from "../../types";
+// import type { Product } from "../../types";
 import type { useQuickEntry } from "../../hooks/useQuickEntry";
 
 const { Text } = Typography;
@@ -36,7 +36,7 @@ export const QuickEntryPanel = ({ entry }: Props) => {
     searchResults,
     searchRef,
     handleSearchKeyDown,
-    commitItem,
+    // commitItem,
     activeItem,
     activeQty,
     setActiveQty,
@@ -134,12 +134,12 @@ export const QuickEntryPanel = ({ entry }: Props) => {
                   }))
                 : []
             }
-            onSelect={(_, opt) => {
-              const p = (opt as { data: Product }).data;
-              commitItem();
-              // commitItem uses internal state; simpler to set directly
-              setKeyword("");
-            }}
+            // onSelect={(_, opt) => {
+            //   // const p = (opt as { data: Product }).data;
+            //   commitItem();
+            //   // commitItem uses internal state; simpler to set directly
+            //   setKeyword("");
+            // }}
             style={{ width: "100%" }}
           >
             <Input
