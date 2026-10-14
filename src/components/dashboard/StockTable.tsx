@@ -20,25 +20,26 @@ export const StockTable = ({ products, loading }: Props) => (
       dataSource={products}
       rowKey="id"
       loading={loading}
-      pagination={{ pageSize: 10, size: "small" }}
+      pagination={{ pageSize: 10, size: "small", showSizeChanger: false }}
       size="small"
+      scroll={{ x: 600 }}
       columns={[
         { dataIndex: "code", title: "Kode", width: 110 },
         { dataIndex: "name", title: "Nama", ellipsis: true },
         {
           dataIndex: "size",
           title: "Ukuran",
-          width: 120,
+          width: 150,
           render: (v: string | null) => v ?? "-",
         },
         {
           dataIndex: "stock",
           title: "Stok",
-          width: 130,
+          width: 120,
           align: "right",
           sorter: (a, b) => a.stock - b.stock,
           render: (v: number, r: Product) => (
-            <Text strong style={{ fontSize: 15 }}>
+            <Text strong style={{ fontSize: 14 }}>
               {formatNumber(v)}{" "}
               <Text type="secondary" style={{ fontSize: 12, fontWeight: 400 }}>
                 {r.unit}

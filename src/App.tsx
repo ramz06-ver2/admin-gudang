@@ -14,11 +14,7 @@ import {
   ErrorComponent,
 } from "@refinedev/antd";
 import { App as AntdApp, ConfigProvider } from "antd";
-import {
-  DashboardOutlined,
-  PlusCircleOutlined,
-  ThunderboltOutlined,
-} from "@ant-design/icons";
+import { DashboardOutlined, PlusCircleOutlined } from "@ant-design/icons";
 import "@refinedev/antd/dist/reset.css";
 
 import { supabaseClient } from "./utility/supabaseClient";
@@ -26,7 +22,6 @@ import { USE_MOCK } from "./utility/config";
 import { DashboardPage } from "./pages/dashboard";
 import { LoginPage } from "./pages/login";
 import { StockEntryCreatePage } from "./pages/stock-entries/create";
-import { EntryPage } from "./pages/entry";
 import { authProvider } from "./authProvider";
 
 const mockDataProvider = {
@@ -51,9 +46,7 @@ function App() {
   return (
     <BrowserRouter>
       <ConfigProvider
-        theme={{
-          token: { borderRadius: 8, colorPrimary: "#1677ff" },
-        }}
+        theme={{ token: { borderRadius: 8, colorPrimary: "#1677ff" } }}
       >
         <AntdApp>
           <RefineKbarProvider>
@@ -76,14 +69,6 @@ function App() {
                   meta: {
                     label: "Dashboard",
                     icon: <DashboardOutlined />,
-                  },
-                },
-                {
-                  name: "entry",
-                  list: "/entry",
-                  meta: {
-                    label: "Entry Cepat",
-                    icon: <ThunderboltOutlined />,
                   },
                 },
                 {
@@ -114,7 +99,6 @@ function App() {
                     element={<NavigateToResource resource="dashboard" />}
                   />
                   <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/entry" element={<EntryPage />} />
                   <Route
                     path="/stock-entries/create"
                     element={<StockEntryCreatePage />}
