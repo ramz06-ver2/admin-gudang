@@ -1,3 +1,7 @@
+// ============================================
+// Master entities
+// ============================================
+
 export interface Category {
   id: number;
   name: string;
@@ -30,6 +34,10 @@ export interface Product {
   createdAt: string;
 }
 
+// ============================================
+// Transaksi
+// ============================================
+
 export interface StockEntry {
   id: number;
   entryNumber: string;
@@ -44,10 +52,6 @@ export interface StockEntry {
   product?: Pick<Product, "id" | "code" | "name" | "unit">;
   supplier?: Pick<Supplier, "id" | "name">;
 }
-
-// ============================================
-// Stock Exit — log pengeluaran barang
-// ============================================
 
 export interface StockExitItem {
   itemId: number;
@@ -68,7 +72,7 @@ export interface StockExit {
 }
 
 // ============================================
-// Wizard setup
+// Wizard
 // ============================================
 
 export interface Team {
@@ -89,7 +93,6 @@ export interface Workplace {
 
 export type SetupStep = "team" | "person" | "workplace" | "done";
 
-// ✅ TAMBAH INI — dipakai oleh useEntryFlow
 export interface EntryLine {
   itemId: number;
   itemName: string;
@@ -98,8 +101,16 @@ export interface EntryLine {
 }
 
 // ============================================
-// Charts
+// Dashboard & Charts
 // ============================================
+
+// ✅ TAMBAH INI
+export interface DashboardStats {
+  totalProducts: number;
+  totalStock: number;
+  todayInbound: number;
+  todayOutbound: number;
+}
 
 export interface StockInChartItem {
   date: string;

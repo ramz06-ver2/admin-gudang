@@ -1,58 +1,131 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { App } from "antd";
-import { SetupWizard } from "../../components/entry/SetupWizard";
-import { EntryBoard } from "../../components/entry/EntryBoard";
-import { useEntryFlow } from "../../hooks/useEntryFlow";
+// ============================================
+// Master entities
+// ============================================
 
-export const EntryPage = () => {
-  const navigate = useNavigate();
-  const { message } = App.useApp();
-  const flow = useEntryFlow();
+export interface Category {
+  id: number;
+  name: string;
+  createdAt: string;
+}
 
-  const handleFinish = async () => {
-    // TODO: simpan ke Supabase
-    message.success(
-      `Tersimpan: ${flow.lines.length} jenis barang di ${flow.workplace?.name}`,
-    );
-    flow.resetSession();
-    navigate("/dashboard");
-  };
+export interface Supplier {
+  id: number;
+  name: string;
+  contact: string | null;
+  phone: string | null;
+  address: string | null;
+  createdAt: string;
+}
 
-  return (
-    <>
-      {/* FASE 1: Wizard */}
-      <SetupWizard
-        open={!flow.isReady}
-        step={flow.step as "team" | "person" | "workplace"}
-        title={flow.currentWizardData.title}
-        placeholder={flow.currentWizardData.placeholder}
-        options={flow.currentWizardData.options}
-        onSelect={flow.selectWizardValue}
-        onBack={flow.step !== "team" ? flow.backWizard : undefined}
-      />
+export type StockStatus = "safe" | "low" | "out";
 
-      {/* FASE 2: Board */}
-      {flow.isReady && flow.team && flow.person && flow.workplace && (
-        <EntryBoard
-          team={flow.team}
-          person={flow.person}
-          workplace={flow.workplace}
-          phase={flow.phase}
-          activeItem={flow.activeItem}
-          activeQty={flow.activeQty}
-          lines={flow.lines}
-          onSelectItem={flow.selectItem}
-          onConfirmQuantity={flow.confirmQuantity}
-          onCancelQuantity={flow.cancelQuantity}
-          onIncreaseQty={flow.increaseQty}
-          onDecreaseQty={flow.decreaseQty}
-          onRemoveLine={flow.removeLine}
-          onFinish={handleFinish}
-        />
-      )}
-    </>
-  );
-};
+export interface Product {
+  id: number;
+  code: string;
+  name: string;
+  size: string | null;
+  categoryId: number | null;
+  categoryName?: string | null;
+  unit: string;
+  stock: number;
+  minStock: number;
+  costPrice: number;
+  status?: StockStatus;
+  createdAt: string;
+}
 
-export default EntryPage;
+// ============================================
+// Transaksi
+// ============================================
+
+export interface StockEntry {
+  id: number;
+  entryNumber: string;
+  productId: number;
+  supplierId: number | null;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  date: string;
+  note: string | null;
+  createdAt: string;
+  product?: Pick<Product, "id" | "code" | "name" | "unit">;
+  supplier?: Pick<Supplier, "id" | "name">;
+}
+
+export interface StockExitItem {
+  itemId: number;
+  itemName: string;
+  unit: string;
+  quantity: number;
+}
+
+export interface StockExit {
+  id: number;
+  timestamp: string;
+  date: string;
+  time: string;
+  team: string;
+  person: string;
+  workplace: string;
+  items: StockExitItem[];
+}
+
+// ============================================
+// Wizard
+// ============================================
+
+export interface Team {
+  id: string;
+  name: string;
+}
+
+export interface Person {
+  id: string;
+  name: string;
+  teamId: string;
+}
+
+export interface Workplace {
+  id: string;
+  name: string;
+}
+
+export type SetupStep = "team" | "person" | "workplace" | "done";
+
+export interface EntryLine {
+  itemId: number;
+  itemName: string;
+  unit: string;
+  quantity: number;
+}
+
+// ============================================
+// Dashboard & Charts
+// ============================================
+
+// ✅ TAMBAH INI
+export interface DashboardStats {
+  totalProducts: number;
+  totalStock: number;
+  todayInbound: number;
+  todayOutbound: number;
+}
+
+export interface StockInChartItem {
+  date: string;
+  total: number;
+}
+
+// ============================================
+// Form inputs
+// ============================================
+
+export interface CreateStockEntryInput {
+  productId: number;
+  supplierId: number | null;
+  quantity: number;
+  unitPrice: number;
+  date: string;
+  note?: string | null;
+}

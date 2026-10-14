@@ -18,7 +18,7 @@ const EMPTY_STATS: DashboardStats = {
   totalProducts: 0,
   totalStock: 0,
   todayInbound: 0,
-  lowStockCount: 0,
+  todayOutbound: 0,
 };
 
 export const useDashboardStats = (): UseDashboardStatsResult => {
@@ -35,20 +35,21 @@ export const useDashboardStats = (): UseDashboardStatsResult => {
       // === MODE SUPABASE ===
       const today = new Date().toISOString().split("T")[0];
 
-      const [productsRes, entriesRes, lowStockRes] = await Promise.all([
+      const [productsRes, inboundRes, outboundRes] = await Promise.all([
         supabaseClient.from(TABLES.products).select("stok"),
         supabaseClient
           .from(TABLES.stockEntries)
           .select("jumlah")
           .eq("tanggal", today),
         supabaseClient
-          .from(TABLES.vLowStock)
-          .select("id", { count: "exact", head: true }),
+          .from(TABLES.stockExits)
+          .select("items")
+          .eq("date", today),
       ]);
 
       if (productsRes.error) throw productsRes.error;
-      if (entriesRes.error) throw entriesRes.error;
-      if (lowStockRes.error) throw lowStockRes.error;
+      if (inboundRes.error) throw inboundRes.error;
+      if (outboundRes.error) throw outboundRes.error;
 
       const totalProducts = productsRes.data?.length ?? 0;
       const totalStock =
@@ -57,13 +58,20 @@ export const useDashboardStats = (): UseDashboardStatsResult => {
           0,
         ) ?? 0;
       const todayInbound =
-        entriesRes.data?.reduce(
+        inboundRes.data?.reduce(
           (sum, e: { jumlah: number | null }) => sum + (e.jumlah ?? 0),
           0,
         ) ?? 0;
-      const lowStockCount = lowStockRes.count ?? 0;
 
-      return { totalProducts, totalStock, todayInbound, lowStockCount };
+      // Hitung total quantity dari items[] di stock exits
+      const todayOutbound =
+        outboundRes.data?.reduce(
+          (sum, exit: { items: Array<{ quantity: number }> }) =>
+            sum + (exit.items?.reduce((s, i) => s + (i.quantity ?? 0), 0) ?? 0),
+          0,
+        ) ?? 0;
+
+      return { totalProducts, totalStock, todayInbound, todayOutbound };
     },
   });
 
