@@ -10,25 +10,24 @@ import {
   Typography,
 } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
-import type { Person, Team, Workplace } from "../../types/entry";
+import type { Person, Workplace } from "../../types/entry";
 
 const { Title, Text } = Typography;
 
 interface Props {
   open: boolean;
-  step: "team" | "person" | "workplace";
+  step: "workplace" | "person";
   title: string;
   placeholder: string;
-  options: readonly (Team | Person | Workplace)[];
-  onSelect: (value: Team | Person | Workplace) => void;
+  options: readonly (Person | Workplace)[];
+  onSelect: (value: Person | Workplace) => void;
   onBack?: () => void;
-  onClose: () => void; // ✅ TAMBAH
+  onClose: () => void;
 }
 
-const STEP_INDEX: Record<"team" | "person" | "workplace", number> = {
-  team: 0,
+const STEP_INDEX: Record<"workplace" | "person", number> = {
+  workplace: 0,
   person: 1,
-  workplace: 2,
 };
 
 export const SetupWizard = ({
@@ -64,11 +63,11 @@ export const SetupWizard = ({
   return (
     <Modal
       open={open}
-      onCancel={onClose} // ✅ BISA DITUTUP (klik luar / X)
+      onCancel={onClose}
       footer={null}
       closable
-      maskClosable // ✅ KLIK LUAR = TUTUP
-      keyboard // ✅ ESC = TUTUP
+      maskClosable
+      keyboard
       width={520}
       styles={{ body: { padding: 0 } }}
       style={{ top: 100 }}
@@ -81,7 +80,7 @@ export const SetupWizard = ({
         <Steps
           current={STEP_INDEX[step]}
           size="small"
-          items={[{ title: "Tim" }, { title: "Orang" }, { title: "Tempat" }]}
+          items={[{ title: "Lokasi" }, { title: "Nama" }]}
           style={{ marginBottom: 20 }}
         />
 
@@ -102,7 +101,7 @@ export const SetupWizard = ({
               data: o,
             }))}
             onSelect={(_, option) => {
-              const data = (option as { data: Team | Person | Workplace }).data;
+              const data = (option as { data: Person | Workplace }).data;
               onSelect(data);
             }}
             style={{ width: "100%" }}

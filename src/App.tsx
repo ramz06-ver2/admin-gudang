@@ -14,12 +14,17 @@ import {
   ErrorComponent,
 } from "@refinedev/antd";
 import { App as AntdApp, ConfigProvider } from "antd";
-import { DashboardOutlined, PlusCircleOutlined } from "@ant-design/icons";
+import {
+  DashboardOutlined,
+  PlusCircleOutlined,
+  AppstoreOutlined,
+} from "@ant-design/icons";
 import "@refinedev/antd/dist/reset.css";
 
 import { supabaseClient } from "./utility/supabaseClient";
 import { USE_MOCK } from "./utility/config";
 import { DashboardPage } from "./pages/dashboard";
+import { InventoryPage } from "./pages/inventory";
 import { LoginPage } from "./pages/login";
 import { StockEntryCreatePage } from "./pages/stock-entries/create";
 import { authProvider } from "./authProvider";
@@ -72,6 +77,14 @@ function App() {
                   },
                 },
                 {
+                  name: "inventory",
+                  list: "/inventory",
+                  meta: {
+                    label: "Data Persediaan",
+                    icon: <AppstoreOutlined />,
+                  },
+                },
+                {
                   name: "stock-entries",
                   create: "/stock-entries/create",
                   meta: {
@@ -99,6 +112,7 @@ function App() {
                     element={<NavigateToResource resource="dashboard" />}
                   />
                   <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/inventory" element={<InventoryPage />} />
                   <Route
                     path="/stock-entries/create"
                     element={<StockEntryCreatePage />}

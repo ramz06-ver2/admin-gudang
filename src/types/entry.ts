@@ -21,4 +21,4 @@ export interface EntryLine {
   quantity: number;
 }
 
-export type SetupStep = "team" | "person" | "workplace" | "done";
+export type SetupStep = "workplace" | "person" | "done";

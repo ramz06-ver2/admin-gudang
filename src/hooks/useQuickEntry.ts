@@ -5,9 +5,13 @@ import { useProductSearch } from "./useProductSearch";
 import { useEntryFlow } from "./useEntryFlow";
 import type { Product, StockExit, StockExitItem } from "../types";
 
+// ============================================
+// PendingLine — tambah field `size`
+// ============================================
 export interface PendingLine {
   itemId: number;
   itemName: string;
+  size: string | null; // ← TAMBAH
   unit: string;
   quantity: number;
 }
@@ -62,7 +66,7 @@ export const useQuickEntry = ({ onFinish }: UseQuickEntryParams = {}) => {
   }, [pendingLines.length]);
 
   // ==========================================
-  // Handlers
+  // Search handlers
   // ==========================================
   const commitItem = useCallback(() => {
     if (searchResults.length === 0) return;
@@ -88,6 +92,9 @@ export const useQuickEntry = ({ onFinish }: UseQuickEntryParams = {}) => {
     [searchResults.length, commitItem],
   );
 
+  // ==========================================
+  // Quantity handlers
+  // ==========================================
   const confirmQuantity = useCallback(() => {
     if (!activeItem) return;
     setPendingLines((prev) => {
@@ -105,6 +112,7 @@ export const useQuickEntry = ({ onFinish }: UseQuickEntryParams = {}) => {
         {
           itemId: activeItem.id,
           itemName: activeItem.name,
+          size: activeItem.size, // ← TAMBAH
           unit: activeItem.unit,
           quantity: activeQty,
         },
@@ -145,22 +153,27 @@ export const useQuickEntry = ({ onFinish }: UseQuickEntryParams = {}) => {
     setKeyword("");
   }, []);
 
+  // ============================================
+  // Handle Finish — build StockExit sesuai tipe baru
+  // ============================================
   const handleFinish = useCallback(() => {
     if (pendingLines.length === 0) return;
-    if (!flow.team || !flow.person || !flow.workplace) return;
+    if (!flow.person || !flow.workplace) return;
 
     const now = dayjs();
     const exit: StockExit = {
       id: Date.now(),
+      nomorTransaksi: "", // akan di-generate DB
       timestamp: now.toISOString(),
       date: now.format("YYYY-MM-DD"),
       time: now.format("HH:mm"),
-      team: flow.team.name,
       person: flow.person.name,
-      workplace: flow.workplace.name,
+      destination: flow.workplace.name, // ← workplace jadi destination
+      isBreakdown: true, // default breakdown
       items: pendingLines.map<StockExitItem>((l) => ({
         itemId: l.itemId,
         itemName: l.itemName,
+        size: l.size, // ← TAMBAH
         unit: l.unit,
         quantity: l.quantity,
       })),
@@ -183,9 +196,7 @@ export const useQuickEntry = ({ onFinish }: UseQuickEntryParams = {}) => {
   const totalPendingItems = pendingLines.reduce((s, l) => s + l.quantity, 0);
 
   return {
-    // flow (wizard)
     flow,
-    // search
     keyword,
     setKeyword,
     highlightedIdx,
@@ -193,20 +204,16 @@ export const useQuickEntry = ({ onFinish }: UseQuickEntryParams = {}) => {
     searchRef,
     handleSearchKeyDown,
     commitItem,
-    // quantity
     activeItem,
     activeQty,
     setActiveQty,
     qtyRef,
     handleQtyKeyDown,
     confirmQuantity,
-    // pending
     pendingLines,
     totalPendingItems,
     removeLine,
-    // phase
     phase,
-    // actions
     handleFinish,
     handleCancel,
   };

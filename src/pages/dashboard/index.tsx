@@ -1,4 +1,3 @@
-import { useState, useEffect, useMemo } from "react";
 import { Card, Col, Row, Statistic, Typography } from "antd";
 import {
   AppstoreOutlined,
@@ -12,16 +11,12 @@ import { StockTable } from "../../components/dashboard/StockTable";
 import { StockExitList } from "../../components/dashboard/StockExitList";
 import { useQuickEntry } from "../../hooks/useQuickEntry";
 import { useProducts } from "../../hooks/useProducts";
-import { mockStockExits } from "../../mocks/stockExitList";
+import { useStockExits } from "../../hooks/useStockExits";
 import { formatFullDate } from "../../utility/format";
 import { COLORS } from "../../utility/constants";
-import type { Product, StockExit } from "../../types";
 
 const { Title, Text } = Typography;
 
-// ============================================
-// Mini stat card — selalu tampil walau 0
-// ============================================
 interface StatCardProps {
   title: string;
   value: number;
@@ -81,73 +76,53 @@ const StatCard = ({
   </Card>
 );
 
-// ============================================
-// Dashboard Page
-// ============================================
 export const DashboardPage = () => {
-  const { products: fetchedProducts, isLoading } = useProducts();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [exits, setExits] = useState<StockExit[]>(mockStockExits);
+  // Fetch SEMUA produk untuk statistik
+  const { products, isLoading: isLoadingProducts } = useProducts();
 
-  // Sync data Supabase → local state
-  useEffect(() => {
-    if (fetchedProducts.length > 0) {
-      setProducts(fetchedProducts);
-    }
-  }, [fetchedProducts]);
+  // HANYA material untuk tabel dashboard
+  const materialProducts = products.filter((p) => p.category === "Material");
+
+  // Barang keluar hari ini dari DB
+  const { exits, isLoading: isLoadingExits } = useStockExits({
+    onlyToday: true,
+  });
 
   const entry = useQuickEntry({
-    onFinish: (exit) => {
-      setProducts((prev) =>
-        prev.map((p) => {
-          const line = exit.items.find((i) => i.itemId === p.id);
-          if (!line) return p;
-          return { ...p, stock: Math.max(0, p.stock - line.quantity) };
-        }),
-      );
-      setExits((prev) => [exit, ...prev]);
+    onFinish: () => {
+      // Refresh data setelah entry
+      // React Query auto-refetch karena invalidate via refetch di hook
     },
   });
 
-  // ==========================================
-  // Hitung statistik (selalu angka, tidak pernah undefined)
-  // ==========================================
-  const stats = useMemo(() => {
-    const totalProducts = products.length;
-    const totalStock = products.reduce((sum, p) => sum + (p.stock ?? 0), 0);
-
-    // Barang masuk hari ini — dihitung dari log barang masuk
-    // (sementara 0 karena belum ada fitur barang masuk)
-    const todayInbound = 0;
-
-    // Barang keluar hari ini — dihitung dari `exits`
-    const today = new Date().toISOString().split("T")[0];
-    const todayOutbound = exits
-      .filter((e) => e.date === today)
-      .reduce((sum, e) => sum + e.items.reduce((s, i) => s + i.quantity, 0), 0);
-
-    return { totalProducts, totalStock, todayInbound, todayOutbound };
-  }, [products, exits]);
+  // Hitung statistik dari data real
+  const totalProducts = products.length;
+  const totalStock = products.reduce((sum, p) => sum + (p.stock ?? 0), 0);
+  const todayOutbound = exits.reduce(
+    (sum, e) => sum + e.items.reduce((s, i) => s + i.quantity, 0),
+    0,
+  );
+  const todayInbound = 0; // TODO: ambil dari tabel barang_masuk
 
   return (
     <>
-      {/* Wizard */}
       <SetupWizard
         open={entry.flow.wizardOpen}
         step={
           entry.flow.step === "done"
-            ? "team"
-            : (entry.flow.step as "team" | "person" | "workplace")
+            ? "workplace"
+            : (entry.flow.step as "workplace" | "person")
         }
         title={entry.flow.currentWizardData?.title ?? ""}
         placeholder={entry.flow.currentWizardData?.placeholder ?? ""}
         options={entry.flow.currentWizardData?.options ?? []}
         onSelect={entry.flow.selectWizardValue}
-        onBack={entry.flow.step !== "team" ? entry.flow.backWizard : undefined}
+        onBack={
+          entry.flow.step !== "workplace" ? entry.flow.backWizard : undefined
+        }
         onClose={() => entry.flow.closeWizard()}
       />
 
-      {/* Header */}
       <div style={{ marginBottom: 16 }}>
         <Title level={3} style={{ marginBottom: 4 }}>
           Dashboard
@@ -155,34 +130,32 @@ export const DashboardPage = () => {
         <Text type="secondary">{formatFullDate(new Date())}</Text>
       </div>
 
-      {/* Quick Entry — search bar */}
       <QuickEntryPanel entry={entry} />
 
-      {/* 4 Stat Cards — SELALU TAMPIL walau 0 */}
       <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
         <Col xs={24} sm={12} lg={6}>
           <StatCard
             title="Total Produk"
-            value={stats.totalProducts}
+            value={totalProducts}
             icon={<AppstoreOutlined />}
             color={COLORS.primary}
             suffix="item"
-            loading={isLoading}
+            loading={isLoadingProducts}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <StatCard
             title="Total Stok"
-            value={stats.totalStock}
+            value={totalStock}
             icon={<InboxOutlined />}
             color={COLORS.success}
-            loading={isLoading}
+            loading={isLoadingProducts}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <StatCard
             title="Masuk Hari Ini"
-            value={stats.todayInbound}
+            value={todayInbound}
             icon={<ArrowDownOutlined />}
             color={COLORS.warning}
             loading={false}
@@ -191,21 +164,22 @@ export const DashboardPage = () => {
         <Col xs={24} sm={12} lg={6}>
           <StatCard
             title="Keluar Hari Ini"
-            value={stats.todayOutbound}
+            value={todayOutbound}
             icon={<ArrowUpOutlined />}
             color={COLORS.danger}
-            loading={false}
+            loading={isLoadingExits}
           />
         </Col>
       </Row>
 
-      {/* Bottom: Stok (kiri besar) + Barang Keluar (kanan kecil) */}
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={16}>
-          <StockTable products={products} loading={isLoading} />
+          {/* ✅ HANYA MATERIAL */}
+          <StockTable products={materialProducts} loading={isLoadingProducts} />
         </Col>
         <Col xs={24} lg={8}>
-          <StockExitList exits={exits} />
+          {/* ✅ DARI DATABASE */}
+          <StockExitList exits={exits} loading={isLoadingExits} />
         </Col>
       </Row>
     </>

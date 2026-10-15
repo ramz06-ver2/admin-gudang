@@ -24,6 +24,8 @@ export interface Product {
   code: string;
   name: string;
   size: string | null;
+  specification: string | null; // ← baru
+  category: string; // ← baru: "Material" | "Alat Bantu"
   categoryId: number | null;
   categoryName?: string | null;
   unit: string;
@@ -56,18 +58,20 @@ export interface StockEntry {
 export interface StockExitItem {
   itemId: number;
   itemName: string;
+  size: string | null; // ← baru
   unit: string;
   quantity: number;
 }
 
 export interface StockExit {
   id: number;
+  nomorTransaksi: string; // ← baru
   timestamp: string;
   date: string;
   time: string;
-  team: string;
-  person: string;
-  workplace: string;
+  person: string; // dari nama_pekerja
+  destination: string | null; // dari tujuan
+  isBreakdown: boolean; // ← baru
   items: StockExitItem[];
 }
 
@@ -91,7 +95,7 @@ export interface Workplace {
   name: string;
 }
 
-export type SetupStep = "team" | "person" | "workplace" | "done";
+export type SetupStep = "workplace" | "person" | "done";
 
 export interface EntryLine {
   itemId: number;
@@ -101,10 +105,9 @@ export interface EntryLine {
 }
 
 // ============================================
-// Dashboard & Charts
+// Dashboard
 // ============================================
 
-// ✅ TAMBAH INI
 export interface DashboardStats {
   totalProducts: number;
   totalStock: number;

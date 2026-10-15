@@ -13,12 +13,10 @@ import {
   CloseCircleOutlined,
   EnvironmentOutlined,
   SearchOutlined,
-  TeamOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import { formatNumber } from "../../utility/format";
 import { COLORS } from "../../utility/constants";
-// import type { Product } from "../../types";
 import type { useQuickEntry } from "../../hooks/useQuickEntry";
 
 const { Text } = Typography;
@@ -36,7 +34,6 @@ export const QuickEntryPanel = ({ entry }: Props) => {
     searchResults,
     searchRef,
     handleSearchKeyDown,
-    // commitItem,
     activeItem,
     activeQty,
     setActiveQty,
@@ -79,7 +76,6 @@ export const QuickEntryPanel = ({ entry }: Props) => {
             <Tag icon={<EnvironmentOutlined />} color="blue">
               {flow.workplace?.name}
             </Tag>
-            <Tag icon={<TeamOutlined />}>{flow.team?.name}</Tag>
             <Tag icon={<UserOutlined />}>{flow.person?.name}</Tag>
           </Space>
           <Space size={8}>
@@ -134,12 +130,6 @@ export const QuickEntryPanel = ({ entry }: Props) => {
                   }))
                 : []
             }
-            // onSelect={(_, opt) => {
-            //   // const p = (opt as { data: Product }).data;
-            //   commitItem();
-            //   // commitItem uses internal state; simpler to set directly
-            //   setKeyword("");
-            // }}
             style={{ width: "100%" }}
           >
             <Input
@@ -148,16 +138,21 @@ export const QuickEntryPanel = ({ entry }: Props) => {
               prefix={<SearchOutlined style={{ fontSize: 18 }} />}
               placeholder={
                 flow.isReady
-                  ? "🔍 Ketik nama barang, lalu Enter untuk tambah..."
-                  : "🔍 Menunggu sesi dimulai..."
+                  ? "🔍 Ketik nama material, lalu Enter untuk tambah..."
+                  : "🔍 Klik di sini untuk memulai sesi pengeluaran..."
               }
               onKeyDown={flow.isReady ? handleSearchKeyDown : undefined}
+              onClick={() => {
+                if (!flow.isReady) {
+                  flow.openWizard();
+                }
+              }}
               readOnly={!flow.isReady}
               autoFocus={flow.isReady}
               style={{
                 fontSize: 15,
                 height: 48,
-                cursor: flow.isReady ? "text" : "not-allowed",
+                cursor: flow.isReady ? "text" : "pointer",
                 background: flow.isReady ? undefined : "#f5f5f5",
               }}
             />
@@ -181,7 +176,7 @@ export const QuickEntryPanel = ({ entry }: Props) => {
               </Space>
             ) : (
               <Text type="secondary" style={{ fontSize: 12 }}>
-                Pilih Lokasi → Tim → Nama untuk memulai
+                Pilih Lokasi → Nama untuk memulai
               </Text>
             )}
           </div>

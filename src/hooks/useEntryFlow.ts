@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
-import { mockTeams, mockPersons, mockWorkplaces } from "../mocks/entry";
-import type { EntryLine, Person, SetupStep, Team, Workplace } from "../types";
+import { mockPersons, mockWorkplaces } from "../mocks/entry";
+import type { EntryLine, Person, SetupStep, Workplace } from "../types";
 import type { Product } from "../types";
 
 export type EntryPhase = "search" | "quantity";
@@ -9,12 +9,9 @@ export const useEntryFlow = () => {
   // ==========================================
   // Wizard state
   // ==========================================
-  const [step, setStep] = useState<SetupStep>("team");
-  const [team, setTeam] = useState<Team | null>(null);
-  const [person, setPerson] = useState<Person | null>(null);
+  const [step, setStep] = useState<SetupStep>("workplace");
   const [workplace, setWorkplace] = useState<Workplace | null>(null);
-
-  // ✅ BARU: wizard open/close control
+  const [person, setPerson] = useState<Person | null>(null);
   const [wizardOpen, setWizardOpen] = useState(true);
 
   // ==========================================
@@ -29,30 +26,24 @@ export const useEntryFlow = () => {
   // Wizard data
   // ==========================================
   const wizardData = {
-    team: {
-      value: team,
-      options: mockTeams,
-      placeholder: "Ketik nama tim...",
-      title: "Pilih Tim",
-    },
-    person: {
-      value: person,
-      options: mockPersons.filter((p) => (team ? p.teamId === team.id : true)),
-      placeholder: "Ketik nama orang...",
-      title: "Pilih Orang",
-    },
     workplace: {
       value: workplace,
       options: mockWorkplaces,
-      placeholder: "Ketik nama tempat...",
-      title: "Pilih Tempat Kerja",
+      placeholder: "Ketik lokasi pekerjaan...",
+      title: "Pilih Lokasi Pekerjaan",
+    },
+    person: {
+      value: person,
+      options: mockPersons,
+      placeholder: "Ketik nama pengambil...",
+      title: "Pilih Nama",
     },
   } as const;
 
   const currentWizardData =
     step === "done"
       ? { value: null, title: "", placeholder: "", options: [] }
-      : wizardData[step as "team" | "person" | "workplace"];
+      : wizardData[step as "workplace" | "person"];
 
   // ==========================================
   // Wizard actions
@@ -61,18 +52,14 @@ export const useEntryFlow = () => {
   const closeWizard = useCallback(() => setWizardOpen(false), []);
 
   const selectWizardValue = useCallback(
-    (value: Team | Person | Workplace) => {
-      if (step === "team") {
-        setTeam(value as Team);
+    (value: Person | Workplace) => {
+      if (step === "workplace") {
+        setWorkplace(value as Workplace);
         setPerson(null);
         setStep("person");
       } else if (step === "person") {
         setPerson(value as Person);
-        setStep("workplace");
-      } else if (step === "workplace") {
-        setWorkplace(value as Workplace);
         setStep("done");
-        // ✅ Auto-close wizard saat selesai
         setWizardOpen(false);
       }
     },
@@ -80,25 +67,20 @@ export const useEntryFlow = () => {
   );
 
   const resetSession = useCallback(() => {
-    setStep("team");
-    setTeam(null);
-    setPerson(null);
+    setStep("workplace");
     setWorkplace(null);
+    setPerson(null);
     setPhase("search");
     setActiveItem(null);
     setActiveQty(1);
     setLines([]);
-    // ✅ Auto-buka wizard untuk sesi berikutnya
     setWizardOpen(true);
   }, []);
 
   const backWizard = useCallback(() => {
     if (step === "person") {
       setPerson(null);
-      setStep("team");
-    } else if (step === "workplace") {
-      setWorkplace(null);
-      setStep("person");
+      setStep("workplace");
     }
   }, [step]);
 
@@ -152,9 +134,7 @@ export const useEntryFlow = () => {
   );
 
   return {
-    // wizard
     step,
-    team,
     person,
     workplace,
     currentWizardData,
@@ -163,7 +143,6 @@ export const useEntryFlow = () => {
     wizardOpen,
     openWizard,
     closeWizard,
-    // board
     phase,
     activeItem,
     activeQty,
@@ -175,7 +154,6 @@ export const useEntryFlow = () => {
     decreaseQty,
     setActiveQty,
     removeLine,
-    // session
     resetSession,
     isReady: step === "done",
   };
