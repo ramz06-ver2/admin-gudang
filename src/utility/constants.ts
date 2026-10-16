@@ -18,6 +18,7 @@ export const TABLES = {
   stockExits: "barang_keluar",
   vProductsFull: "v_barang_lengkap",
   vLowStock: "v_stok_menipis",
+  workers: "pekerja", // ✅ Tambahan tabel pekerja
 } as const;
 
 export const SHORTCUTS = {

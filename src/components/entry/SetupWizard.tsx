@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   AutoComplete,
+  Button,
   Card,
   Input,
   Modal,
@@ -9,14 +10,14 @@ import {
   Tag,
   Typography,
 } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
+import { SearchOutlined, UserOutlined, EnvironmentOutlined } from "@ant-design/icons";
 import type { Person, Workplace } from "../../types/entry";
 
 const { Title, Text } = Typography;
 
 interface Props {
   open: boolean;
-  step: "workplace" | "person";
+  step: "person" | "workplace";
   title: string;
   placeholder: string;
   options: readonly (Person | Workplace)[];
@@ -25,9 +26,9 @@ interface Props {
   onClose: () => void;
 }
 
-const STEP_INDEX: Record<"workplace" | "person", number> = {
-  workplace: 0,
-  person: 1,
+const STEP_INDEX: Record<"person" | "workplace", number> = {
+  person: 0,
+  workplace: 1,
 };
 
 export const SetupWizard = ({
@@ -70,7 +71,7 @@ export const SetupWizard = ({
       keyboard
       width={520}
       styles={{ body: { padding: 0 } }}
-      style={{ top: 100 }}
+      style={{ top: 80 }}
     >
       <Card
         variant="borderless"
@@ -80,16 +81,16 @@ export const SetupWizard = ({
         <Steps
           current={STEP_INDEX[step]}
           size="small"
-          items={[{ title: "Lokasi" }, { title: "Nama" }]}
+          items={[
+            { title: "Nama Pekerja", icon: <UserOutlined /> },
+            { title: "Lokasi Pekerjaan", icon: <EnvironmentOutlined /> },
+          ]}
           style={{ marginBottom: 20 }}
         />
 
         <Title level={4} style={{ marginBottom: 4 }}>
           {title}
         </Title>
-        <Text type="secondary">
-          Ketik nama, lalu tekan <Tag>Enter</Tag> untuk memilih
-        </Text>
 
         <div style={{ marginTop: 16 }}>
           <AutoComplete
@@ -125,16 +126,34 @@ export const SetupWizard = ({
           </AutoComplete>
         </div>
 
-        <Space style={{ marginTop: 16 }} size="small">
+        {/* Tombol Pilihan Cepat (Sangat memudahkan di Mobile & Desktop) */}
+        <div style={{ marginTop: 16 }}>
+          <Space size={[8, 8]} wrap>
+            {filtered.map((item) => (
+              <Button
+                key={item.id}
+                size="middle"
+                style={{ borderRadius: 8, fontWeight: 500 }}
+                onClick={() => onSelect(item)}
+              >
+                {item.name}
+              </Button>
+            ))}
+          </Space>
+        </div>
+
+        <Space style={{ marginTop: 20 }} size="small" wrap>
           <Tag>Enter</Tag>
           <Text type="secondary" style={{ fontSize: 12 }}>
             pilih item pertama
           </Text>
           {onBack && (
             <>
-              <Tag>Esc</Tag>
+              <Tag style={{ cursor: "pointer" }} onClick={onBack}>
+                Esc / Kembali
+              </Tag>
               <Text type="secondary" style={{ fontSize: 12 }}>
-                kembali
+                kembali ke pilih nama
               </Text>
             </>
           )}

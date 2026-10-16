@@ -1,23 +1,18 @@
-import { Refine, Authenticated } from "@refinedev/core";
+import { Refine } from "@refinedev/core";
 import { RefineKbarProvider } from "@refinedev/kbar";
 import routerProvider, {
   NavigateToResource,
   UnsavedChangesNotifier,
   DocumentTitleHandler,
-  CatchAllNavigate,
 } from "@refinedev/react-router-v6";
 import { dataProvider, liveProvider } from "@refinedev/supabase";
 import { BrowserRouter, Route, Routes, Outlet } from "react-router-dom";
-import {
-  ThemedLayoutV2,
-  useNotificationProvider,
-  ErrorComponent,
-} from "@refinedev/antd";
+import { useNotificationProvider, ErrorComponent } from "@refinedev/antd";
 import { App as AntdApp, ConfigProvider } from "antd";
 import {
   DashboardOutlined,
-  PlusCircleOutlined,
   AppstoreOutlined,
+  AppstoreAddOutlined,
 } from "@ant-design/icons";
 import "@refinedev/antd/dist/reset.css";
 
@@ -26,7 +21,9 @@ import { USE_MOCK } from "./utility/config";
 import { DashboardPage } from "./pages/dashboard";
 import { InventoryPage } from "./pages/inventory";
 import { LoginPage } from "./pages/login";
-import { StockEntryCreatePage } from "./pages/stock-entries/create";
+import { ProductCreatePage } from "./pages/products/create";
+import { EntryPage } from "./pages/entry";
+import { AdminLayout } from "./components/layout/AdminLayout";
 import { authProvider } from "./authProvider";
 
 const mockDataProvider = {
@@ -77,6 +74,14 @@ function App() {
                   },
                 },
                 {
+                  name: "products-create",
+                  list: "/products/create",
+                  meta: {
+                    label: "Tambah Barang +",
+                    icon: <AppstoreAddOutlined />,
+                  },
+                },
+                {
                   name: "inventory",
                   list: "/inventory",
                   meta: {
@@ -84,27 +89,14 @@ function App() {
                     icon: <AppstoreOutlined />,
                   },
                 },
-                {
-                  name: "stock-entries",
-                  create: "/stock-entries/create",
-                  meta: {
-                    label: "Input Barang Masuk",
-                    icon: <PlusCircleOutlined />,
-                  },
-                },
               ]}
             >
               <Routes>
                 <Route
                   element={
-                    <Authenticated
-                      key="app"
-                      fallback={<CatchAllNavigate to="/login" />}
-                    >
-                      <ThemedLayoutV2>
-                        <Outlet />
-                      </ThemedLayoutV2>
-                    </Authenticated>
+                    <AdminLayout>
+                      <Outlet />
+                    </AdminLayout>
                   }
                 >
                   <Route
@@ -112,23 +104,15 @@ function App() {
                     element={<NavigateToResource resource="dashboard" />}
                   />
                   <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/inventory" element={<InventoryPage />} />
                   <Route
-                    path="/stock-entries/create"
-                    element={<StockEntryCreatePage />}
+                    path="/products/create"
+                    element={<ProductCreatePage />}
                   />
+                  <Route path="/inventory" element={<InventoryPage />} />
+                  <Route path="/entry" element={<EntryPage />} />
                 </Route>
 
-                <Route
-                  element={
-                    <Authenticated key="auth" fallback={<Outlet />}>
-                      <NavigateToResource resource="dashboard" />
-                    </Authenticated>
-                  }
-                >
-                  <Route path="/login" element={<LoginPage />} />
-                </Route>
-
+                <Route path="/login" element={<LoginPage />} />
                 <Route path="*" element={<ErrorComponent />} />
               </Routes>
 

@@ -1,12 +1,6 @@
-export interface Team {
-  id: string;
-  name: string;
-}
-
 export interface Person {
   id: string;
   name: string;
-  teamId: string;
 }
 
 export interface Workplace {

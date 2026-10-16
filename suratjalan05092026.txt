@@ -1,0 +1,56 @@
+
+No.	No.PO	Nama Barang	Merk	Ukuran	Type/Class	Jml	Sat.	Tanggal Pengiriman
+1	005	Besi UNP	Lokal	10mm	-	5	bh	05 September 2026
+2	005	Besi UNP	Lokal	80mm	-	10	bh	05 September 2026
+3	005	Besi UNP	Lokal	50mm	-	15	bh	05 September 2026
+4	005	Besi Siku	Lokal	50mm	-	25	bh	05 September 2026
+5	005	Besi Siku	Lokal	40mm	-	30	bh	05 September 2026
+6	005	Besi Plat Strip	Lokal	50mmx0.8mm	-	20	bh	05 September 2026
+7	006	Inbow Dos	Panasonic	-	WEJ5911	200	bh	05 September 2026
+8	006	Semen Grouting	Sika	-	214-111d	14	sak	05 September 2026
+9	006	Cairan Pengeras	Damdex	-	1 ltr	15	ltr	05 September 2026
+10	007 Rev1	Sepatu Boot Warn Hijau	Lokal	43	-	3	psg	05 September 2026
+11	007 Rev1	Sepatu Boot Warn Hijau	Lokal	41	-	2	psg	05 September 2026
+12	008 Rev	Helm Proyek Warna Kuning SNI	Lokal	-	-	30	bh	05 September 2026
+13	008 Rev	Helm Proyek Warna Putih SNI	Lokal	Fastrck	-	10	bh	05 September 2026
+14	008 Rev	Maker Medis	Lokal	-	-	5	pak	05 September 2026
+15	011	Tambang Dadung	Lokal	16mm	-	10	M'	05 September 2026
+16	011	Kunci Pipa	Lokal	14"	-	2	bh	05 September 2026
+17	011	Mesin Senai	Lokal	2"	-	1	unit	05 September 2026
+18	011	Mata Senai	Lokal	1" sd 2"	-	1	set	05 September 2026
+19	011	Gergaji Besi	Lokal	12"	-	15	bh	05 September 2026
+20	021	Pipa BS Class SCH 40	Spindo	2 1/2"	-	7	btg	05 September 2026
+21	021	Pipa BS Class SCH 40	Spindo	2"	-	8	btg	05 September 2026
+22	021	Pipa BS Class SCH 40	Spindo	1 1/2"	-	7	btg	05 September 2026
+23	021	Pipa BS Class SCH 40	Spindo	1 1/4"	-	18	btg	05 September 2026
+24	021	Pipa BS Class SCH 40	Spindo	1"	-	55	btg	05 September 2026
+25	022	Elbow BS Las SCH 40	Ricon,FKK	6"	-	14	bh	05 September 2026
+26	022	Elbow BS Las SCH 40	Ricon,FKK	4"	-	4	bh	05 September 2026
+27	022	Elbow BS Las SCH 40	Ricon,FKK	3"	-	4	bh	05 September 2026
+28	022	Elbow BS Las SCH 40	Ricon,FKK	2 1/2"	-	8	bh	05 September 2026
+29	022	Reduser BS Las SCH 40	Ricon,FKK	4"x3"	-	8	bh	05 September 2026
+30	022	Reduser BS Las SCH 40	Ricon,FKK	3"x2 1/2"	-	4	bh	05 September 2026
+31	022	Reduser BS Las SCH 40	Ricon,FKK	2 1/2"x2"	-	16	bh	05 September 2026
+32	023	Elbow BS Drat SCH 40	TSP	2"	-	8	bh	05 September 2026
+33	023	Elbow BS Drat SCH 40	TSP	1 1/2"	-	8	bh	05 September 2026
+34	023	Elbow BS Drat SCH 40	TSP	1 1/4"	-	24	bh	05 September 2026
+35	023	Elbow BS Drat SCH 40	TSP	1"	-	200	bh	05 September 2026
+36	023	Tee BS Drat SCH 40	TSP	2"	-	4	bh	05 September 2026
+37	023	Tee BS Drat SCH 40	TSP	2"x1 1/2"	-	4	bh	05 September 2026
+38	023	Tee BS Drat SCH 40	TSP	2"x1 1/4"	-	8	bh	05 September 2026
+39	023	Tee BS Drat SCH 40	TSP	1 1/2"	-	16	bh	05 September 2026
+40	023	Tee BS Drat SCH 40	TSP	1 1/2"x1 1/4"	-	8	bh	05 September 2026
+41	023	Tee BS Drat SCH 40	TSP	1 1/2"x1"	-	16	bh	05 September 2026
+42	023	Tee BS Drat SCH 40	TSP	1 1/4"x1"	-	24	bh	05 September 2026
+43	023	Tee BS Drat SCH 40	TSP	1"	-	100	bh	05 September 2026
+44	023	Reducer BS Drat SCH 40	TSP	2"x1 1/2"	-	8	bh	05 September 2026
+45	023	Reducer BS Drat SCH 40	TSP	1 1/2"x1 1/4"	-	24	bh	05 September 2026
+46	023	Reducer BS Drat SCH 40	TSP	1 1/4"x1"	-	32	bh	05 September 2026
+47	023	Reducer BS Drat SCH 40	TSP	1"x1/2"	-	100	bh	05 September 2026
+48	023	Bushing BS	TSP	1"x1/2"	-	120	bh	05 September 2026
+49	023	Double Neple BS Drat	TSP	1"	-	100	bh	05 September 2026
+50	023	Watermur BS	TSP	1"	-	10	bh	05 September 2026
+51	032	Tackel Chain Lock	Takada	5 ton	-	1	unit	05 September 2026
+52	032	Tackel Chain Lock	Takada	3 ton	-	1	unit	05 September 2026
+53	032	Webbing Sling	Lokal	3 ton	-	2	bh	05 September 2026
+54	-	Cat Zinkromet Grey	-	-	-	1	-	05 September 2026

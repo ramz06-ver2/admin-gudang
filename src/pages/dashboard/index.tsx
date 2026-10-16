@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, Col, Row, Statistic, Typography } from "antd";
 import {
   AppstoreOutlined,
@@ -9,9 +11,10 @@ import { SetupWizard } from "../../components/entry/SetupWizard";
 import { QuickEntryPanel } from "../../components/dashboard/QuickPanel";
 import { StockTable } from "../../components/dashboard/StockTable";
 import { StockExitList } from "../../components/dashboard/StockExitList";
-import { useQuickEntry } from "../../hooks/useQuickEntry";
+import { useEntryFlow } from "../../hooks/useEntryFlow";
 import { useProducts } from "../../hooks/useProducts";
 import { useStockExits } from "../../hooks/useStockExits";
+import { useKeyboardShortcut } from "../../hooks/useKeyboardShortcut";
 import { formatFullDate } from "../../utility/format";
 import { COLORS } from "../../utility/constants";
 
@@ -77,25 +80,50 @@ const StatCard = ({
 );
 
 export const DashboardPage = () => {
-  // Fetch SEMUA produk untuk statistik
+  const navigate = useNavigate();
   const { products, isLoading: isLoadingProducts } = useProducts();
 
-  // HANYA material untuk tabel dashboard
   const materialProducts = products.filter((p) => p.category === "Material");
 
-  // Barang keluar hari ini dari DB
   const { exits, isLoading: isLoadingExits } = useStockExits({
     onlyToday: true,
   });
 
-  const entry = useQuickEntry({
-    onFinish: () => {
-      // Refresh data setelah entry
-      // React Query auto-refetch karena invalidate via refetch di hook
-    },
+  const flow = useEntryFlow();
+
+  // Shortcut Ctrl + K
+  useKeyboardShortcut({
+    key: "k",
+    ctrlKey: true,
+    enabled: !flow.wizardOpen,
+    handler: () => flow.openWizard(),
   });
 
-  // Hitung statistik dari data real
+  // Shortcut Tab
+  useKeyboardShortcut({
+    key: "Tab",
+    ignoreInputs: true,
+    enabled: !flow.wizardOpen,
+    handler: () => flow.openWizard(),
+  });
+
+  // ✅ Shortcut M (Tambahan)
+  useKeyboardShortcut({
+    key: "m",
+    ignoreInputs: true,
+    enabled: !flow.wizardOpen,
+    handler: () => flow.openWizard(),
+  });
+
+  useEffect(() => {
+    if (flow.isReady && flow.person && flow.workplace) {
+      const personName = encodeURIComponent(flow.person.name);
+      const workplaceName = encodeURIComponent(flow.workplace.name);
+      flow.resetSession();
+      navigate(`/entry?person=${personName}&workplace=${workplaceName}`);
+    }
+  }, [flow, navigate]);
+
   const totalProducts = products.length;
   const totalStock = products.reduce((sum, p) => sum + (p.stock ?? 0), 0);
   const todayOutbound = exits.reduce(
@@ -107,20 +135,18 @@ export const DashboardPage = () => {
   return (
     <>
       <SetupWizard
-        open={entry.flow.wizardOpen}
+        open={flow.wizardOpen}
         step={
-          entry.flow.step === "done"
-            ? "workplace"
-            : (entry.flow.step as "workplace" | "person")
+          flow.step === "done"
+            ? "person"
+            : (flow.step as "person" | "workplace")
         }
-        title={entry.flow.currentWizardData?.title ?? ""}
-        placeholder={entry.flow.currentWizardData?.placeholder ?? ""}
-        options={entry.flow.currentWizardData?.options ?? []}
-        onSelect={entry.flow.selectWizardValue}
-        onBack={
-          entry.flow.step !== "workplace" ? entry.flow.backWizard : undefined
-        }
-        onClose={() => entry.flow.closeWizard()}
+        title={flow.currentWizardData?.title ?? ""}
+        placeholder={flow.currentWizardData?.placeholder ?? ""}
+        options={flow.currentWizardData?.options ?? []}
+        onSelect={flow.selectWizardValue}
+        onBack={flow.step !== "person" ? flow.backWizard : undefined}
+        onClose={() => flow.closeWizard()}
       />
 
       <div style={{ marginBottom: 16 }}>
@@ -130,12 +156,12 @@ export const DashboardPage = () => {
         <Text type="secondary">{formatFullDate(new Date())}</Text>
       </div>
 
-      <QuickEntryPanel entry={entry} />
+      <QuickEntryPanel onTriggerStart={() => flow.openWizard()} />
 
       <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
         <Col xs={24} sm={12} lg={6}>
           <StatCard
-            title="Total Produk"
+            title="Total Barang"
             value={totalProducts}
             icon={<AppstoreOutlined />}
             color={COLORS.primary}
@@ -174,11 +200,9 @@ export const DashboardPage = () => {
 
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={16}>
-          {/* ✅ HANYA MATERIAL */}
           <StockTable products={materialProducts} loading={isLoadingProducts} />
         </Col>
         <Col xs={24} lg={8}>
-          {/* ✅ DARI DATABASE */}
           <StockExitList exits={exits} loading={isLoadingExits} />
         </Col>
       </Row>

@@ -30,7 +30,7 @@ export const authProvider: AuthProvider = {
       if (email === MOCK_USER.email && password === MOCK_USER.password) {
         localStorage.setItem(
           STORAGE_KEY,
-          JSON.stringify({ email, name: MOCK_USER.name }),
+          JSON.stringify({ email, name: MOCK_USER.name, role: "admin" }),
         );
         return { success: true, redirectTo: "/dashboard" };
       }
@@ -66,63 +66,64 @@ export const authProvider: AuthProvider = {
   logout: async (): Promise<AuthActionResponse> => {
     if (USE_MOCK) {
       localStorage.removeItem(STORAGE_KEY);
-      return { success: true, redirectTo: "/login" };
+      return { success: true, redirectTo: "/dashboard" };
     }
-    const { error } = await supabaseClient.auth.signOut();
-    if (error) {
-      return {
-        success: false,
-        error: { name: "LogoutError", message: error.message },
-      };
-    }
-    return { success: true, redirectTo: "/login" };
+    await supabaseClient.auth.signOut();
+    return { success: true, redirectTo: "/dashboard" };
   },
 
-  // ⬇️ INI YANG DIPERBAIKI: return type CheckResponse, bukan AuthActionResponse
+  // ✅ Selalu izinkan akses agar User (Public) bisa melihat stok tanpa harus login
   check: async (): Promise<CheckResponse> => {
-    if (USE_MOCK) {
-      const user = getMockUser();
-      return user
-        ? { authenticated: true }
-        : { authenticated: false, redirectTo: "/login", logout: true };
-    }
-    const { data } = await supabaseClient.auth.getSession();
-    return data.session
-      ? { authenticated: true }
-      : { authenticated: false, redirectTo: "/login", logout: true };
+    return { authenticated: true };
   },
 
   getIdentity: async () => {
     if (USE_MOCK) {
       const user = getMockUser();
-      if (!user) return null;
+      if (user) {
+        return {
+          id: "admin-1",
+          name: user.name,
+          email: user.email,
+          role: "admin",
+        };
+      }
       return {
-        id: "mock-1",
-        name: user.name,
-        email: user.email,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(
-          user.name,
-        )}&background=1677ff&color=fff`,
+        id: "public-user",
+        name: "User (Public)",
+        email: "",
+        role: "user",
       };
     }
+
     const { data } = await supabaseClient.auth.getUser();
-    if (!data.user) return null;
+    if (data?.user) {
+      return {
+        id: data.user.id,
+        name: data.user.email?.split("@")[0] ?? "Admin",
+        email: data.user.email,
+        role: "admin",
+      };
+    }
+
     return {
-      id: data.user.id,
-      name: data.user.email?.split("@")[0] ?? "User",
-      email: data.user.email,
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(
-        data.user.email ?? "U",
-      )}&background=1677ff&color=fff`,
+      id: "public-user",
+      name: "User (Public)",
+      email: "",
+      role: "user",
     };
   },
 
-  getPermissions: async () => ["admin"],
+  getPermissions: async () => {
+    if (USE_MOCK) {
+      const user = getMockUser();
+      return user ? ["admin"] : ["user"];
+    }
+    const { data } = await supabaseClient.auth.getSession();
+    return data.session ? ["admin"] : ["user"];
+  },
 
   onError: async (error) => {
-    if (error?.statusCode === 401) {
-      return { logout: true, redirectTo: "/login", error };
-    }
     return { error };
   },
 };

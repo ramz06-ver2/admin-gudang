@@ -8,7 +8,6 @@ interface UseKeyboardShortcutOptions {
   metaKey?: boolean;
   enabled?: boolean;
   preventDefault?: boolean;
-  /** Jika true, shortcut diabaikan saat user sedang mengetik di input/textarea */
   ignoreInputs?: boolean;
   handler: (event: KeyboardEvent) => void;
 }
@@ -39,7 +38,10 @@ export const useKeyboardShortcut = ({
     if (!enabled) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== key) return;
+      // Normalisasi nama key (mengabaikan case untuk huruf 'm' dan 'M')
+      const isKeyMatch = event.key.toLowerCase() === key.toLowerCase() || event.key === key;
+      
+      if (!isKeyMatch) return;
       if (event.ctrlKey !== ctrlKey) return;
       if (event.shiftKey !== shiftKey) return;
       if (event.altKey !== altKey) return;

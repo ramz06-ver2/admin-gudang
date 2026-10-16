@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Typography, Tabs, Space } from "antd";
 import { formatFullDate } from "../../utility/format";
 import { InventoryTable } from "../../components/inventory/InventoryTable";
@@ -17,14 +17,12 @@ enum InventoryTabKey {
 export const InventoryPage = () => {
   const [activeTab, setActiveTab] = useState<string>(InventoryTabKey.MATERIAL);
 
-  // ✅ Filter kategori langsung di query
   const { products: materials, isLoading: isLoadingMaterials } =
     useProducts("Material");
 
   const { products: tools, isLoading: isLoadingTools } =
     useProducts("Alat Bantu");
 
-  // Barang keluar — pisah breakdown vs non-breakdown
   const { exits: breakdownExits, isLoading: isLoadingBreakdown } =
     useStockExits({ breakdown: true });
 
@@ -45,7 +43,8 @@ export const InventoryPage = () => {
     },
     {
       key: InventoryTabKey.TOOLS,
-      label: `Stok Persediaan Alat Bantu (${tools.length})`,
+      // ✅ Rename jadi Stok Persediaan Alat
+      label: `Stok Persediaan Alat (${tools.length})`,
       children: (
         <InventoryTable
           type="stock"
@@ -67,7 +66,7 @@ export const InventoryPage = () => {
     },
     {
       key: InventoryTabKey.OUTBOUND_NON_BREAKDOWN,
-      label: `Pengeluaran (Non-Breakdown) (${nonBreakdownExits.length})`,
+      label: `Pengeluaran (Diluar Breakdown) (${nonBreakdownExits.length})`,
       children: (
         <InventoryTable
           type="outbound"

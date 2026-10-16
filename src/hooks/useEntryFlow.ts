@@ -1,64 +1,60 @@
 import { useCallback, useState } from "react";
-import { mockPersons, mockWorkplaces } from "../mocks/entry";
-import type { EntryLine, Person, SetupStep, Workplace } from "../types";
+import { mockWorkplaces } from "../mocks/entry";
+import { usePersons } from "./usePersons";
+import type { EntryLine, Person, SetupStep, Workplace } from "../types/entry";
 import type { Product } from "../types";
 
 export type EntryPhase = "search" | "quantity";
 
 export const useEntryFlow = () => {
-  // ==========================================
-  // Wizard state
-  // ==========================================
-  const [step, setStep] = useState<SetupStep>("workplace");
-  const [workplace, setWorkplace] = useState<Workplace | null>(null);
+  const [step, setStep] = useState<SetupStep>("person");
   const [person, setPerson] = useState<Person | null>(null);
-  const [wizardOpen, setWizardOpen] = useState(true);
+  const [workplace, setWorkplace] = useState<Workplace | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
-  // ==========================================
-  // Board state
-  // ==========================================
   const [phase, setPhase] = useState<EntryPhase>("search");
   const [activeItem, setActiveItem] = useState<Product | null>(null);
   const [activeQty, setActiveQty] = useState(1);
   const [lines, setLines] = useState<EntryLine[]>([]);
 
-  // ==========================================
-  // Wizard data
-  // ==========================================
+  // ✅ Ambil data pekerja langsung dari Database
+  const { persons } = usePersons();
+
   const wizardData = {
-    workplace: {
-      value: workplace,
-      options: mockWorkplaces,
-      placeholder: "Ketik lokasi pekerjaan...",
-      title: "Pilih Lokasi Pekerjaan",
-    },
     person: {
       value: person,
-      options: mockPersons,
-      placeholder: "Ketik nama pengambil...",
-      title: "Pilih Nama",
+      options: persons, // Pakai data dari DB
+      placeholder: "Ketik atau pilih nama pekerja...",
+      title: "Pilih Nama Pekerja",
+    },
+    workplace: {
+      value: workplace,
+      options: mockWorkplaces, // Tetap pakai hardcode lokal
+      placeholder: "Ketik atau pilih lokasi pekerjaan...",
+      title: "Pilih Lokasi Pekerjaan",
     },
   } as const;
 
   const currentWizardData =
     step === "done"
       ? { value: null, title: "", placeholder: "", options: [] }
-      : wizardData[step as "workplace" | "person"];
+      : wizardData[step as "person" | "workplace"];
 
-  // ==========================================
-  // Wizard actions
-  // ==========================================
-  const openWizard = useCallback(() => setWizardOpen(true), []);
+  const openWizard = useCallback(() => {
+    setStep("person");
+    setWizardOpen(true);
+  }, []);
+
   const closeWizard = useCallback(() => setWizardOpen(false), []);
 
   const selectWizardValue = useCallback(
     (value: Person | Workplace) => {
-      if (step === "workplace") {
-        setWorkplace(value as Workplace);
-        setPerson(null);
-        setStep("person");
-      } else if (step === "person") {
+      if (step === "person") {
         setPerson(value as Person);
+        setWorkplace(null);
+        setStep("workplace");
+      } else if (step === "workplace") {
+        setWorkplace(value as Workplace);
         setStep("done");
         setWizardOpen(false);
       }
@@ -67,26 +63,23 @@ export const useEntryFlow = () => {
   );
 
   const resetSession = useCallback(() => {
-    setStep("workplace");
-    setWorkplace(null);
+    setStep("person");
     setPerson(null);
+    setWorkplace(null);
     setPhase("search");
     setActiveItem(null);
     setActiveQty(1);
     setLines([]);
-    setWizardOpen(true);
+    setWizardOpen(false);
   }, []);
 
   const backWizard = useCallback(() => {
-    if (step === "person") {
-      setPerson(null);
-      setStep("workplace");
+    if (step === "workplace") {
+      setWorkplace(null);
+      setStep("person");
     }
   }, [step]);
 
-  // ==========================================
-  // Board actions
-  // ==========================================
   const selectItem = useCallback((item: Product) => {
     setActiveItem(item);
     setActiveQty(1);
