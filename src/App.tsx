@@ -13,6 +13,7 @@ import {
   DashboardOutlined,
   AppstoreOutlined,
   AppstoreAddOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
 import "@refinedev/antd/dist/reset.css";
 
@@ -23,6 +24,7 @@ import { InventoryPage } from "./pages/inventory";
 import { LoginPage } from "./pages/login";
 import { ProductCreatePage } from "./pages/products/create";
 import { EntryPage } from "./pages/entry";
+import { MonitoringSPBPage } from "./pages/monitoring-spb"; // ✅ Import halaman SPB
 import { AdminLayout } from "./components/layout/AdminLayout";
 import { authProvider } from "./authProvider";
 
@@ -74,6 +76,14 @@ function App() {
                   },
                 },
                 {
+                  name: "monitoring-spb",
+                  list: "/monitoring-spb",
+                  meta: {
+                    label: "Monitoring SPB",
+                    icon: <FileTextOutlined />,
+                  },
+                },
+                {
                   name: "products-create",
                   list: "/products/create",
                   meta: {
@@ -99,15 +109,10 @@ function App() {
                     </AdminLayout>
                   }
                 >
-                  <Route
-                    index
-                    element={<NavigateToResource resource="dashboard" />}
-                  />
+                  <Route index element={<NavigateToResource resource="dashboard" />} />
                   <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route
-                    path="/products/create"
-                    element={<ProductCreatePage />}
-                  />
+                  <Route path="/monitoring-spb" element={<MonitoringSPBPage />} />
+                  <Route path="/products/create" element={<ProductCreatePage />} />
                   <Route path="/inventory" element={<InventoryPage />} />
                   <Route path="/entry" element={<EntryPage />} />
                 </Route>
