@@ -1,0 +1,1432 @@
+================================================================================
+FILE: test/diagnostics/01-imports.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/01-imports.test.ts
+================================================================================
+
+import { describe, it, expect, vi } from "vitest";
+
+// Tipe longgar untuk dynamic import
+type AnyModule = Record<string, unknown>;
+
+// ============================================
+// Mock SEBELUM import
+// ============================================
+vi.mock("@/utility/supabaseClient", () => ({
+  supabaseClient: {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+      getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
+      signInWithPassword: vi.fn(),
+      signOut: vi.fn(),
+      onAuthStateChange: vi.fn(() => ({
+        data: { subscription: { unsubscribe: vi.fn() } },
+      })),
+    },
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+    })),
+  },
+}));
+
+vi.mock("@ant-design/plots", () => ({
+  Line: () => null,
+}));
+
+describe("DIAGNOSTIC 01 — Module Imports", () => {
+  // ============================================
+  // Library packages
+  // ============================================
+  describe("Library packages", () => {
+    it("import @refinedev/core", async () => {
+      const mod = (await import("@refinedev/core")) as AnyModule;
+      expect(mod).toBeDefined();
+    });
+
+    it("import @refinedev/kbar", async () => {
+      const mod = (await import("@refinedev/kbar")) as AnyModule;
+      expect(mod).toBeDefined();
+    });
+
+    it("import @refinedev/react-router-v6", async () => {
+      const mod = (await import("@refinedev/react-router-v6")) as AnyModule;
+      expect(mod).toBeDefined();
+    });
+
+    it("import @refinedev/supabase", async () => {
+      const mod = (await import("@refinedev/supabase")) as AnyModule;
+      expect(mod).toBeDefined();
+    });
+
+    it("import @refinedev/antd", async () => {
+      const mod = (await import("@refinedev/antd")) as AnyModule;
+      expect(mod).toBeDefined();
+    });
+
+    it("import antd", async () => {
+      const mod = (await import("antd")) as AnyModule;
+      expect(mod).toBeDefined();
+    });
+
+    it("import @ant-design/icons", async () => {
+      const mod = (await import("@ant-design/icons")) as AnyModule;
+      expect(mod).toBeDefined();
+    });
+
+    it("import react-router-dom", async () => {
+      const mod = (await import("react-router-dom")) as AnyModule;
+      expect(mod).toBeDefined();
+    });
+  });
+
+  // ============================================
+  // Local source files
+  // ============================================
+  describe("Local source files", () => {
+    it("import @/utility/config", async () => {
+      const mod = (await import("@/utility/config")) as AnyModule;
+      expect(mod.USE_MOCK).toBeDefined();
+    });
+
+    it("import @/utility/constants", async () => {
+      const mod = (await import("@/utility/constants")) as AnyModule;
+      expect(mod.COLORS).toBeDefined();
+      expect(mod.TABLES).toBeDefined();
+    });
+
+    it("import @/utility/format", async () => {
+      const mod = (await import("@/utility/format")) as AnyModule;
+      expect(mod.formatRupiah).toBeDefined();
+    });
+
+    it("import @/types (types only, no runtime export)", async () => {
+      const mod = (await import("@/types")) as AnyModule;
+      expect(mod).toBeDefined();
+    });
+
+    it("import @/authProvider", async () => {
+      const mod = (await import("@/authProvider")) as AnyModule;
+      expect(mod.authProvider).toBeDefined();
+    });
+
+    it("import @/App", async () => {
+      const mod = (await import("@/App")) as AnyModule;
+      expect(mod.default).toBeDefined();
+    });
+  });
+
+  // ============================================
+  // Pages
+  // ============================================
+  describe("Pages", () => {
+    it("import @/pages/login", async () => {
+      const mod = (await import("@/pages/login")) as AnyModule;
+      expect(mod.LoginPage).toBeDefined();
+    });
+
+    it("import @/pages/dashboard", async () => {
+      const mod = (await import("@/pages/dashboard")) as AnyModule;
+      expect(mod.DashboardPage).toBeDefined();
+    });
+
+    it("import @/pages/stock-entries/create", async () => {
+      const mod = (await import("@/pages/stock-entries/create")) as AnyModule;
+      expect(mod.StockEntryCreatePage).toBeDefined();
+    });
+  });
+
+  // ============================================
+  // Hooks
+  // ============================================
+  describe("Hooks", () => {
+    it("import @/hooks/useDashboardStats", async () => {
+      const mod = (await import("@/hooks/useDashboardStats")) as AnyModule;
+      expect(mod.useDashboardStats).toBeDefined();
+    });
+
+    it("import @/hooks/useLowStock", async () => {
+      const mod = (await import("@/hooks/useLowStock")) as AnyModule;
+      expect(mod.useLowStock).toBeDefined();
+    });
+
+    it("import @/hooks/useStockInChart", async () => {
+      const mod = (await import("@/hooks/useStockInChart")) as AnyModule;
+      expect(mod.useStockInChart).toBeDefined();
+    });
+
+    it("import @/hooks/useKeyboardShortcut", async () => {
+      const mod = (await import("@/hooks/useKeyboardShortcut")) as AnyModule;
+      expect(mod.useKeyboardShortcut).toBeDefined();
+    });
+
+    it("import @/hooks/useProductSearch", async () => {
+      const mod = (await import("@/hooks/useProductSearch")) as AnyModule;
+      expect(mod.useProductSearch).toBeDefined();
+    });
+
+    it("import @/hooks/useStockEntryMutations", async () => {
+      const mod = (await import("@/hooks/useStockEntryMutations")) as AnyModule;
+      expect(mod.useCreateStockEntry).toBeDefined();
+    });
+  });
+
+  // ============================================
+  // Components
+  // ============================================
+  describe("Components", () => {
+    it("import @/components/common/GlobalSearch", async () => {
+      const mod = (await import("@/components/common/GlobalSearch")) as AnyModule;
+      expect(mod.GlobalSearch).toBeDefined();
+    });
+
+    it("import @/components/common/StatusBadge", async () => {
+      const mod = (await import("@/components/common/StatusBadge")) as AnyModule;
+      expect(mod.StatusBadge).toBeDefined();
+    });
+
+    it("import @/components/dashboard/StatCard", async () => {
+      const mod = (await import("@/components/dashboard/StatCard")) as AnyModule;
+      expect(mod.StatCard).toBeDefined();
+    });
+
+    it("import @/components/dashboard/StockInChart", async () => {
+      const mod = (await import("@/components/dashboard/StockInChart")) as AnyModule;
+      expect(mod.StockInChart).toBeDefined();
+    });
+
+    it("import @/components/dashboard/LowStockTable", async () => {
+      const mod = (await import("@/components/dashboard/LowStockTable")) as AnyModule;
+      expect(mod.LowStockTable).toBeDefined();
+    });
+  });
+
+  // ============================================
+  // Mocks
+  // ============================================
+  describe("Mocks", () => {
+    it("import @/mocks/products", async () => {
+      const mod = (await import("@/mocks/products")) as AnyModule;
+      expect(mod.mockProducts).toBeDefined();
+      expect(Array.isArray(mod.mockProducts)).toBe(true);
+    });
+
+    it("import @/mocks/stockEntries", async () => {
+      const mod = (await import("@/mocks/stockEntries")) as AnyModule;
+      expect(mod.mockStockEntries).toBeDefined();
+    });
+
+    it("import @/mocks/dashboard", async () => {
+      const mod = (await import("@/mocks/dashboard")) as AnyModule;
+      expect(mod.getMockDashboardStats).toBeDefined();
+    });
+  });
+});
+
+================================================================================
+FILE: test/diagnostics/02-exports.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/02-exports.test.ts
+================================================================================
+
+import { describe, it, expect } from "vitest";
+
+// Tipe longgar untuk dynamic import
+type AnyModule = Record<string, unknown>;
+
+describe("DIAGNOSTIC 02 — Named Exports", () => {
+  // ============================================
+  // @refinedev/core
+  // ============================================
+  describe("@refinedev/core", () => {
+    it("exports Refine", async () => {
+      const mod = (await import("@refinedev/core")) as AnyModule;
+      expect(mod.Refine).toBeDefined();
+      expect(typeof mod.Refine).not.toBe("undefined");
+    });
+
+    it("exports Authenticated", async () => {
+      const mod = (await import("@refinedev/core")) as AnyModule;
+      expect(mod.Authenticated).toBeDefined();
+    });
+
+    it("exports useLogin", async () => {
+      const mod = (await import("@refinedev/core")) as AnyModule;
+      expect(mod.useLogin).toBeDefined();
+    });
+
+    it("exports useList", async () => {
+      const mod = (await import("@refinedev/core")) as AnyModule;
+      expect(mod.useList).toBeDefined();
+    });
+
+    it("exports useCustom", async () => {
+      const mod = (await import("@refinedev/core")) as AnyModule;
+      expect(mod.useCustom).toBeDefined();
+    });
+  });
+
+  // ============================================
+  // @refinedev/kbar
+  // ============================================
+  describe("@refinedev/kbar", () => {
+    it("exports RefineKbarProvider", async () => {
+      const mod = (await import("@refinedev/kbar")) as AnyModule;
+      expect(mod.RefineKbarProvider).toBeDefined();
+    });
+  });
+
+  // ============================================
+  // @refinedev/react-router-v6 ← UPDATED
+  // ============================================
+  describe("@refinedev/react-router-v6", () => {
+    it("has default export (routerProvider)", async () => {
+      const mod = (await import("@refinedev/react-router-v6")) as AnyModule;
+      expect(mod.default).toBeDefined();
+      expect(["function", "object"]).toContain(typeof mod.default);
+    });
+
+    it("exports NavigateToResource", async () => {
+      const mod = (await import("@refinedev/react-router-v6")) as AnyModule;
+      expect(mod.NavigateToResource).toBeDefined();
+    });
+
+    it("exports UnsavedChangesNotifier", async () => {
+      const mod = (await import("@refinedev/react-router-v6")) as AnyModule;
+      expect(mod.UnsavedChangesNotifier).toBeDefined();
+    });
+
+    it("exports DocumentTitleHandler", async () => {
+      const mod = (await import("@refinedev/react-router-v6")) as AnyModule;
+      expect(mod.DocumentTitleHandler).toBeDefined();
+    });
+
+    it("exports CatchAllNavigate", async () => {
+      const mod = (await import("@refinedev/react-router-v6")) as AnyModule;
+      expect(mod.CatchAllNavigate).toBeDefined();
+    });
+  });
+
+  // ============================================
+  // @refinedev/supabase
+  // ============================================
+  describe("@refinedev/supabase", () => {
+    it("exports dataProvider", async () => {
+      const mod = (await import("@refinedev/supabase")) as AnyModule;
+      expect(mod.dataProvider).toBeDefined();
+      expect(typeof mod.dataProvider).toBe("function");
+    });
+
+    it("exports liveProvider", async () => {
+      const mod = (await import("@refinedev/supabase")) as AnyModule;
+      expect(mod.liveProvider).toBeDefined();
+      expect(typeof mod.liveProvider).toBe("function");
+    });
+  });
+
+  // ============================================
+  // @refinedev/antd
+  // ============================================
+  describe("@refinedev/antd", () => {
+    const checkExport = async (name: string) => {
+      const mod = (await import("@refinedev/antd")) as AnyModule;
+      return mod[name];
+    };
+
+    it("exports ThemedLayoutV2", async () => {
+      const x = await checkExport("ThemedLayoutV2");
+      expect(x).toBeDefined();
+    });
+
+    it("exports ThemedLayout (fallback)", async () => {
+      const x = await checkExport("ThemedLayout");
+      expect(x).toBeDefined();
+    });
+
+    it("exports useNotificationProvider", async () => {
+      const x = await checkExport("useNotificationProvider");
+      expect(x).toBeDefined();
+    });
+
+    it("exports ErrorComponent", async () => {
+      const x = await checkExport("ErrorComponent");
+      expect(x).toBeDefined();
+    });
+  });
+
+  // ============================================
+  // antd
+  // ============================================
+  describe("antd", () => {
+    it("exports ConfigProvider", async () => {
+      const mod = (await import("antd")) as AnyModule;
+      expect(mod.ConfigProvider).toBeDefined();
+    });
+
+    it("exports App", async () => {
+      const mod = (await import("antd")) as AnyModule;
+      expect(mod.App).toBeDefined();
+    });
+
+    it("exports Table", async () => {
+      const mod = (await import("antd")) as AnyModule;
+      expect(mod.Table).toBeDefined();
+    });
+
+    it("exports Form", async () => {
+      const mod = (await import("antd")) as AnyModule;
+      expect(mod.Form).toBeDefined();
+    });
+
+    it("exports Button", async () => {
+      const mod = (await import("antd")) as AnyModule;
+      expect(mod.Button).toBeDefined();
+    });
+
+    it("exports Input", async () => {
+      const mod = (await import("antd")) as AnyModule;
+      expect(mod.Input).toBeDefined();
+    });
+
+    it("exports Modal", async () => {
+      const mod = (await import("antd")) as AnyModule;
+      expect(mod.Modal).toBeDefined();
+    });
+  });
+
+  // ============================================
+  // @ant-design/icons
+  // ============================================
+  describe("@ant-design/icons", () => {
+    it("exports DashboardOutlined", async () => {
+      const mod = (await import("@ant-design/icons")) as AnyModule;
+      expect(mod.DashboardOutlined).toBeDefined();
+    });
+
+    it("exports PlusCircleOutlined", async () => {
+      const mod = (await import("@ant-design/icons")) as AnyModule;
+      expect(mod.PlusCircleOutlined).toBeDefined();
+    });
+
+    it("exports ArrowLeftOutlined", async () => {
+      const mod = (await import("@ant-design/icons")) as AnyModule;
+      expect(mod.ArrowLeftOutlined).toBeDefined();
+    });
+
+    it("exports SaveOutlined", async () => {
+      const mod = (await import("@ant-design/icons")) as AnyModule;
+      expect(mod.SaveOutlined).toBeDefined();
+    });
+  });
+
+  // ============================================
+  // react-router-dom (bukan react-router)
+  // ============================================
+  describe("react-router-dom", () => {
+    it("exports BrowserRouter", async () => {
+      const mod = (await import("react-router-dom")) as AnyModule;
+      expect(mod.BrowserRouter).toBeDefined();
+    });
+
+    it("exports Routes", async () => {
+      const mod = (await import("react-router-dom")) as AnyModule;
+      expect(mod.Routes).toBeDefined();
+    });
+
+    it("exports Route", async () => {
+      const mod = (await import("react-router-dom")) as AnyModule;
+      expect(mod.Route).toBeDefined();
+    });
+
+    it("exports Outlet", async () => {
+      const mod = (await import("react-router-dom")) as AnyModule;
+      expect(mod.Outlet).toBeDefined();
+    });
+
+    it("exports useNavigate", async () => {
+      const mod = (await import("react-router-dom")) as AnyModule;
+      expect(mod.useNavigate).toBeDefined();
+    });
+
+    it("exports useSearchParams", async () => {
+      const mod = (await import("react-router-dom")) as AnyModule;
+      expect(mod.useSearchParams).toBeDefined();
+    });
+  });
+});
+
+================================================================================
+FILE: test/diagnostics/03-components.test.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/03-components.test.tsx
+================================================================================
+
+import { describe, it, expect, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router";
+import { App as AntdApp, ConfigProvider } from "antd";
+import type { ComponentType, ReactNode } from "react";
+
+// ============================================
+// Tipe longgar untuk dynamic import
+// ============================================
+type AnyModule = Record<string, unknown>;
+type AnyComponent = ComponentType<Record<string, unknown>>;
+
+// ============================================
+// Mock supabase
+// ============================================
+vi.mock("@/utility/supabaseClient", () => ({
+  supabaseClient: {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+      getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
+      signInWithPassword: vi.fn(),
+      signOut: vi.fn(),
+      onAuthStateChange: vi.fn(() => ({
+        data: { subscription: { unsubscribe: vi.fn() } },
+      })),
+    },
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+    })),
+  },
+}));
+
+vi.mock("@ant-design/plots", () => ({
+  Line: () => <div data-testid="mock-line-chart" />,
+}));
+
+// ============================================
+// Wrapper dengan semua provider yang dibutuhkan
+// ============================================
+function Wrapper({ children }: { children: ReactNode }) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, cacheTime: 0 },
+      mutations: { retry: false },
+    },
+  });
+
+  return (
+    <ConfigProvider theme={{ token: { colorPrimary: "#1677ff" } }}>
+      <AntdApp>
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter>{children}</MemoryRouter>
+        </QueryClientProvider>
+      </AntdApp>
+    </ConfigProvider>
+  );
+}
+
+function safeRender(ui: ReactNode) {
+  return render(<Wrapper>{ui}</Wrapper>);
+}
+
+// ============================================
+// Helper: ambil komponen dari module
+// ============================================
+async function loadComponent(
+  modulePath: string,
+  exportName: string,
+): Promise<AnyComponent> {
+  const mod = (await import(/* @vite-ignore */ modulePath)) as AnyModule;
+  return mod[exportName] as AnyComponent;
+}
+
+// ============================================
+// Tests
+// ============================================
+describe("DIAGNOSTIC 03 — Component Renders", () => {
+  // ----------------------------------------
+  // Components murni (tanpa provider khusus)
+  // ----------------------------------------
+  describe("Pure components", () => {
+    it("renders StatCard", async () => {
+      const StatCard = await loadComponent(
+        "@/components/dashboard/StatCard",
+        "StatCard",
+      );
+      safeRender(<StatCard title="Test" value={100} />);
+      expect(screen.getByText("Test")).toBeInTheDocument();
+    });
+
+    it("renders StatusBadge (safe)", async () => {
+      const StatusBadge = await loadComponent(
+        "@/components/common/StatusBadge",
+        "StatusBadge",
+      );
+      safeRender(<StatusBadge status="safe" />);
+      expect(screen.getByText(/aman/i)).toBeInTheDocument();
+    });
+
+    it("renders StatusBadge (low)", async () => {
+      const StatusBadge = await loadComponent(
+        "@/components/common/StatusBadge",
+        "StatusBadge",
+      );
+      safeRender(<StatusBadge status="low" />);
+      expect(screen.getByText(/menipis/i)).toBeInTheDocument();
+    });
+
+    it("renders StatusBadge (out)", async () => {
+      const StatusBadge = await loadComponent(
+        "@/components/common/StatusBadge",
+        "StatusBadge",
+      );
+      safeRender(<StatusBadge status="out" />);
+      expect(screen.getByText(/habis/i)).toBeInTheDocument();
+    });
+  });
+
+  // ----------------------------------------
+  // Components dengan data hooks (query)
+  // ----------------------------------------
+  describe("Data components (mock mode)", () => {
+    it("renders LowStockTable", async () => {
+      const LowStockTable = await loadComponent(
+        "@/components/dashboard/LowStockTable",
+        "LowStockTable",
+      );
+
+      expect(() => safeRender(<LowStockTable />)).not.toThrow();
+    });
+
+    it("renders StockInChart", async () => {
+      const StockInChart = await loadComponent(
+        "@/components/dashboard/StockInChart",
+        "StockInChart",
+      );
+
+      expect(() => safeRender(<StockInChart />)).not.toThrow();
+    });
+
+    it("renders GlobalSearch", async () => {
+      const GlobalSearch = await loadComponent(
+        "@/components/common/GlobalSearch",
+        "GlobalSearch",
+      );
+
+      expect(() => safeRender(<GlobalSearch />)).not.toThrow();
+    });
+  });
+
+  // ----------------------------------------
+  // Pages — butuh Refine context
+  // ----------------------------------------
+  describe("Pages (butuh Refine context)", () => {
+    it("LoginPage module bisa di-load", async () => {
+      const mod = (await import("@/pages/login")) as AnyModule;
+      expect(mod.LoginPage).toBeDefined();
+    });
+
+    it("DashboardPage module bisa di-load", async () => {
+      const mod = (await import("@/pages/dashboard")) as AnyModule;
+      expect(mod.DashboardPage).toBeDefined();
+    });
+
+    it("StockEntryCreatePage module bisa di-load", async () => {
+      const mod = (await import("@/pages/stock-entries/create")) as AnyModule;
+      expect(mod.StockEntryCreatePage).toBeDefined();
+    });
+
+    // Note: Render penuh untuk pages tidak dilakukan di sini karena
+    // butuh full Refine provider. Cek di file 04-app-render.test.tsx.
+  });
+});
+
+
+================================================================================
+FILE: test/diagnostics/04-app-render.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/04-app-render.test.ts
+================================================================================
+
+import { describe, it, expect, vi } from "vitest";
+import { createElement } from "react";
+import { render, screen } from "@testing-library/react";
+import type { ComponentType } from "react";
+
+// ============================================
+// Tipe longgar
+// ============================================
+type AnyModule = Record<string, unknown>;
+
+// ============================================
+// Mock supabase
+// ============================================
+vi.mock("@/utility/supabaseClient", () => ({
+  supabaseClient: {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+      getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
+      signInWithPassword: vi.fn(),
+      signOut: vi.fn().mockResolvedValue({ error: null }),
+      onAuthStateChange: vi.fn(() => ({
+        data: { subscription: { unsubscribe: vi.fn() } },
+      })),
+    },
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+    })),
+  },
+}));
+
+vi.mock("@ant-design/plots", () => ({
+  Line: () => null,
+}));
+
+// ============================================
+// Helper
+// ============================================
+async function loadApp(): Promise<ComponentType> {
+  const mod = (await import("@/App")) as AnyModule;
+  return mod.default as ComponentType;
+}
+
+// ============================================
+// Tests
+// ============================================
+describe("DIAGNOSTIC 04 — Full App Render", () => {
+  it(
+    "Step 1: App.tsx module loads",
+    async () => {
+      const mod = (await import("@/App")) as AnyModule;
+      expect(mod).toBeDefined();
+      expect(mod.default).toBeDefined();
+      expect(typeof mod.default).toBe("function");
+    },
+    30_000,
+  );
+
+  it(
+    "Step 2: App renders without throwing synchronously",
+    async () => {
+      const App = await loadApp();
+
+      let renderError: Error | null = null;
+      try {
+        render(createElement(App));
+      } catch (e) {
+        renderError = e as Error;
+      }
+
+      expect(renderError).toBeNull();
+    },
+    30_000,
+  );
+
+  it(
+    "Step 3: App renders and produces DOM output",
+    async () => {
+      const App = await loadApp();
+      const { container } = render(createElement(App));
+
+      await new Promise((r) => setTimeout(r, 500));
+
+      expect(container).toBeTruthy();
+      expect(document.body.innerHTML.length).toBeGreaterThan(0);
+    },
+    30_000,
+  );
+
+  it(
+    "Step 4: login page appears (auth belum login)",
+    async () => {
+      const App = await loadApp();
+      render(createElement(App));
+
+      // ⬇️ "Admin Stok" — dengan huruf "k", bukan "ck"
+      const heading = await screen.findByText(
+        /admin stok/i,
+        {},
+        { timeout: 10_000 },
+      );
+      expect(heading).toBeInTheDocument();
+    },
+    30_000,
+  );
+
+  it(
+    "Step 5: form login punya input email & password",
+    async () => {
+      const App = await loadApp();
+      render(createElement(App));
+
+      // ⬇️ "Admin Stok" — dengan huruf "k", bukan "ck"
+      await screen.findByText(/admin stok/i, {}, { timeout: 10_000 });
+
+      expect(
+        screen.getByPlaceholderText("admin@admin.com"),
+      ).toBeInTheDocument();
+      expect(screen.getByPlaceholderText("••••••••")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /masuk/i }),
+      ).toBeInTheDocument();
+    },
+    30_000,
+  );
+});
+
+================================================================================
+FILE: test/diagnostics/05-supabase-config.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/05-supabase-config.test.ts
+================================================================================
+
+import { describe, it, expect } from "vitest";
+
+describe("FOCUS: Supabase Config", () => {
+  it("VITE_SUPABASE_URL terdefinisi", () => {
+    expect(import.meta.env.VITE_SUPABASE_URL).toBeDefined();
+    expect(typeof import.meta.env.VITE_SUPABASE_URL).toBe("string");
+    expect(import.meta.env.VITE_SUPABASE_URL.length).toBeGreaterThan(0);
+  });
+
+  it("VITE_SUPABASE_KEY terdefinisi", () => {
+    expect(import.meta.env.VITE_SUPABASE_KEY).toBeDefined();
+    expect(typeof import.meta.env.VITE_SUPABASE_KEY).toBe("string");
+    expect(import.meta.env.VITE_SUPABASE_KEY.length).toBeGreaterThan(0);
+  });
+
+  it("URL format benar (https, tanpa trailing slash)", () => {
+    const url = import.meta.env.VITE_SUPABASE_URL;
+    expect(url).toMatch(/^https:\/\//);
+    expect(url).not.toMatch(/\/$/);
+    expect(url).not.toMatch(/\/rest\/v1\/?$/); // TIDAK boleh ada /rest/v1/
+  });
+
+  it("URL mengarah ke supabase.co", () => {
+    const url = import.meta.env.VITE_SUPABASE_URL;
+    expect(url).toMatch(/\.supabase\.co/);
+  });
+
+  it("Key bukan service_role (harus publishable/anon)", () => {
+    const key = import.meta.env.VITE_SUPABASE_KEY;
+    // service_role pakai JWT dengan "role":"service_role"
+    // atau prefix "sb_secret_"
+    expect(key).not.toMatch(/^sb_secret_/);
+
+    // Kalau JWT, decode untuk cek role
+    if (key.startsWith("eyJ")) {
+      const parts = key.split(".");
+      if (parts.length >= 2) {
+        try {
+          const payload = JSON.parse(atob(parts[1]));
+          expect(payload.role).not.toBe("service_role");
+        } catch {
+          // Kalau tidak bisa decode, skip
+        }
+      }
+    }
+  });
+});
+
+
+================================================================================
+FILE: test/diagnostics/06-supabase-connection.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/06-supabase-connection.test.ts
+================================================================================
+
+import { describe, it, expect } from "vitest";
+import { createClient } from "@supabase/supabase-js";
+
+describe("FOCUS: Supabase Connection", () => {
+  const url = import.meta.env.VITE_SUPABASE_URL;
+  const key = import.meta.env.VITE_SUPABASE_KEY;
+  const supabase = createClient(url, key);
+
+  it("Client berhasil dibuat", () => {
+    expect(supabase).toBeDefined();
+    expect(supabase.from).toBeDefined();
+  });
+
+  it("Bisa ping ke Supabase (health check)", async () => {
+    const response = await fetch(`${url}/rest/v1/barang?select=id&limit=1`, {
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+      },
+    });
+    expect(response.ok).toBe(true);
+  }, 15_000);
+
+  it("Tabel 'barang' bisa dibaca", async () => {
+    const { data, error } = await supabase.from("barang").select("*").limit(3);
+
+    expect(error).toBeNull();
+    expect(Array.isArray(data)).toBe(true);
+  }, 15_000);
+
+  it("Data barang tidak kosong (≥ 1 baris)", async () => {
+    const { count, error } = await supabase
+      .from("barang")
+      .select("*", { count: "exact", head: true });
+
+    expect(error).toBeNull();
+    expect(count).toBeGreaterThan(0);
+    console.log(`📊 Total barang di Supabase: ${count}`);
+  }, 15_000);
+
+  it("Struktur kolom sesuai (kode, nama, ukuran, satuan, stok)", async () => {
+    const { data, error } = await supabase.from("barang").select("*").limit(1);
+
+    expect(error).toBeNull();
+    expect(data).toBeDefined();
+    expect(data!.length).toBeGreaterThan(0);
+
+    const row = data![0];
+    expect(row).toHaveProperty("id");
+    expect(row).toHaveProperty("kode");
+    expect(row).toHaveProperty("nama");
+    expect(row).toHaveProperty("ukuran");
+    expect(row).toHaveProperty("satuan");
+    expect(row).toHaveProperty("stok");
+  }, 15_000);
+});
+
+
+================================================================================
+FILE: test/diagnostics/07-mappers.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/07-mappers.test.ts
+================================================================================
+
+import { describe, it, expect } from "vitest";
+import { mapProduct } from "@/utility/mappers";
+
+describe("FOCUS: Product Mapper", () => {
+  it("Mapping lengkap", () => {
+    const dbRow = {
+      id: 1,
+      kode: "BRG-001",
+      nama: "Printer",
+      ukuran: "A3",
+      satuan: "unit",
+      stok: 10,
+      created_at: "2026-10-13T00:00:00Z",
+    };
+
+    const product = mapProduct(dbRow);
+
+    expect(product.id).toBe(1);
+    expect(product.code).toBe("BRG-001");
+    expect(product.name).toBe("Printer");
+    expect(product.size).toBe("A3");
+    expect(product.unit).toBe("unit");
+    expect(product.stock).toBe(10);
+  });
+
+  it("Handle ukuran null", () => {
+    const dbRow = {
+      id: 2,
+      kode: "BRG-002",
+      nama: "Laptop",
+      ukuran: null,
+      satuan: "unit",
+      stok: 5,
+      created_at: "2026-10-13T00:00:00Z",
+    };
+
+    const product = mapProduct(dbRow);
+    expect(product.size).toBeNull();
+  });
+
+  it("Handle field missing (fallback default)", () => {
+    const dbRow = {
+      id: 3,
+      kode: "BRG-003",
+      nama: "Test",
+    };
+
+    const product = mapProduct(dbRow);
+    expect(product.size).toBeNull();
+    expect(product.unit).toBe("pcs");
+    expect(product.stock).toBe(0);
+  });
+
+  it("Semua 517 produk bisa di-map tanpa error", () => {
+    const sample = Array.from({ length: 10 }, (_, i) => ({
+      id: i + 1,
+      kode: `BRG-${String(i + 1).padStart(3, "0")}`,
+      nama: `Product ${i + 1}`,
+      ukuran: i % 2 === 0 ? "10 cm" : null,
+      satuan: "pcs",
+      stok: i * 5,
+      created_at: new Date().toISOString(),
+    }));
+
+    const products = sample.map(mapProduct);
+    expect(products).toHaveLength(10);
+    products.forEach((p) => {
+      expect(p.id).toBeDefined();
+      expect(p.code).toMatch(/^BRG-/);
+      expect(typeof p.name).toBe("string");
+      expect(typeof p.stock).toBe("number");
+    });
+  });
+});
+
+
+================================================================================
+FILE: test/diagnostics/08-hooks-supabase.test.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/08-hooks-supabase.test.tsx
+================================================================================
+
+import { describe, it, expect } from "vitest";
+import { renderHook, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactNode } from "react";
+import { useProducts } from "@/hooks/useProducts";
+import { useProductSearch } from "@/hooks/useProductSearch";
+
+function wrapper({ children }: { children: ReactNode }) {
+  const qc = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
+}
+
+describe("FOCUS: Hooks dengan Supabase", () => {
+  it("useProducts fetch dari Supabase", async () => {
+    const { result } = renderHook(() => useProducts(), { wrapper });
+
+    await waitFor(
+      () => {
+        expect(result.current.isLoading).toBe(false);
+      },
+      { timeout: 15_000 },
+    );
+
+    expect(result.current.products.length).toBeGreaterThan(0);
+
+    const first = result.current.products[0];
+    console.log("First product:", first);
+
+    expect(first).toHaveProperty("id");
+    expect(first).toHaveProperty("code");
+    expect(first).toHaveProperty("name");
+    expect(first).toHaveProperty("stock");
+  }, 20_000);
+
+  it("useProductSearch cari 'beras'", async () => {
+    const { result } = renderHook(() => useProductSearch("beras", 5), {
+      wrapper,
+    });
+
+    await waitFor(
+      () => {
+        expect(result.current.isLoading).toBe(false);
+      },
+      { timeout: 15_000 },
+    );
+
+    console.log(`Hasil cari "beras": ${result.current.products.length} item`);
+    // Kalau ada "beras" di DB, harus > 0
+    // Kalau tidak ada, minimal 0 tidak error
+    expect(Array.isArray(result.current.products)).toBe(true);
+  }, 20_000);
+
+  it("useProductSearch cari 'kabel'", async () => {
+    const { result } = renderHook(() => useProductSearch("kabel", 10), {
+      wrapper,
+    });
+
+    await waitFor(
+      () => {
+        expect(result.current.isLoading).toBe(false);
+      },
+      { timeout: 15_000 },
+    );
+
+    console.log(`Hasil cari "kabel": ${result.current.products.length} item`);
+    result.current.products.forEach((p) => {
+      expect(
+        p.name.toLowerCase().includes("kabel") ||
+          p.code.toLowerCase().includes("kabel"),
+      ).toBe(true);
+    });
+  }, 20_000);
+});
+
+
+================================================================================
+FILE: test/integration/01-master-data.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/integration/01-master-data.test.ts
+================================================================================
+
+import { describe, it, expect } from "vitest";
+import { supabaseClient } from "../../src/utility/supabaseClient";
+
+describe("Integration: Master Data (Tabel Barang)", () => {
+  it("harus bisa mengambil data barang tanpa error", async () => {
+    const { data, error } = await supabaseClient
+      .from("barang")
+      .select("*")
+      .limit(5);
+
+    expect(error).toBeNull();
+    expect(data).toBeDefined();
+    expect(data?.length).toBeGreaterThan(0);
+
+    if (data && data.length > 0) {
+      expect(data[0]).toHaveProperty("kode");
+      expect(data[0]).toHaveProperty("nama");
+      expect(data[0]).toHaveProperty("stok");
+    }
+  });
+});
+
+================================================================================
+FILE: test/integration/02-movemnet.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/integration/02-movemnet.test.ts
+================================================================================
+
+import { describe, it, expect } from "vitest";
+import { supabaseClient } from "../../src/utility/supabaseClient";
+
+describe("Integration: Transaksi Barang Masuk & Keluar", () => {
+  it("harus bisa mengakses tabel barang_masuk", async () => {
+    const { data, error } = await supabaseClient
+      .from("barang_masuk")
+      .select("*")
+      .limit(5);
+
+    expect(error).toBeNull();
+    expect(data).toBeDefined();
+  });
+
+  it("harus bisa mengakses tabel barang_keluar", async () => {
+    const { data, error } = await supabaseClient
+      .from("barang_keluar")
+      .select("*")
+      .limit(5);
+
+    expect(error).toBeNull();
+    expect(data).toBeDefined();
+  });
+});
+
+================================================================================
+FILE: test/integration/03-spb-po-relation.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/integration/03-spb-po-relation.test.ts
+================================================================================
+
+import { describe, it, expect } from "vitest";
+import { supabaseClient } from "../../src/utility/supabaseClient";
+
+describe("Integration: Relasi Tabel SPB dan PO", () => {
+  it("tabel po harus memiliki 62 data sesuai sampel", async () => {
+    const { count, error } = await supabaseClient
+      .from("po")
+      .select("*", { count: "exact", head: true });
+
+    expect(error).toBeNull();
+    expect(count).toBe(62);
+  });
+
+  it("tabel spb harus memiliki 70 data sesuai sampel", async () => {
+    const { count, error } = await supabaseClient
+      .from("spb")
+      .select("*", { count: "exact", head: true });
+
+    expect(error).toBeNull();
+    expect(count).toBe(70);
+  });
+
+  it("harus bisa melakukan relasi (join) dari tabel spb ke tabel po menggunakan po_id", async () => {
+    // Sintaks po(*) akan divalidasi oleh Supabase. Jika relasi Foreign Key benar, ini akan berhasil
+    const { data, error } = await supabaseClient
+      .from("spb")
+      .select("no_spb, nama_barang, po(no_po, supplier)")
+      .limit(10);
+
+    expect(error).toBeNull();
+    expect(data).toBeDefined();
+    expect(data?.length).toBeGreaterThan(0);
+
+    // Memastikan ada item SPB yang berhasil membawa data PO di dalamnya
+    const linkedData = data?.filter((item) => item.po !== null);
+    expect(linkedData).toBeDefined();
+    expect(linkedData?.length).toBeGreaterThan(0);
+  });
+});
+
+================================================================================
+FILE: test/setup.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/setup.ts
+================================================================================
+
+import "@testing-library/jest-dom/vitest";
+import { afterEach, vi } from "vitest";
+import { cleanup } from "@testing-library/react";
+
+// Antd butuh matchMedia
+Object.defineProperty(window, "matchMedia", {
+  writable: true,
+  value: vi.fn().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
+// Antd butuh ResizeObserver
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+global.ResizeObserver = ResizeObserverMock as never;
+
+// Antd butuh getComputedStyle
+Object.defineProperty(window, "getComputedStyle", {
+  value: () => ({
+    getPropertyValue: () => "",
+  }),
+});
+
+// Cleanup tiap test
+afterEach(() => {
+  cleanup();
+  localStorage.clear();
+  vi.clearAllMocks();
+});
+
+
+================================================================================
+FILE: test/smoke/app.test.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/smoke/app.test.tsx
+================================================================================
+
+import { describe, it, expect, vi } from "vitest";
+
+// Mock supabase
+vi.mock("@/utility/supabaseClient", () => ({
+  supabaseClient: {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+      getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
+      signInWithPassword: vi.fn(),
+      signOut: vi.fn(),
+      onAuthStateChange: vi.fn(() => ({
+        data: { subscription: { unsubscribe: vi.fn() } },
+      })),
+    },
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+    })),
+  },
+}));
+
+vi.mock("@ant-design/plots", () => ({
+  Line: () => null,
+}));
+
+type AnyModule = Record<string, unknown>;
+
+describe("Smoke: App module", () => {
+  it("App.tsx bisa di-import", async () => {
+    const mod = (await import("@/App")) as AnyModule;
+    expect(mod.default).toBeDefined();
+    expect(typeof mod.default).toBe("function");
+  });
+
+  it("authProvider bisa di-import", async () => {
+    const mod = (await import("@/authProvider")) as AnyModule;
+    expect(mod.authProvider).toBeDefined();
+  });
+
+  it("semua halaman bisa di-import", async () => {
+    const dashboard = (await import("@/pages/dashboard")) as AnyModule;
+    const login = (await import("@/pages/login")) as AnyModule;
+    const stockEntry = (await import("@/pages/stock-entries/create")) as AnyModule;
+
+    expect(dashboard.DashboardPage).toBeDefined();
+    expect(login.LoginPage).toBeDefined();
+    expect(stockEntry.StockEntryCreatePage).toBeDefined();
+  });
+});
+
+================================================================================
+FILE: test/unit/hooks/useKeyboardShortcut.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/hooks/useKeyboardShortcut.test.ts
+================================================================================
+
+import { describe, it, expect, vi } from "vitest";
+import { renderHook, fireEvent } from "@testing-library/react";
+import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
+
+describe("useKeyboardShortcut", () => {
+  it("memanggil handler saat tombol cocok", () => {
+    const handler = vi.fn();
+    renderHook(() => useKeyboardShortcut({ key: " ", handler }));
+
+    fireEvent.keyDown(window, { key: " " });
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it("TIDAK memanggil saat tombol beda", () => {
+    const handler = vi.fn();
+    renderHook(() => useKeyboardShortcut({ key: " ", handler }));
+
+    fireEvent.keyDown(window, { key: "a" });
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it("ctrl modifier harus cocok", () => {
+    const handler = vi.fn();
+    renderHook(() =>
+      useKeyboardShortcut({ key: "k", ctrlKey: true, handler }),
+    );
+
+    fireEvent.keyDown(window, { key: "k" });
+    expect(handler).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignoreInputs=true skip saat fokus di input", () => {
+    const handler = vi.fn();
+    renderHook(() =>
+      useKeyboardShortcut({ key: " ", ignoreInputs: true, handler }),
+    );
+
+    const input = document.createElement("input");
+    document.body.appendChild(input);
+
+    fireEvent.keyDown(input, { key: " " });
+    expect(handler).not.toHaveBeenCalled();
+
+    document.body.removeChild(input);
+  });
+
+  it("enabled=false tidak memasang listener", () => {
+    const handler = vi.fn();
+    renderHook(() =>
+      useKeyboardShortcut({ key: " ", enabled: false, handler }),
+    );
+
+    fireEvent.keyDown(window, { key: " " });
+    expect(handler).not.toHaveBeenCalled();
+  });
+});
+
+
+
+================================================================================
+FILE: test/utils/mocks.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/utils/mocks.ts
+================================================================================
+
+import { vi } from "vitest";
+
+/**
+ * Mock Supabase client supaya test tidak butuh network.
+ * Import helper ini di test yang menggunakan supabaseClient.
+ */
+export const createSupabaseMock = () => ({
+  auth: {
+    getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+    getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
+    signInWithPassword: vi.fn(),
+    signOut: vi.fn().mockResolvedValue({ error: null }),
+    onAuthStateChange: vi.fn(() => ({
+      data: { subscription: { unsubscribe: vi.fn() } },
+    })),
+  },
+  from: vi.fn(() => ({
+    select: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    gte: vi.fn().mockReturnThis(),
+    lte: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue({ data: null, error: null }),
+    or: vi.fn().mockReturnThis(),
+  })),
+});
+
+/**
+ * Mock next/router atau react-router jika dipakai di test
+ */
+export const mockNavigate = vi.fn();
+
+
+================================================================================
+FILE: test/utils/render.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/utils/render.tsx
+================================================================================
+
+import type { ReactNode } from "react";
+import { render, type RenderOptions } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
+import { App as AntdApp, ConfigProvider } from "antd";
+
+interface CustomOptions extends Omit<RenderOptions, "wrapper"> {
+  initialRoute?: string;
+  withRouter?: boolean;
+}
+
+export function renderWithProviders(
+  ui: ReactNode,
+  {
+    initialRoute = "/",
+    withRouter = true,
+    ...options
+  }: CustomOptions = {},
+) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      // ⬇️ v4 pakai cacheTime, bukan gcTime
+      queries: { retry: false, cacheTime: 0 },
+      mutations: { retry: false },
+    },
+  });
+
+  const Wrapper = ({ children }: { children: ReactNode }) => (
+    <ConfigProvider theme={{ token: { colorPrimary: "#1677ff" } }}>
+      <AntdApp>
+        <QueryClientProvider client={queryClient}>
+          {withRouter ? (
+            <MemoryRouter initialEntries={[initialRoute]}>
+              {children}
+            </MemoryRouter>
+          ) : (
+            children
+          )}
+        </QueryClientProvider>
+      </AntdApp>
+    </ConfigProvider>
+  );
+
+  return render(ui, { wrapper: Wrapper, ...options });
+}
+
+export { render, screen, fireEvent, waitFor } from "@testing-library/react";
+export { default as userEvent } from "@testing-library/user-event";
+

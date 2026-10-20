@@ -1,0 +1,75 @@
+# Masuk ke direktori src
+cd src
+
+# 1. Buat kerangka folder baru
+mkdir -p app/providers \
+  shared/components shared/hooks shared/lib shared/layout \
+  features/dashboard/components features/dashboard/pages \
+  features/products/components features/products/pages \
+  features/stock-out/components features/stock-out/hooks features/stock-out/pages \
+  features/stock-in/pages \
+  features/spb/pages \
+  features/auth/pages \
+  features/stock-opname/pages \
+  features/reports/pages
+
+# 2. Pindahkan Core & App
+mv App.tsx app/
+mv authProvider.ts app/providers/
+touch app/router.tsx app/providers/accessControlProvider.ts app/providers/dataProvider.ts
+
+# 3. Pindahkan modul Shared
+mv components/common/* shared/components/
+mv components/layout/* shared/layout/
+mv hooks/useDebounce.ts shared/hooks/
+mv hooks/useKeyboardShortcut.ts shared/hooks/
+mv utility/* shared/lib/
+mv types/index.ts shared/types.ts
+
+# 4. Pindahkan modul Dashboard
+mv components/dashboard/* features/dashboard/components/
+mv pages/dashboard/index.tsx features/dashboard/pages/DashboardPage.tsx
+mv hooks/useDashboardStats.ts features/dashboard/
+mv hooks/useStockInChart.ts features/dashboard/
+mv hooks/useLowStock.ts features/dashboard/
+touch features/dashboard/api.ts
+
+# 5. Pindahkan modul Products (Master Barang & Inventory)
+mv components/inventory/InventoryTable.tsx features/products/components/
+mv pages/inventory/index.tsx features/products/pages/InventoryPage.tsx
+mv pages/products/create.tsx features/products/pages/ProductCreatePage.tsx
+mv hooks/useProducts.ts features/products/
+mv hooks/useProductSearch.ts features/products/
+touch features/products/api.ts features/products/types.ts
+
+# 6. Pindahkan modul Stock-Out (Pengeluaran/Entry)
+mv components/entry/SetupWizard.tsx features/stock-out/components/
+mv pages/entry/index.tsx features/stock-out/pages/EntryPage.tsx
+mv hooks/useEntryFlow.ts features/stock-out/hooks/
+mv hooks/useStockExits.ts features/stock-out/
+mv hooks/usePersons.ts features/stock-out/
+touch features/stock-out/api.ts
+
+# 7. Pindahkan modul SPB
+mv pages/monitoring-spb/index.tsx features/spb/pages/MonitoringSPBPage.tsx
+mv pages/monitoring-spb/detail.tsx features/spb/pages/MonitoringSPBDetailPage.tsx
+mv hooks/useMonitoringSPB.ts features/spb/
+mv hooks/useMonitoringSPBDetail.ts features/spb/
+touch features/spb/api.ts
+
+# 8. Pindahkan modul Auth & Stock-In
+mv pages/login/index.tsx features/auth/pages/LoginPage.tsx
+mv hooks/useStockEntryMutations.ts features/stock-in/ || true
+touch features/stock-in/api.ts features/stock-in/pages/StockInListPage.tsx
+
+# 9. Buat file skeleton untuk fitur roadmap (Opname & Reports)
+touch features/stock-opname/api.ts features/stock-opname/pages/StockOpnamePage.tsx
+touch features/reports/pages/ReportsPage.tsx
+
+# 10. Hapus struktur folder lama yang sudah kosong
+rm -rf components hooks pages utility types
+
+# 11. Hapus folder mocks (Hapus tanda # di bawah jika ingin menghapus mocks permanen)
+# rm -rf mocks
+
+echo "✅ Refaktor direktori selesai!"
