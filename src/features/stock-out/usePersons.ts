@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabaseClient } from "../utility/supabaseClient";
-import { TABLES } from "../utility/constants";
-import { USE_MOCK } from "../utility/config";
-import type { Person } from "../types";
+import { supabaseClient } from "../../shared/lib/supabaseClient";
+import { TABLES } from "../../shared/lib/constants";
+import { USE_MOCK } from "../../shared/lib/config";
+import type { Person } from "../../shared/types";
 
 export const usePersons = () => {
   const { data, isLoading, refetch } = useQuery<Person[]>({

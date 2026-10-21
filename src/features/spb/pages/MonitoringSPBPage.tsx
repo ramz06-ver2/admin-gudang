@@ -7,8 +7,8 @@ import {
 import {
   useMonitoringSPB,
   type SPBDocumentGroup,
-} from "../../hooks/useMonitoringSPB";
-import { formatFullDate, formatDate } from "../../utility/format";
+} from "../useMonitoringSPB";
+import { formatFullDate, formatDate } from "../../../shared/lib/format";
 import {
   CheckCircleOutlined,
   SyncOutlined,

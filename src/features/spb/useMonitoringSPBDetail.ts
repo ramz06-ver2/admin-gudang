@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabaseClient } from "../utility/supabaseClient";
-import { TABLES } from "../utility/constants";
+import { supabaseClient } from "../../shared/lib/supabaseClient";
+import { TABLES } from "../../shared/lib/constants";
 
 export interface SPBItemDetail {
   id: number;

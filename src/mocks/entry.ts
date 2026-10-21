@@ -1,4 +1,4 @@
-import type { Workplace } from "../types";
+import type { Workplace } from "../shared/types";
 
 export const mockWorkplaces: Workplace[] = [
   { id: "w1", name: "Tamra" },

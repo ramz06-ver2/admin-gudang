@@ -4,7 +4,7 @@ import { useGetIdentity, useLogout } from "@refinedev/core";
 import { useNavigate } from "react-router-dom";
 import { Button, Tag, Typography } from "antd";
 import { LogoutOutlined, LoginOutlined, DownOutlined, UpOutlined, SafetyCertificateOutlined, UserOutlined } from "@ant-design/icons";
-import { GlobalSearch } from "../common/GlobalSearch"; // ✅ Mount Global Search
+import { GlobalSearch } from "../components/GlobalSearch"; // ✅ Mount Global Search
 
 const { Text } = Typography;
 

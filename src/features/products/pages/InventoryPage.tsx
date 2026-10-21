@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Typography, Tabs, Space } from "antd";
-import { formatFullDate } from "../../utility/format";
-import { InventoryTable } from "../../components/inventory/InventoryTable";
-import { useProducts } from "../../hooks/useProducts";
-import { useStockExits } from "../../hooks/useStockExits";
+import { formatFullDate } from "../../../shared/lib/format";
+import { InventoryTable } from "../components/InventoryTable";
+import { useProducts } from "../useProducts";
+import { useStockExits } from "../../stock-out/useStockExits";
 
 const { Title, Text } = Typography;
 

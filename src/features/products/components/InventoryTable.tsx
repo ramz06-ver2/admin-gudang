@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Table, Typography, Tag, Space, Card, Input } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { formatNumber } from "../../utility/format";
+import { formatNumber } from "../../../shared/lib/format";
 import { SendOutlined, UserOutlined, SearchOutlined } from "@ant-design/icons";
-import type { Product, StockExit, StockExitItem } from "../../types";
+import type { Product, StockExit, StockExitItem } from "../../../shared/types";
 
 const { Text } = Typography;
 

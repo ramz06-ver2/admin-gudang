@@ -1,7 +1,7 @@
 import { Card, Empty, Space, Tag, Typography, Skeleton } from "antd";
 import { UserOutlined, SendOutlined } from "@ant-design/icons";
-import { formatNumber } from "../../utility/format";
-import type { StockExit } from "../../types";
+import { formatNumber } from "../../../shared/lib/format";
+import type { StockExit } from "../../../shared/types";
 
 const { Text } = Typography;
 

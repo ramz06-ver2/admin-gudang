@@ -5,9 +5,9 @@ import {
   Spin, Empty, Space, Result,
 } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
-import { useMonitoringSPBDetail } from "../../hooks/useMonitoringSPBDetail";
-import type { SPBItemDetail } from "../../hooks/useMonitoringSPBDetail";
-import { formatDate } from "../../utility/format";
+import { useMonitoringSPBDetail } from "../useMonitoringSPBDetail";
+import type { SPBItemDetail } from "../useMonitoringSPBDetail";
+import { formatDate } from "../../../shared/lib/format";
 
 const { Title, Text } = Typography;
 

@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import type { StockEntry, StockInChartItem } from "../types";
+import type { StockEntry, StockInChartItem } from "../shared/types";
 
 // ============================================
 // Transaksi barang masuk (untuk list/detail)

@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import type { StockExit } from "../types";
+import type { StockExit } from "../shared/types";
 
 export const mockStockExits: StockExit[] = [
   {

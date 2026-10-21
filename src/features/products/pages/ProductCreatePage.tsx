@@ -3,12 +3,12 @@ import { Button, Card, Col, DatePicker, Form, Input, InputNumber, Row, Select, S
 import { PlusOutlined, SaveOutlined, AppstoreAddOutlined } from "@ant-design/icons";
 import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { supabaseClient } from "../../utility/supabaseClient";
-import { USE_MOCK } from "../../utility/config";
-import { useProductSearch } from "../../hooks/useProductSearch";
-import { useDebounce } from "../../hooks/useDebounce";
-import { formatNumber, formatDate } from "../../utility/format";
-import type { Product } from "../../types";
+import { supabaseClient } from "../../../shared/lib/supabaseClient";
+import { USE_MOCK } from "../../../shared/lib/config";
+import { useProductSearch } from "../useProductSearch";
+import { useDebounce } from "../../../shared/hooks/useDebounce";
+import { formatNumber, formatDate } from "../../../shared/lib/format";
+import type { Product } from "../../../shared/types";
 
 const { Title, Text } = Typography;
 

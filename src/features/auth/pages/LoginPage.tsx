@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useLogin } from "@refinedev/core";
 import { Button, Card, Form, Input, Typography, Alert, Space } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
-import { USE_MOCK } from "../../utility/config";
+
+// ✅ Path import disesuaikan dengan arsitektur baru (naik 3 tingkat ke shared/lib)
+import { USE_MOCK } from "../../../shared/lib/config";
 
 const { Title, Text } = Typography;
 
@@ -158,3 +160,6 @@ export const LoginPage = () => {
     </div>
   );
 };
+
+// ✅ Wajib ada agar React.lazy() di App.tsx tidak error
+export default LoginPage;

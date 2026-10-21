@@ -1,7 +1,7 @@
 import { Card, Empty, Skeleton } from "antd";
 import { Line } from "@ant-design/plots";
-import { useStockInChart } from "../../hooks/useStockInChart";
-import { formatDate } from "../../utility/format";
+import { useStockInChart } from "../useStockInChart";
+import { formatDate } from "../../../shared/lib/format";
 
 export const StockInChart = () => {
   const { items, isLoading } = useStockInChart(30);

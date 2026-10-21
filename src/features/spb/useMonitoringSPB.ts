@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabaseClient } from "../utility/supabaseClient";
-import { USE_MOCK } from "../utility/config";
-import type { SPBDocumentGroup } from "../types";
+import { supabaseClient } from "../../shared/lib/supabaseClient";
+import { USE_MOCK } from "../../shared/lib/config";
+import type { SPBDocumentGroup } from "../../shared/types";
 
 const getSortNumber = (str: string | null) => {
   if (!str) return 999999;

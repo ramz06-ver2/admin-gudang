@@ -1,4 +1,4 @@
-import type { DashboardStats } from "../types";
+import type { DashboardStats } from "../shared/types";
 import { mockProducts } from "./products";
 import { getMockTodayInbound } from "./stockEntries";
 import { mockStockExits } from "./stockExitList";

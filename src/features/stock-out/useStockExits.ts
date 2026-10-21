@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { supabaseClient } from "../utility/supabaseClient";
-import { TABLES } from "../utility/constants";
-import { USE_MOCK } from "../utility/config";
-import { mockStockExits } from "../mocks/stockExitList";
-import { mapStockExits } from "../utility/mappers";
-import type { StockExit } from "../types";
+import { supabaseClient } from "../../shared/lib/supabaseClient";
+import { TABLES } from "../../shared/lib/constants";
+import { USE_MOCK } from "../../shared/lib/config";
+import { mockStockExits } from "../../mocks/stockExitList";
+import { mapStockExits } from "../../shared/lib/mappers";
+import type { StockExit } from "../../shared/types";
 
 interface Options { onlyToday?: boolean; breakdown?: boolean; limit?: number; }
 

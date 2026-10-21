@@ -53,8 +53,8 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/.devcontainer/devcontainer.js
 
 
 ================================================================================
-FILE: ../src/App.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/App.tsx
+FILE: ../src/app/App.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/app/App.tsx
 ================================================================================
 
 import { Suspense, lazy } from "react";
@@ -66,18 +66,18 @@ import { dataProvider } from "@refinedev/supabase";
 import { App as AntdApp, ConfigProvider, Spin } from "antd";
 import { DashboardOutlined, AppstoreOutlined, FileTextOutlined, PlusCircleOutlined, SendOutlined } from "@ant-design/icons";
 
-import { supabaseClient } from "./utility/supabaseClient";
-import { authProvider } from "./authProvider";
-import { AdminLayout } from "./components/layout/AdminLayout";
+import { supabaseClient } from "../shared/lib/supabaseClient";
+import { authProvider } from "./providers/authProvider";
+import { AdminLayout } from "../shared/layout/AdminLayout";
 
-// ✅ PERBAIKAN: Lazy Loading untuk optimasi bundle
-const DashboardPage = lazy(() => import("./pages/dashboard"));
-const EntryPage = lazy(() => import("./pages/entry"));
-const InventoryPage = lazy(() => import("./pages/inventory"));
-const LoginPage = lazy(() => import("./pages/login"));
-const MonitoringSPBPage = lazy(() => import("./pages/monitoring-spb"));
-const MonitoringSPBDetailPage = lazy(() => import("./pages/monitoring-spb/detail"));
-const ProductCreatePage = lazy(() => import("./pages/products/create"));
+// ✅ Jauh lebih bersih. Syaratnya: setiap file di bawah ini wajib punya "export default"
+const DashboardPage = lazy(() => import("../features/dashboard/pages/DashboardPage"));
+const EntryPage = lazy(() => import("../features/stock-out/pages/EntryPage"));
+const InventoryPage = lazy(() => import("../features/products/pages/InventoryPage"));
+const LoginPage = lazy(() => import("../features/auth/pages/LoginPage"));
+const MonitoringSPBPage = lazy(() => import("../features/spb/pages/MonitoringSPBPage"));
+const MonitoringSPBDetailPage = lazy(() => import("../features/spb/pages/MonitoringSPBDetailPage"));
+const ProductCreatePage = lazy(() => import("../features/products/pages/ProductCreatePage"));
 
 const PageLoader = () => (
   <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
@@ -108,7 +108,7 @@ function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-                {/* ✅ PERBAIKAN: Rute Publik (Read-Only) */}
+                {/* Rute Publik */}
                 <Route element={<AdminLayout><Outlet /></AdminLayout>}>
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/inventory" element={<InventoryPage />} />
@@ -116,9 +116,9 @@ function App() {
                   <Route path="/monitoring-spb/detail" element={<MonitoringSPBDetailPage />} />
                 </Route>
 
-                {/* ✅ PERBAIKAN: Rute Admin (Write) Dilindungi */}
+                {/* Rute Admin */}
                 <Route element={
-                  <Authenticated key="admin-routes" fallback={<Navigate to="/login" />}>
+                  <Authenticated key="admin-routes" fallback={<Navigate to="/login" replace />}>
                     <AdminLayout><Outlet /></AdminLayout>
                   </Authenticated>
                 }>
@@ -141,13 +141,22 @@ function App() {
 export default App;
 
 ================================================================================
-FILE: ../src/authProvider.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/authProvider.ts
+FILE: ../src/app/providers/accessControlProvider.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/app/providers/accessControlProvider.ts
+================================================================================
+
+
+
+================================================================================
+FILE: ../src/app/providers/authProvider.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/app/providers/authProvider.ts
 ================================================================================
 
 import type { AuthProvider, AuthActionResponse, CheckResponse } from "@refinedev/core";
-import { supabaseClient } from "./utility/supabaseClient";
-import { USE_MOCK } from "./utility/config";
+
+// ✅ Path import disesuaikan dengan arsitektur baru (naik 2 tingkat ke shared/lib)
+import { supabaseClient } from "../../shared/lib/supabaseClient";
+import { USE_MOCK } from "../../shared/lib/config";
 
 const STORAGE_KEY = "mock-auth-user";
 
@@ -223,277 +232,208 @@ export const authProvider: AuthProvider = {
 };
 
 ================================================================================
-FILE: ../src/components/common/ErrorBoundary.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/components/common/ErrorBoundary.tsx
+FILE: ../src/app/providers/dataProvider.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/app/providers/dataProvider.ts
 ================================================================================
 
-import React, { Component, ErrorInfo, ReactNode } from "react";
-import { Result, Button, Typography } from "antd";
 
-const { Paragraph, Text } = Typography;
-
-interface Props {
-  children: ReactNode;
-}
-
-interface State {
-  hasError: boolean;
-  error: Error | null;
-}
-
-export class ErrorBoundary extends Component<Props, State> {
-  public state: State = { hasError: false, error: null };
-
-  public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
-  }
-
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Uncaught error:", error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div style={{ padding: 40, display: "flex", justifyContent: "center" }}>
-          <Result
-            status="500"
-            title="Terjadi Kesalahan (500)"
-            subTitle="Maaf, aplikasi mengalami masalah internal."
-            extra={
-              <Button type="primary" onClick={() => window.location.reload()}>
-                Muat Ulang Halaman
-              </Button>
-            }
-          >
-            <div style={{ textAlign: "left", background: "#f5f5f5", padding: 16, borderRadius: 8 }}>
-              <Text strong>Detail Error:</Text>
-              <Paragraph type="danger" copyable style={{ marginTop: 8 }}>
-                {this.state.error?.message}
-              </Paragraph>
-            </div>
-          </Result>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
 
 ================================================================================
-FILE: ../src/components/common/GlobalSearch.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/components/common/GlobalSearch.tsx
+FILE: ../src/app/router.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/app/router.tsx
 ================================================================================
 
-import { useState, useRef, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { Input, Modal, Spin, Empty, Tag, Typography } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
-import { useKeyboardShortcut } from "../../hooks/useKeyboardShortcut";
-import { useDebounce } from "../../hooks/useDebounce";
-import { useProductSearch } from "../../hooks/useProductSearch";
-import type { Product } from "../../types";
 
-const { Text } = Typography;
 
-export const GlobalSearch = () => {
-  const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
-  const [keyword, setKeyword] = useState("");
-  const [activeIndex, setActiveIndex] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
+================================================================================
+FILE: ../src/features/auth/pages/LoginPage.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/auth/pages/LoginPage.tsx
+================================================================================
 
-  const debouncedKeyword = useDebounce(keyword, 250);
-  const { products, isLoading } = useProductSearch(debouncedKeyword);
+import { useState } from "react";
+import { useLogin } from "@refinedev/core";
+import { Button, Card, Form, Input, Typography, Alert, Space } from "antd";
+import { UserOutlined, LockOutlined } from "@ant-design/icons";
 
-  useEffect(() => {
-    if (open) {
-      setKeyword("");
-      setActiveIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
-  }, [open]);
+// ✅ Path import disesuaikan dengan arsitektur baru (naik 3 tingkat ke shared/lib)
+import { USE_MOCK } from "../../../shared/lib/config";
 
-  useEffect(() => {
-    if (activeIndex >= products.length) setActiveIndex(0);
-  }, [products.length, activeIndex]);
+const { Title, Text } = Typography;
 
-  const handleSelect = useCallback(
-    (product: Product) => {
-      setOpen(false);
-      navigate(`/products/create?productId=${product.id}`);
-    },
-    [navigate],
-  );
+interface LoginForm {
+  email: string;
+  password: string;
+}
 
-  // ⌨️ Ctrl+K → buka palette pencarian global
-  useKeyboardShortcut({
-    key: "k",
-    ctrlKey: true,
-    enabled: !open,
-    handler: () => setOpen(true),
-  });
+export const LoginPage = () => {
+  const { mutate: login, isLoading } = useLogin<LoginForm>();
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      setActiveIndex((i) => Math.min(i + 1, Math.max(0, products.length - 1)));
-    } else if (event.key === "ArrowUp") {
-      event.preventDefault();
-      setActiveIndex((i) => Math.max(i - 1, 0));
-    } else if (event.key === "Enter") {
-      event.preventDefault();
-      const selected = products[activeIndex];
-      if (selected) handleSelect(selected);
-    } else if (event.key === "Escape") {
-      event.preventDefault();
-      setOpen(false);
-    }
+  const handleSubmit = (values: LoginForm) => {
+    setErrorMsg(null);
+    login(values, {
+      onError: (error) => {
+        setErrorMsg(error?.message ?? "Login gagal, coba lagi");
+      },
+    });
   };
 
   return (
-    <Modal
-      open={open}
-      onCancel={() => setOpen(false)}
-      footer={null}
-      closable={false}
-      width={560}
-      destroyOnClose
-      styles={{ body: { padding: 0 } }}
-      style={{ top: 80 }}
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background:
+          "linear-gradient(135deg, #1677ff 0%, #0e4fb8 50%, #062d6e 100%)",
+        padding: 16,
+      }}
     >
-      <div style={{ padding: 12, borderBottom: "1px solid #f0f0f0" }}>
-        <Input
-          ref={inputRef as never}
-          size="large"
-          prefix={<SearchOutlined />}
-          placeholder="Cari produk berdasarkan nama atau kode (Ctrl+K)..."
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          onKeyDown={handleKeyDown}
-          variant="borderless"
-          autoFocus
-        />
-      </div>
-
-      <div style={{ maxHeight: 360, overflowY: "auto", padding: 8 }}>
-        {isLoading && (
-          <div style={{ textAlign: "center", padding: 24 }}>
-            <Spin />
+      <Card
+        style={{
+          width: "100%",
+          maxWidth: 420,
+          borderRadius: 16,
+          boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
+        }}
+        styles={{ body: { padding: 32 } }}
+      >
+        {/* Header */}
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <div
+            style={{
+              width: 64,
+              height: 64,
+              margin: "0 auto 12px",
+              borderRadius: 16,
+              background: "linear-gradient(135deg, #1677ff, #0e4fb8)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#fff",
+              fontSize: 28,
+              fontWeight: 700,
+            }}
+          >
+            AS
           </div>
-        )}
+          <Title level={3} style={{ margin: 0 }}>
+            Admin Stok
+          </Title>
+          <Text type="secondary">Masuk untuk mengelola inventaris</Text>
+        </div>
 
-        {!isLoading && products.length === 0 && (
-          <Empty
-            description="Produk tidak ditemukan"
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            style={{ padding: 24 }}
+        {/* Error */}
+        {errorMsg && (
+          <Alert
+            type="error"
+            message={errorMsg}
+            showIcon
+            closable
+            onClose={() => setErrorMsg(null)}
+            style={{ marginBottom: 16 }}
           />
         )}
 
-        {!isLoading &&
-          products.map((product, index) => (
-            <div
-              key={product.id}
-              onMouseEnter={() => setActiveIndex(index)}
-              onClick={() => handleSelect(product)}
-              style={{
-                padding: "10px 12px",
-                borderRadius: 8,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 12,
-                background: index === activeIndex ? "#e6f4ff" : "transparent",
-              }}
+        {/* Form */}
+        <Form<LoginForm>
+          layout="vertical"
+          onFinish={handleSubmit}
+          autoComplete="off"
+          requiredMark={false}
+          initialValues={
+            USE_MOCK
+              ? { email: "admin@admin.com", password: "admin123" }
+              : undefined
+          }
+        >
+          <Form.Item
+            name="email"
+            label="Email"
+            rules={[
+              { required: true, message: "Email wajib diisi" },
+              { type: "email", message: "Format email tidak valid" },
+            ]}
+          >
+            <Input
+              size="large"
+              prefix={<UserOutlined />}
+              placeholder="admin@admin.com"
+              autoFocus
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="password"
+            label="Password"
+            rules={[{ required: true, message: "Password wajib diisi" }]}
+          >
+            <Input.Password
+              size="large"
+              prefix={<LockOutlined />}
+              placeholder="••••••••"
+            />
+          </Form.Item>
+
+          <Form.Item style={{ marginBottom: 12 }}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              size="large"
+              block
+              loading={isLoading}
             >
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontWeight: 500, fontSize: 14 }}>
-                  {product.name}{" "}
-                  {product.size && (
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                      ({product.size})
-                    </Text>
-                  )}
-                </div>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  {product.code} · Stok: {product.stock} {product.unit}
+              Masuk
+            </Button>
+          </Form.Item>
+        </Form>
+
+        {/* Info mock */}
+        {USE_MOCK && (
+          <Alert
+            type="info"
+            showIcon
+            style={{ marginTop: 8 }}
+            message="Mode Demo"
+            description={
+              <Space direction="vertical" size={2}>
+                <Text style={{ fontSize: 12 }}>
+                  Email: <Text code>admin@admin.com</Text>
                 </Text>
-              </div>
-              <Tag color="blue" style={{ margin: 0 }}>
-                Tambah Stok
-              </Tag>
-            </div>
-          ))}
-      </div>
-
-      <div
-        style={{
-          padding: "8px 16px",
-          borderTop: "1px solid #f0f0f0",
-          display: "flex",
-          gap: 16,
-          fontSize: 12,
-          color: "#8c8c8c",
-        }}
-      >
-        <span>↑↓ navigasi</span>
-        <span>↵ pilih</span>
-        <span>esc tutup</span>
-      </div>
-    </Modal>
+                <Text style={{ fontSize: 12 }}>
+                  Password: <Text code>admin123</Text>
+                </Text>
+              </Space>
+            }
+          />
+        )}
+      </Card>
+    </div>
   );
 };
 
-================================================================================
-FILE: ../src/components/common/Rupiah.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/components/common/Rupiah.tsx
-================================================================================
-
-import { formatRupiah } from "../../utility/format";
-
-interface Props {
-  value: number | null | undefined;
-  bold?: boolean;
-}
-
-export const RupiahText = ({ value, bold }: Props) => (
-  <span style={{ fontWeight: bold ? 600 : 400 }}>{formatRupiah(value)}</span>
-);
+// ✅ Wajib ada agar React.lazy() di App.tsx tidak error
+export default LoginPage;
 
 ================================================================================
-FILE: ../src/components/common/StatusBadge.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/components/common/StatusBadge.tsx
+FILE: ../src/features/dashboard/api.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/api.ts
 ================================================================================
 
-import { Tag } from "antd";
-import type { StockStatus } from "../../types";
-import { COLORS, STOCK_STATUS_LABELS } from "../../utility/constants";
 
-interface Props {
-  status?: StockStatus;
-}
-
-export const StatusBadge = ({ status }: Props) => {
-  if (!status) return null;
-
-  return (
-    <Tag color={COLORS.status[status]}>
-      {STOCK_STATUS_LABELS[status]}
-    </Tag>
-  );
-};
 
 ================================================================================
-FILE: ../src/components/dashboard/LowStockTable.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/components/dashboard/LowStockTable.tsx
+FILE: ../src/features/dashboard/components/LowStockTable.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/components/LowStockTable.tsx
 ================================================================================
 
 import { Card, Empty, Skeleton, Table } from "antd";
-import { useLowStock } from "../../hooks/useLowStock";
-import { StatusBadge } from "../common/StatusBadge";
-import type { Product } from "../../types";
+
+// ✅ Path import disesuaikan dengan arsitektur baru
+import { useLowStock } from "../useLowStock"; // Hook sekarang berada di dalam fitur dashboard
+import { StatusBadge } from "../../../shared/components/StatusBadge"; // Komponen umum naik ke shared
+import type { Product } from "../../../shared/types"; // Tipe naik ke shared
 
 export const LowStockTable = () => {
   const { items, isLoading } = useLowStock(5);
@@ -553,8 +493,8 @@ export const LowStockTable = () => {
 };
 
 ================================================================================
-FILE: ../src/components/dashboard/QuickPanel.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/components/dashboard/QuickPanel.tsx
+FILE: ../src/features/dashboard/components/QuickPanel.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/components/QuickPanel.tsx
 ================================================================================
 
 import { Card, Input, Space, Tag } from "antd";
@@ -599,8 +539,8 @@ export const QuickEntryPanel = ({ onTriggerStart }: Props) => {
 };
 
 ================================================================================
-FILE: ../src/components/dashboard/StatCard.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/components/dashboard/StatCard.tsx
+FILE: ../src/features/dashboard/components/StatCard.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/components/StatCard.tsx
 ================================================================================
 
 import { Card, Statistic, Typography } from "antd";
@@ -679,8 +619,8 @@ export const StatCard = ({
 };
 
 ================================================================================
-FILE: ../src/components/dashboard/StockExitList.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/components/dashboard/StockExitList.tsx
+FILE: ../src/features/dashboard/components/StockExitList.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/components/StockExitList.tsx
 ================================================================================
 
 import { Card, Empty, Space, Tag, Typography, Skeleton } from "antd";
@@ -804,8 +744,8 @@ export const StockExitList = ({ exits, loading }: Props) => {
 
 
 ================================================================================
-FILE: ../src/components/dashboard/StockInChart.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/components/dashboard/StockInChart.tsx
+FILE: ../src/features/dashboard/components/StockInChart.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/components/StockInChart.tsx
 ================================================================================
 
 import { Card, Empty, Skeleton } from "antd";
@@ -872,8 +812,8 @@ export const StockInChart = () => {
 };
 
 ================================================================================
-FILE: ../src/components/dashboard/StockTable.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/components/dashboard/StockTable.tsx
+FILE: ../src/features/dashboard/components/StockTable.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/components/StockTable.tsx
 ================================================================================
 
 import { Card, Table, Typography, Tag } from "antd";
@@ -934,8 +874,1323 @@ export const StockTable = ({ products, loading }: Props) => (
 );
 
 ================================================================================
-FILE: ../src/components/entry/SetupWizard.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/components/entry/SetupWizard.tsx
+FILE: ../src/features/dashboard/pages/DashboardPage.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/pages/DashboardPage.tsx
+================================================================================
+
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Col, Row, Typography } from "antd";
+import { AppstoreOutlined, InboxOutlined, ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
+import { SetupWizard } from "../../components/entry/SetupWizard";
+import { QuickEntryPanel } from "../../components/dashboard/QuickPanel";
+import { StatCard } from "../../components/dashboard/StatCard";
+import { StockTable } from "../../components/dashboard/StockTable";
+import { StockExitList } from "../../components/dashboard/StockExitList";
+import { LowStockTable } from "../../components/dashboard/LowStockTable";
+import { StockInChart } from "../../components/dashboard/StockInChart";
+import { useEntryFlow } from "../../hooks/useEntryFlow";
+import { useProducts } from "../../hooks/useProducts";
+import { useStockExits } from "../../hooks/useStockExits";
+import { useDashboardStats } from "../../hooks/useDashboardStats";
+import { useKeyboardShortcut } from "../../hooks/useKeyboardShortcut";
+import { formatFullDate } from "../../utility/format";
+import { COLORS } from "../../utility/constants";
+
+const { Title, Text } = Typography;
+
+export default function DashboardPage() {
+  const navigate = useNavigate();
+  const { products, isLoading: isLoadingProducts } = useProducts();
+  const { stats, isLoading: isLoadingStats } = useDashboardStats();
+
+  const materialProducts = products.filter((p) => p.category === "Material");
+  const { exits, isLoading: isLoadingExits } = useStockExits({ onlyToday: true });
+  const flow = useEntryFlow();
+
+  // ✅ PERBAIKAN: Ganti Tab dengan Alt+M (Standard A11y)
+  useKeyboardShortcut({
+    key: "m", altKey: true, ignoreInputs: true, enabled: !flow.wizardOpen,
+    handler: () => flow.openWizard(),
+  });
+
+  useEffect(() => {
+    if (flow.isReady && flow.person && flow.workplace) {
+      const personName = encodeURIComponent(flow.person.name);
+      const workplaceName = encodeURIComponent(flow.workplace.name);
+      flow.resetSession();
+      navigate(`/entry?person=${personName}&workplace=${workplaceName}`);
+    }
+  }, [flow, navigate]);
+
+  return (
+    <>
+      <SetupWizard open={flow.wizardOpen} step={flow.step === "done" ? "person" : (flow.step as "person" | "workplace")} title={flow.currentWizardData?.title ?? ""} placeholder={flow.currentWizardData?.placeholder ?? ""} options={flow.currentWizardData?.options ?? []} onSelect={flow.selectWizardValue} onBack={flow.step !== "person" ? flow.backWizard : undefined} onClose={() => flow.closeWizard()} />
+
+      <div style={{ marginBottom: 16 }}>
+        <Title level={3} style={{ marginBottom: 4 }}>Dashboard</Title>
+        <Text type="secondary">{formatFullDate(new Date())}</Text>
+      </div>
+
+      <QuickEntryPanel onTriggerStart={() => flow.openWizard()} />
+
+      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+        <Col xs={24} sm={12} lg={6}><StatCard title="Total Barang" value={stats.totalProducts} icon={<AppstoreOutlined />} color={COLORS.primary} suffix="item" loading={isLoadingStats} /></Col>
+        <Col xs={24} sm={12} lg={6}><StatCard title="Total Stok" value={stats.totalStock} icon={<InboxOutlined />} color={COLORS.success} loading={isLoadingStats} /></Col>
+        <Col xs={24} sm={12} lg={6}><StatCard title="Masuk Hari Ini" value={stats.todayInbound} icon={<ArrowDownOutlined />} color={COLORS.warning} loading={isLoadingStats} /></Col>
+        <Col xs={24} sm={12} lg={6}><StatCard title="Keluar Hari Ini" value={stats.todayOutbound} icon={<ArrowUpOutlined />} color={COLORS.danger} loading={isLoadingStats} /></Col>
+      </Row>
+
+      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+        <Col xs={24} lg={16}><StockTable products={materialProducts} loading={isLoadingProducts} /></Col>
+        <Col xs={24} lg={8}><StockExitList exits={exits} loading={isLoadingExits} /></Col>
+      </Row>
+
+      <Row gutter={[16, 16]}>
+        <Col xs={24} lg={14}><StockInChart /></Col>
+        <Col xs={24} lg={10}><LowStockTable /></Col>
+      </Row>
+    </>
+  );
+}
+
+================================================================================
+FILE: ../src/features/dashboard/useDashboardStats.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/useDashboardStats.ts
+================================================================================
+
+import { useQuery } from "@tanstack/react-query";
+import dayjs from "dayjs";
+import { supabaseClient } from "../utility/supabaseClient";
+import { TABLES } from "../utility/constants";
+import { USE_MOCK } from "../utility/config";
+import { getMockDashboardStats } from "../mocks/dashboard";
+import type { DashboardStats } from "../types";
+
+export interface UseDashboardStatsResult {
+  stats: DashboardStats;
+  isLoading: boolean;
+  refetch: () => void;
+}
+
+const EMPTY_STATS: DashboardStats = {
+  totalProducts: 0,
+  totalStock: 0,
+  todayInbound: 0,
+  todayOutbound: 0,
+};
+
+export const useDashboardStats = (): UseDashboardStatsResult => {
+  const query = useQuery<DashboardStats, Error, DashboardStats>({
+    queryKey: ["dashboard-stats"],
+    refetchInterval: USE_MOCK ? false : 60_000,
+    queryFn: async (): Promise<DashboardStats> => {
+      if (USE_MOCK) {
+        await new Promise((r) => setTimeout(r, 300));
+        return getMockDashboardStats();
+      }
+
+      const today = dayjs().format("YYYY-MM-DD");
+      const startOfDay = dayjs().startOf("day").toISOString();
+      const endOfDay = dayjs().endOf("day").toISOString();
+
+      const [productsRes, inboundRes, outboundRes] = await Promise.all([
+        supabaseClient.from(TABLES.products).select("stok"),
+        supabaseClient
+          .from(TABLES.stockEntries)
+          .select("jumlah_barang_masuk")
+          .eq("tanggal_pengiriman", today),
+        supabaseClient
+          .from(TABLES.stockExits)
+          .select("jumlah_barang_keluar")
+          .gte("created_at", startOfDay)
+          .lte("created_at", endOfDay),
+      ]);
+
+      if (productsRes.error) throw productsRes.error;
+      if (inboundRes.error) throw inboundRes.error;
+      if (outboundRes.error) throw outboundRes.error;
+
+      const totalProducts = productsRes.data?.length ?? 0;
+      const totalStock =
+        productsRes.data?.reduce(
+          (sum, p: { stok: number | null }) => sum + (p.stok ?? 0),
+          0,
+        ) ?? 0;
+
+      const todayInbound =
+        inboundRes.data?.reduce(
+          (sum, e: { jumlah_barang_masuk: number | null }) =>
+            sum + (e.jumlah_barang_masuk ?? 0),
+          0,
+        ) ?? 0;
+
+      const todayOutbound =
+        outboundRes.data?.reduce(
+          (sum, exit: { jumlah_barang_keluar: number | null }) =>
+            sum + (exit.jumlah_barang_keluar ?? 0),
+          0,
+        ) ?? 0;
+
+      return { totalProducts, totalStock, todayInbound, todayOutbound };
+    },
+  });
+
+  return {
+    stats: query.data ?? EMPTY_STATS,
+    isLoading: query.isLoading,
+    refetch: query.refetch,
+  };
+};
+
+================================================================================
+FILE: ../src/features/dashboard/useLowStock.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/useLowStock.ts
+================================================================================
+
+import { useQuery } from "@tanstack/react-query";
+import { supabaseClient } from "../utility/supabaseClient";
+import { TABLES } from "../utility/constants";
+import { USE_MOCK } from "../utility/config";
+import { mockLowStockProducts } from "../mocks/products";
+import { mapProduct } from "../utility/mappers";
+import type { Product } from "../types";
+
+const LOW_STOCK_THRESHOLD = 5;
+
+export const useLowStock = (limit = 5) => {
+  const { data, isLoading, refetch } = useQuery<Product[]>({
+    queryKey: ["low-stock", limit],
+    queryFn: async () => {
+      if (USE_MOCK) {
+        await new Promise((r) => setTimeout(r, 300));
+        return mockLowStockProducts.slice(0, limit);
+      }
+
+      const { data, error } = await supabaseClient
+        .from(TABLES.products)
+        .select("*")
+        .lte("stok", LOW_STOCK_THRESHOLD)
+        .order("stok", { ascending: true })
+        .limit(limit);
+
+      if (error) throw error;
+
+      return (data ?? []).map((row) => {
+        const product = mapProduct(row as Record<string, unknown>);
+        return {
+          ...product,
+          minStock: LOW_STOCK_THRESHOLD,
+          status: product.stock <= 0 ? "out" : "low",
+        };
+      });
+    },
+  });
+
+  return {
+    items: data ?? [],
+    total: data?.length ?? 0,
+    isLoading,
+    refetch,
+  };
+};
+
+================================================================================
+FILE: ../src/features/dashboard/useStockInChart.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/useStockInChart.ts
+================================================================================
+
+import { useQuery } from "@tanstack/react-query";
+import dayjs from "dayjs";
+import { supabaseClient } from "../utility/supabaseClient";
+import { TABLES } from "../utility/constants";
+import { USE_MOCK } from "../utility/config";
+import { mockStockInChart } from "../mocks/stockEntries";
+import type { StockInChartItem } from "../types";
+
+export const useStockInChart = (days = 30) => {
+  const { data, isLoading, refetch } = useQuery<StockInChartItem[]>({
+    queryKey: ["stock-in-chart", days],
+    queryFn: async () => {
+      if (USE_MOCK) {
+        await new Promise((r) => setTimeout(r, 300));
+        return mockStockInChart.slice(-days);
+      }
+
+      const fromDate = dayjs().subtract(days, "day").format("YYYY-MM-DD");
+
+      const { data, error } = await supabaseClient
+        .from(TABLES.stockEntries)
+        .select("tanggal_pengiriman, jumlah_barang_masuk")
+        .gte("tanggal_pengiriman", fromDate)
+        .order("tanggal_pengiriman", { ascending: true });
+
+      if (error) throw error;
+
+      const grouped = (data ?? []).reduce<Record<string, number>>(
+        (
+          acc,
+          row: {
+            tanggal_pengiriman: string | null;
+            jumlah_barang_masuk: number | null;
+          },
+        ) => {
+          if (!row.tanggal_pengiriman) return acc;
+          acc[row.tanggal_pengiriman] =
+            (acc[row.tanggal_pengiriman] ?? 0) + (row.jumlah_barang_masuk ?? 0);
+          return acc;
+        },
+        {},
+      );
+
+      return Object.entries(grouped).map(([date, total]) => ({
+        date,
+        total,
+      }));
+    },
+  });
+
+  return {
+    items: data ?? [],
+    isLoading,
+    refetch,
+  };
+};
+
+================================================================================
+FILE: ../src/features/products/api.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/products/api.ts
+================================================================================
+
+
+
+================================================================================
+FILE: ../src/features/products/components/InventoryTable.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/products/components/InventoryTable.tsx
+================================================================================
+
+import { useState } from "react";
+import { Table, Typography, Tag, Space, Card, Input } from "antd";
+import type { ColumnsType } from "antd/es/table";
+import { formatNumber } from "../../utility/format";
+import { SendOutlined, UserOutlined, SearchOutlined } from "@ant-design/icons";
+import type { Product, StockExit, StockExitItem } from "../../types";
+
+const { Text } = Typography;
+
+interface OutboundRow extends StockExitItem { transactionId: number; time: string; person: string; destination: string | null; }
+
+type InventoryTableProps = 
+  | { type: "stock"; dataSource: Product[]; loading?: boolean }
+  | { type: "outbound"; dataSource: StockExit[]; loading?: boolean };
+
+export const InventoryTable = (props: InventoryTableProps) => {
+  const { type, loading } = props;
+  const [searchText, setSearchText] = useState("");
+
+  const stockColumns: ColumnsType<Product> = [
+    { dataIndex: "name", title: "Nama Item", render: (v: string) => <Text strong style={{ fontSize: 14 }}>{v}</Text> },
+    { dataIndex: "size", title: "Ukuran", width: 200, render: (v: string | null) => v ? <Text type="secondary">{v}</Text> : "-" },
+    { dataIndex: "stock", title: "Stok Tersedia", width: 160, align: "right", defaultSortOrder: "descend", sorter: (a, b) => a.stock - b.stock, render: (v, r) => <Tag color={v > 0 ? "blue" : "red"} style={{ fontSize: 13 }}>{formatNumber(v)} {r.unit}</Tag> },
+  ];
+
+  const outboundColumns: ColumnsType<OutboundRow> = [
+    { title: "Waktu", dataIndex: "time", width: 100, render: (v: string) => <Text strong style={{ color: "#1677ff" }}>{v}</Text> },
+    { title: "Nama Item", dataIndex: "itemName", render: (v: string, r) => <Space direction="vertical" size={0}><Text strong>{v}</Text>{r.size && <Text type="secondary" style={{ fontSize: 12 }}>{r.size}</Text>}</Space> },
+    { title: "Jumlah", dataIndex: "quantity", width: 140, align: "right", render: (v, r) => <Text strong style={{ color: "#ff4d4f", fontSize: 14 }}>{formatNumber(v)} <Text type="secondary" style={{ fontSize: 12 }}>{r.unit}</Text></Text> },
+    { title: "Lokasi", dataIndex: "destination", width: 200, render: (v) => v ? <Tag icon={<SendOutlined />} color="cyan">{v}</Tag> : <Text type="secondary">-</Text> },
+    { title: "PIC", dataIndex: "person", width: 180, render: (v: string) => <Text style={{ fontSize: 13, color: "#595959" }}><UserOutlined /> {v}</Text> },
+  ];
+
+  const lowerSearch = searchText.trim().toLowerCase();
+
+  const stockData = type === "stock" ? props.dataSource.filter((item) => !lowerSearch || item.name.toLowerCase().includes(lowerSearch) || (item.size && item.size.toLowerCase().includes(lowerSearch))) : [];
+  const outboundData = type === "outbound" ? props.dataSource.flatMap((exit) => exit.items.map((item) => ({ ...item, transactionId: exit.id, time: exit.time, person: exit.person, destination: exit.destination }))).filter((item) => !lowerSearch || item.itemName.toLowerCase().includes(lowerSearch) || item.person.toLowerCase().includes(lowerSearch)) : [];
+
+  return (
+    <Card variant="borderless" style={{ borderRadius: 12, border: "1px solid #f0f0f0", overflow: "hidden" }} styles={{ body: { padding: 0 } }}>
+      <div style={{ padding: "16px 20px", borderBottom: "1px solid #f0f0f0" }}>
+        <Input placeholder="Cari..." prefix={<SearchOutlined />} allowClear size="large" value={searchText} onChange={(e) => setSearchText(e.target.value)} style={{ maxWidth: 400 }} />
+      </div>
+      {type === "stock" ? <Table<Product> dataSource={stockData} rowKey="id" loading={loading} pagination={{ pageSize: 20, size: "small" }} scroll={{ x: 750 }} columns={stockColumns} rowClassName={(_, i) => (i % 2 === 0 ? "table-row-light" : "table-row-dark")} /> : <Table<OutboundRow> dataSource={outboundData} rowKey={(r) => `${r.transactionId}-${r.itemId}`} loading={loading} pagination={{ pageSize: 20, size: "small" }} scroll={{ x: 750 }} columns={outboundColumns} rowClassName={(_, i) => (i % 2 === 0 ? "table-row-light" : "table-row-dark")} />}
+    </Card>
+  );
+};
+
+================================================================================
+FILE: ../src/features/products/pages/InventoryPage.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/products/pages/InventoryPage.tsx
+================================================================================
+
+import { useState } from "react";
+import { Typography, Tabs, Space } from "antd";
+import { formatFullDate } from "../../utility/format";
+import { InventoryTable } from "../../components/inventory/InventoryTable";
+import { useProducts } from "../../hooks/useProducts";
+import { useStockExits } from "../../hooks/useStockExits";
+
+const { Title, Text } = Typography;
+
+enum InventoryTabKey {
+  MATERIAL = "material",
+  TOOLS = "tools",
+  OUTBOUND_BREAKDOWN = "outbound-breakdown",
+  OUTBOUND_NON_BREAKDOWN = "outbound-non-breakdown",
+}
+
+export const InventoryPage = () => {
+  const [activeTab, setActiveTab] = useState<string>(InventoryTabKey.MATERIAL);
+
+  const { products: materials, isLoading: isLoadingMaterials } =
+    useProducts("Material");
+
+  const { products: tools, isLoading: isLoadingTools } =
+    useProducts("Alat Bantu");
+
+  const { exits: breakdownExits, isLoading: isLoadingBreakdown } =
+    useStockExits({ breakdown: true });
+
+  const { exits: nonBreakdownExits, isLoading: isLoadingNonBreakdown } =
+    useStockExits({ breakdown: false });
+
+  const tabItems = [
+    {
+      key: InventoryTabKey.MATERIAL,
+      label: `Stok Persediaan Material (${materials.length})`,
+      children: (
+        <InventoryTable
+          type="stock"
+          dataSource={materials}
+          loading={isLoadingMaterials}
+        />
+      ),
+    },
+    {
+      key: InventoryTabKey.TOOLS,
+      // ✅ Rename jadi Stok Persediaan Alat
+      label: `Stok Persediaan Alat (${tools.length})`,
+      children: (
+        <InventoryTable
+          type="stock"
+          dataSource={tools}
+          loading={isLoadingTools}
+        />
+      ),
+    },
+    {
+      key: InventoryTabKey.OUTBOUND_BREAKDOWN,
+      label: `Pengeluaran (Breakdown) (${breakdownExits.length})`,
+      children: (
+        <InventoryTable
+          type="outbound"
+          dataSource={breakdownExits}
+          loading={isLoadingBreakdown}
+        />
+      ),
+    },
+    {
+      key: InventoryTabKey.OUTBOUND_NON_BREAKDOWN,
+      label: `Pengeluaran (Diluar Breakdown) (${nonBreakdownExits.length})`,
+      children: (
+        <InventoryTable
+          type="outbound"
+          dataSource={nonBreakdownExits}
+          loading={isLoadingNonBreakdown}
+        />
+      ),
+    },
+  ];
+
+  return (
+    <Space direction="vertical" size="large" style={{ width: "100%" }}>
+      <div>
+        <Title level={3} style={{ marginBottom: 4 }}>
+          Manajemen Persediaan & Pengeluaran
+        </Title>
+        <Text type="secondary">{formatFullDate(new Date())}</Text>
+      </div>
+
+      <Tabs
+        activeKey={activeTab}
+        onChange={setActiveTab}
+        type="card"
+        size="large"
+        items={tabItems}
+        destroyInactiveTabPane={false}
+      />
+    </Space>
+  );
+};
+
+export default InventoryPage;
+
+================================================================================
+FILE: ../src/features/products/pages/ProductCreatePage.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/products/pages/ProductCreatePage.tsx
+================================================================================
+
+import { useState } from "react";
+import { Button, Card, Col, DatePicker, Form, Input, InputNumber, Row, Select, Space, Table, Typography, App } from "antd";
+import { PlusOutlined, SaveOutlined, AppstoreAddOutlined } from "@ant-design/icons";
+import { useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
+import { supabaseClient } from "../../utility/supabaseClient";
+import { USE_MOCK } from "../../utility/config";
+import { useProductSearch } from "../../hooks/useProductSearch";
+import { useDebounce } from "../../hooks/useDebounce";
+import { formatNumber, formatDate } from "../../utility/format";
+import type { Product } from "../../types";
+
+const { Title, Text } = Typography;
+
+interface StockEntryFormValues { productId: number; jumlah: number; tanggal_pengiriman: dayjs.Dayjs; spesifikasi?: string; merk?: string; }
+
+export const ProductCreatePage = () => {
+  const [form] = Form.useForm<StockEntryFormValues>();
+  const { message } = App.useApp();
+  const queryClient = useQueryClient();
+
+  const [keyword, setKeyword] = useState("");
+  const debouncedKeyword = useDebounce(keyword, 250);
+  const { products, isLoading } = useProductSearch(debouncedKeyword, 30);
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [recentEntries, setRecentEntries] = useState<any[]>([]);
+
+  const handleProductSelect = (val: number) => setSelectedProduct(products.find((p) => p.id === val) || null);
+
+  const handleSubmit = async (values: StockEntryFormValues) => {
+    if (!selectedProduct) return;
+    setIsSubmitting(true);
+    
+    try {
+      if (!USE_MOCK) {
+        // ✅ PERBAIKAN: Gunakan RPC Supabase untuk atomicity (stok masuk)
+        const { error } = await supabaseClient.rpc("receive_stock", {
+          p_product_id: selectedProduct.id,
+          p_quantity: values.jumlah,
+          p_date: values.tanggal_pengiriman.format("YYYY-MM-DD"),
+          p_merk: values.merk || null,
+          p_spesifikasi: values.spesifikasi || null
+        });
+        if (error) throw error;
+      }
+
+      message.success(`Berhasil menambah ${formatNumber(values.jumlah)} ${selectedProduct.unit} ke ${selectedProduct.name}!`);
+      setRecentEntries((prev) => [{ key: Date.now(), nama: selectedProduct.name, ukuran: selectedProduct.size, jumlah: values.jumlah, satuan: selectedProduct.unit, tanggal: values.tanggal_pengiriman.format("YYYY-MM-DD") }, ...prev]);
+      
+      form.resetFields();
+      setSelectedProduct(null);
+      setKeyword("");
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+    } catch (err: any) {
+      message.error(err?.message || "Gagal menyimpan data barang masuk");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: 860, margin: "0 auto", paddingBottom: 32 }}>
+      <div style={{ marginBottom: 16 }}>
+        <Space align="center" size={10}>
+          <div style={{ width: 42, height: 42, borderRadius: 10, background: "#1677ff15", color: "#1677ff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}><AppstoreAddOutlined /></div>
+          <div><Title level={3} style={{ margin: 0 }}>Tambah Barang Masuk</Title><Text type="secondary">Pilih barang dan tambahkan stoknya</Text></div>
+        </Space>
+      </div>
+
+      <Card variant="borderless" style={{ borderRadius: 14, marginBottom: 24 }} styles={{ body: { padding: 24 } }}>
+        <Form<StockEntryFormValues> form={form} layout="vertical" onFinish={handleSubmit} initialValues={{ tanggal_pengiriman: dayjs() }} requiredMark={false}>
+          <Row gutter={[16, 8]}>
+            <Col xs={24}>
+              <Form.Item name="productId" label="Nama Barang" rules={[{ required: true }]}>
+                <Select showSearch size="large" filterOption={false} loading={isLoading} onSearch={setKeyword} onChange={handleProductSelect} options={products.map((p) => ({ value: p.id, label: `${p.name} ${p.size ? `(${p.size})` : ""} — Sisa: ${p.stock} ${p.unit}` }))} notFoundContent={isLoading ? "Mencari data..." : "Tidak ditemukan"} />
+              </Form.Item>
+            </Col>
+            <Col xs={12} sm={8}>
+              <Form.Item name="jumlah" label="Jumlah" rules={[{ required: true }]}><InputNumber size="large" min={1} style={{ width: "100%" }} addonAfter={selectedProduct?.unit || ""} /></Form.Item>
+            </Col>
+            <Col xs={12} sm={16}>
+              <Form.Item name="tanggal_pengiriman" label="Tgl Pengiriman" rules={[{ required: true }]}><DatePicker size="large" style={{ width: "100%" }} format="DD MMM YYYY" /></Form.Item>
+            </Col>
+            <Col xs={24} sm={12}><Form.Item name="merk" label="Merk (Opsional)"><Input size="large" /></Form.Item></Col>
+            <Col xs={24} sm={12}><Form.Item name="spesifikasi" label="Spesifikasi (Opsional)"><Input size="large" /></Form.Item></Col>
+          </Row>
+          <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}><Button type="primary" size="large" htmlType="submit" icon={<SaveOutlined />} loading={isSubmitting} disabled={!selectedProduct}>Simpan Stok</Button></div>
+        </Form>
+      </Card>
+
+      {recentEntries.length > 0 && (
+        <Card title={<Space><PlusOutlined /><span>Baru Saja Ditambahkan</span></Space>} variant="borderless" style={{ borderRadius: 14 }} styles={{ body: { padding: 0 } }}>
+          <Table dataSource={recentEntries} pagination={false} size="small" scroll={{ x: 500 }} columns={[{ dataIndex: "nama", title: "Nama", ellipsis: true }, { dataIndex: "ukuran", title: "Ukuran", width: 140, render: (v) => v ?? "-" }, { title: "Jumlah", width: 120, align: "right", render: (_, r) => <Text strong style={{ color: "#52c41a" }}>+{formatNumber(r.jumlah)} <Text type="secondary" style={{fontSize: 12}}>{r.satuan}</Text></Text> }, { dataIndex: "tanggal", title: "Tgl Kirim", width: 110, render: (v) => formatDate(v) }]} />
+        </Card>
+      )}
+    </div>
+  );
+};
+export default ProductCreatePage;
+
+================================================================================
+FILE: ../src/features/products/types.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/products/types.ts
+================================================================================
+
+
+
+================================================================================
+FILE: ../src/features/products/useProducts.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/products/useProducts.ts
+================================================================================
+
+import { useQuery } from "@tanstack/react-query";
+import { supabaseClient } from "../utility/supabaseClient";
+import { TABLES } from "../utility/constants";
+import { USE_MOCK } from "../utility/config";
+import { mockProducts } from "../mocks/products";
+import { mapProduct } from "../utility/mappers";
+import type { Product } from "../types";
+
+export const useProducts = (category?: string) => {
+  const { data, isLoading, refetch } = useQuery<Product[]>({
+    queryKey: ["products", category ?? "all"],
+    queryFn: async () => {
+      if (USE_MOCK) {
+        await new Promise((r) => setTimeout(r, 300));
+        const filtered = category
+          ? mockProducts.filter((p) => p.category === category)
+          : mockProducts;
+        return [...filtered].sort((a, b) => b.stock - a.stock);
+      }
+
+      let query = supabaseClient
+        .from(TABLES.products)
+        .select("*")
+        // ✅ Urutkan berdasarkan stok terbanyak terlebih dahulu
+        .order("stok", { ascending: false })
+        .order("nama", { ascending: true });
+
+      if (category) {
+        query = query.eq("kategori", category);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data ?? []).map(mapProduct);
+    },
+  });
+
+  return {
+    products: data ?? [],
+    isLoading,
+    refetch,
+  };
+};
+
+================================================================================
+FILE: ../src/features/products/useProductSearch.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/products/useProductSearch.ts
+================================================================================
+
+import { useQuery } from "@tanstack/react-query";
+import { supabaseClient } from "../utility/supabaseClient";
+import { TABLES } from "../utility/constants";
+import { USE_MOCK } from "../utility/config";
+import { mockProducts } from "../mocks/products";
+import { mapProduct } from "../utility/mappers";
+import type { Product } from "../types";
+
+export const useProductSearch = (keyword: string, limit = 30) => {
+  const sanitize = (str: string) => str.replace(/[%_()\\'"]/g, "");
+  const trimmed = sanitize(keyword).trim();
+
+  const { data, isLoading, refetch } = useQuery<Product[]>({
+    queryKey: ["product-search", trimmed, limit],
+    queryFn: async () => {
+      if (USE_MOCK) {
+        if (!trimmed) return mockProducts.slice(0, limit);
+        const lower = trimmed.toLowerCase();
+        return mockProducts.filter((p) => p.name.toLowerCase().includes(lower) || p.code.toLowerCase().includes(lower)).slice(0, limit);
+      }
+
+      let query = supabaseClient.from(TABLES.products).select("*").limit(limit).order("nama", { ascending: true }); 
+      if (trimmed) {
+        const words = trimmed.split(/\s+/).filter(Boolean);
+        const orConditions = words.map((w) => `nama.ilike.%${w}%,kode.ilike.%${w}%`).join(",");
+        query = query.or(orConditions);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data ?? []).map(mapProduct);
+    },
+    staleTime: 10_000,
+  });
+
+  return { products: data ?? [], isLoading, refetch };
+};
+
+================================================================================
+FILE: ../src/features/reports/pages/ReportsPage.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/reports/pages/ReportsPage.tsx
+================================================================================
+
+
+
+================================================================================
+FILE: ../src/features/spb/api.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/api.ts
+================================================================================
+
+
+
+================================================================================
+FILE: ../src/features/spb/pages/MonitoringSPBDetailPage.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/pages/MonitoringSPBDetailPage.tsx
+================================================================================
+
+import { useMemo } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import {
+  Typography, Card, Row, Col, Tag, Table, Button,
+  Spin, Empty, Space, Result,
+} from "antd";
+import { ArrowLeftOutlined } from "@ant-design/icons";
+import { useMonitoringSPBDetail } from "../../hooks/useMonitoringSPBDetail";
+import type { SPBItemDetail } from "../../hooks/useMonitoringSPBDetail";
+import { formatDate } from "../../utility/format";
+
+const { Title, Text } = Typography;
+
+const DELIVERED = ["DATANG SESUAI", "DATANG KURANG", "DATANG LEBIH"];
+
+export const MonitoringSPBDetailPage = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const spbNo = searchParams.get("spb");
+  const poNo = searchParams.get("po");
+
+  const { items, isLoading, error } = useMonitoringSPBDetail(spbNo, poNo);
+
+  const statuses = useMemo(() => {
+    if (items.length === 0) {
+      return {
+        belumDiPo: false,
+        sudahDiPo: false,
+        datangSebagian: false,
+        selesai: false,
+      };
+    }
+    const somePo = items.some((it) => it.no_po && it.tanggal_po);
+    const someDelivered = items.some((it) => DELIVERED.includes(it.status));
+    const allDelivered = items.every((it) => DELIVERED.includes(it.status));
+
+    return {
+      belumDiPo: !somePo,
+      sudahDiPo: somePo,
+      datangSebagian: someDelivered && !allDelivered,
+      selesai: allDelivered,
+    };
+  }, [items]);
+
+  const StatusCard = ({ title, active }: { title: string; active: boolean }) => (
+    <Card
+      size="small"
+      style={{
+        backgroundColor: active ? "#f6ffed" : "#f5f5f5",
+        borderColor: active ? "#b7eb8f" : "#d9d9d9",
+        textAlign: "center",
+      }}
+    >
+      <span
+        style={{
+          color: active ? "#52c41a" : "#8c8c8c",
+          fontWeight: active ? "bold" : "normal",
+        }}
+      >
+        {title}
+      </span>
+    </Card>
+  );
+
+  const columns = [
+    { title: "Nama Barang", dataIndex: "nama_barang", key: "nama_barang" },
+    {
+      title: "Qty",
+      dataIndex: "jumlah_permintaan",
+      key: "jumlah_permintaan",
+      align: "right" as const,
+    },
+    { title: "Satuan", dataIndex: "satuan", key: "satuan" },
+    { title: "No PO", dataIndex: "no_po", key: "no_po" },
+    {
+      title: "Tgl PO",
+      dataIndex: "tanggal_po",
+      key: "tanggal_po",
+      render: (v: string | null) => (v ? formatDate(v) : "-"),
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status: string) => {
+        let color: "green" | "red" | "orange" | "default" = "default";
+        if (["DATANG SESUAI", "DATANG LEBIH"].includes(status)) color = "green";
+        else if (status === "DATANG KURANG") color = "orange";
+        else if (status === "BELUM DATANG") color = "red";
+        return <Tag color={color}>{status}</Tag>;
+      },
+    },
+    {
+      title: "Tgl Datang",
+      dataIndex: "tanggal_datang",
+      key: "tanggal_datang",
+      render: (v: string | null) => (v ? formatDate(v) : "-"),
+    },
+  ];
+
+  return (
+    <div style={{ maxWidth: 1100, margin: "0 auto", paddingBottom: 32 }}>
+      {/* Header */}
+      <Space align="center" style={{ marginBottom: 16 }}>
+        <Button
+          type="text"
+          size="large"
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate("/monitoring-spb")}
+        />
+        <div>
+          <Title level={3} style={{ margin: 0 }}>
+            Detail SPB / PO
+          </Title>
+          <Text type="secondary">
+            {spbNo ? `SPB: ${spbNo}` : ""}
+            {spbNo && poNo ? " · " : ""}
+            {poNo ? `PO: ${poNo}` : ""}
+          </Text>
+        </div>
+      </Space>
+
+      {isLoading && (
+        <div style={{ textAlign: "center", padding: 50 }}>
+          <Spin size="large" />
+        </div>
+      )}
+
+      {!isLoading && error && (
+        <Result
+          status="error"
+          title="Gagal memuat detail"
+          subTitle={error.message}
+        />
+      )}
+
+      {!isLoading && !error && items.length === 0 && (
+        <Empty description="Dokumen tidak ditemukan atau sudah dihapus" />
+      )}
+
+      {!isLoading && !error && items.length > 0 && (
+        <>
+          {/* Status Cards */}
+          <Row gutter={[8, 8]} style={{ marginBottom: 16 }}>
+            <Col xs={12} md={6}><StatusCard title="Belum di PO" active={statuses.belumDiPo} /></Col>
+            <Col xs={12} md={6}><StatusCard title="Sudah di PO" active={statuses.sudahDiPo} /></Col>
+            <Col xs={12} md={6}><StatusCard title="Datang Sebagian" active={statuses.datangSebagian} /></Col>
+            <Col xs={12} md={6}><StatusCard title="SPB Selesai" active={statuses.selesai} /></Col>
+          </Row>
+
+          <Card
+            title={`Daftar Barang (${items.length})`}
+            variant="borderless"
+            style={{ borderRadius: 12 }}
+            styles={{ body: { padding: 0 } }}
+          >
+            <Table<SPBItemDetail>
+              dataSource={items}
+              columns={columns}
+              rowKey="id"
+              pagination={{ pageSize: 20 }}
+              scroll={{ x: "max-content" }}
+            />
+          </Card>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default MonitoringSPBDetailPage;
+
+================================================================================
+FILE: ../src/features/spb/pages/MonitoringSPBPage.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/pages/MonitoringSPBPage.tsx
+================================================================================
+
+import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Typography, Card, Space, Tag, Row, Col, Divider,
+  Spin, Segmented, Empty, Alert,
+} from "antd";
+import {
+  useMonitoringSPB,
+  type SPBDocumentGroup,
+} from "../../hooks/useMonitoringSPB";
+import { formatFullDate, formatDate } from "../../utility/format";
+import {
+  CheckCircleOutlined,
+  SyncOutlined,
+  FileTextOutlined,
+  ArrowRightOutlined,
+} from "@ant-design/icons";
+
+const { Title, Text } = Typography;
+
+type FilterType =
+  | "Semua"
+  | "Sudah di PO"
+  | "Belum di PO"
+  | "Datang"
+  | "SPB Selesai";
+
+// Status yang dianggap "sudah datang"
+const DELIVERED = ["DATANG SESUAI", "DATANG KURANG", "DATANG LEBIH"];
+// Status yang dianggap "selesai tanpa masalah"
+const COMPLETED = ["DATANG SESUAI", "DATANG LEBIH"];
+
+export const MonitoringSPBPage = () => {
+  const { data, isLoading, error } = useMonitoringSPB();
+  const navigate = useNavigate();
+  const [filter, setFilter] = useState<FilterType>("Semua");
+
+  // ✅ "Baru ditambahkan" = 4 dokumen dengan tanggal terbaru
+  const recentItems = useMemo(() => {
+    const time = (d: string) =>
+      d && d !== "-" ? new Date(d).getTime() || 0 : 0;
+    return [...data]
+      .sort((a, b) => time(b.date) - time(a.date))
+      .slice(0, 4);
+  }, [data]);
+
+  const filteredAndSortedData = useMemo(() => {
+    const filtered = data.filter((item) => {
+      switch (filter) {
+        case "Sudah di PO":
+          return item.poNo !== null;
+        case "Belum di PO":
+          return item.poNo === null;
+        case "Datang":
+          // ✅ ikutkan DATANG KURANG (sebagian datang)
+          return DELIVERED.includes(item.status);
+        case "SPB Selesai":
+          // ✅ hanya yang benar-benar selesai (tidak kurang)
+          return COMPLETED.includes(item.status);
+        default:
+          return true;
+      }
+    });
+
+    // Yang selesai diletakkan paling bawah, sisanya urut sortNumber
+    return filtered.sort((a, b) => {
+      const aDone = COMPLETED.includes(a.status);
+      const bDone = COMPLETED.includes(b.status);
+      if (aDone && !bDone) return 1;
+      if (!aDone && bDone) return -1;
+      return a.sortNumber - b.sortNumber;
+    });
+  }, [data, filter]);
+
+  // ✅ Navigasi ke detail
+  const handleCardClick = (item: SPBDocumentGroup) => {
+    const params = new URLSearchParams();
+    if (item.spbNo) params.set("spb", item.spbNo);
+    if (item.poNo) params.set("po", item.poNo);
+    navigate(`/monitoring-spb/detail?${params.toString()}`);
+  };
+
+  const renderCardContent = (item: SPBDocumentGroup) => {
+    const hasSPB = item.spbNo !== null;
+    const hasPO = item.poNo !== null;
+
+    const isDone = COMPLETED.includes(item.status);
+    const statusColor = isDone
+      ? "success"
+      : item.status === "BELUM DATANG"
+      ? "error"
+      : "processing";
+    const statusIcon = isDone ? <CheckCircleOutlined /> : <SyncOutlined spin />;
+
+    return (
+      <Card
+        hoverable
+        onClick={() => handleCardClick(item)}
+        style={{
+          borderRadius: 12,
+          height: "100%",
+          border: "1px solid #f0f0f0",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+          cursor: "pointer",
+          transition: "all 0.2s",
+        }}
+        styles={{ body: { padding: 16 } }}
+      >
+        <Space direction="vertical" style={{ width: "100%" }} size={2}>
+          {hasSPB && (
+            <div>
+              <Text type="secondary" style={{ fontSize: 11 }}>No. SPB</Text>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>{item.spbNo}</div>
+            </div>
+          )}
+
+          {hasSPB && hasPO && <Divider style={{ margin: "8px 0" }} />}
+
+          {hasPO && (
+            <div>
+              <Text type="secondary" style={{ fontSize: 11 }}>No. PO</Text>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>{item.poNo}</div>
+            </div>
+          )}
+
+          <div style={{ marginTop: 12 }}>
+            <Tag icon={statusIcon} color={statusColor} style={{ margin: 0 }}>
+              Status: {item.status}
+            </Tag>
+            <div style={{ marginTop: 8, fontSize: 12, color: "#8c8c8c" }}>
+              Total: {item.itemsCount} Barang
+            </div>
+          </div>
+
+          {/* ✅ Hint visual bahwa card bisa diklik */}
+          <div
+            style={{
+              marginTop: 12,
+              paddingTop: 12,
+              borderTop: "1px dashed #f0f0f0",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              color: "#1677ff",
+              fontSize: 12,
+              fontWeight: 500,
+            }}
+          >
+            <span>Lihat detail</span>
+            <ArrowRightOutlined />
+          </div>
+        </Space>
+      </Card>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <div style={{ textAlign: "center", padding: 50 }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert
+        type="error"
+        showIcon
+        message="Gagal memuat data SPB"
+        description={(error as Error)?.message ?? "Coba muat ulang halaman"}
+      />
+    );
+  }
+
+  return (
+    <div style={{ maxWidth: 1000, margin: "0 auto", paddingBottom: 32 }}>
+      <div style={{ marginBottom: 24 }}>
+        <Space align="center">
+          <div
+            style={{
+              width: 42, height: 42, borderRadius: 10,
+              background: "#1677ff15", color: "#1677ff",
+              display: "flex", alignItems: "center",
+              justifyContent: "center", fontSize: 20,
+            }}
+          >
+            <FileTextOutlined />
+          </div>
+          <div>
+            <Title level={3} style={{ margin: 0 }}>Monitoring SPB</Title>
+            <Text type="secondary">
+              {data.length} Dokumen Terdaftar · Diperbarui{" "}
+              {formatFullDate(new Date())}
+            </Text>
+          </div>
+        </Space>
+      </div>
+
+      {/* Baru ditambahkan */}
+      {recentItems.length > 0 && (
+        <div style={{ marginBottom: 32 }}>
+          <Text strong style={{ fontSize: 16, display: "block", marginBottom: 12 }}>
+            Baru ditambahkan
+          </Text>
+          <div style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 8 }}>
+            {recentItems.map((item) => (
+              <div key={item.id} style={{ minWidth: 200, flexShrink: 0 }}>
+                <Card
+                  size="small"
+                  hoverable
+                  onClick={() => handleCardClick(item)}
+                  style={{
+                    borderRadius: 10,
+                    background: "#fafafa",
+                    cursor: "pointer",
+                  }}
+                >
+                  <Space direction="vertical" size={0}>
+                    <Text strong>
+                      {item.spbNo && item.poNo
+                        ? `SPB: ${item.spbNo} · PO: ${item.poNo}`
+                        : item.spbNo
+                        ? `SPB: ${item.spbNo}`
+                        : `PO: ${item.poNo}`}
+                    </Text>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      {item.date !== "-" ? formatDate(item.date) : "-"}
+                    </Text>
+                  </Space>
+                </Card>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div style={{ marginBottom: 20 }}>
+        <Segmented<FilterType>
+          size="large"
+          options={["Semua", "Sudah di PO", "Belum di PO", "Datang", "SPB Selesai"]}
+          value={filter}
+          onChange={setFilter}
+          style={{ padding: 4, fontWeight: 500 }}
+        />
+      </div>
+
+      <Row gutter={[16, 16]}>
+        {filteredAndSortedData.map((item) => (
+          <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
+            {renderCardContent(item)}
+          </Col>
+        ))}
+      </Row>
+
+      {filteredAndSortedData.length === 0 && (
+        <div style={{ textAlign: "center", padding: 40, width: "100%" }}>
+          <Empty description="Tidak ada data SPB/PO untuk kategori ini." />
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default MonitoringSPBPage;
+
+================================================================================
+FILE: ../src/features/spb/useMonitoringSPB.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/useMonitoringSPB.ts
+================================================================================
+
+import { useQuery } from "@tanstack/react-query";
+import { supabaseClient } from "../utility/supabaseClient";
+import { USE_MOCK } from "../utility/config";
+import type { SPBDocumentGroup } from "../types";
+
+const getSortNumber = (str: string | null) => {
+  if (!str) return 999999;
+  const match = str.match(/\d+/);
+  return match ? parseInt(match[0], 10) : 999999;
+};
+
+export const useMonitoringSPB = () => {
+  const { data, isLoading, error, refetch } = useQuery<SPBDocumentGroup[]>({
+    queryKey: ["monitoring-spb"],
+    queryFn: async () => {
+      if (USE_MOCK) return [];
+      
+      // ✅ PERBAIKAN: Mengambil data dari VIEW (agregasi server-side)
+      const { data, error } = await supabaseClient
+        .from("v_spb_grouped")
+        .select("*")
+        .order("tanggal", { ascending: false });
+
+      if (error) throw error;
+
+      return (data ?? []).map((row: any) => ({
+        id: `${row.no_spb || "NO_SPB"}_${row.no_po || "NO_PO"}`,
+        spbNo: row.no_spb,
+        poNo: row.no_po,
+        date: row.tanggal || "-",
+        status: row.status,
+        itemsCount: row.items_count,
+        sortNumber: getSortNumber(row.no_spb) + getSortNumber(row.no_po) * 0.01,
+      }));
+    },
+  });
+
+  return { data: data ?? [], isLoading, error: error as Error | null, refetch };
+};
+
+================================================================================
+FILE: ../src/features/spb/useMonitoringSPBDetail.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/useMonitoringSPBDetail.ts
+================================================================================
+
+import { useQuery } from "@tanstack/react-query";
+import { supabaseClient } from "../utility/supabaseClient";
+import { TABLES } from "../utility/constants";
+
+export interface SPBItemDetail {
+  id: number;
+  no_spb: string | null;
+  no_po: string | null;
+  nama_barang: string;
+  jumlah_permintaan: number | null;
+  satuan: string | null;
+  status: string;
+  tanggal_po: string | null;
+  tanggal_datang: string | null;
+  tanggal_pembuatan_spb?: string | null;
+}
+
+export const useMonitoringSPBDetail = (
+  spbNo: string | null,
+  poNo: string | null,
+) => {
+  const { data, isLoading, error, refetch } = useQuery<SPBItemDetail[]>({
+    queryKey: ["monitoring-spb-detail", spbNo, poNo],
+    queryFn: async () => {
+      let query = supabaseClient.from(TABLES.spb).select("*");
+
+      if (spbNo && poNo) {
+        query = query.eq("no_spb", spbNo).eq("no_po", poNo);
+      } else if (spbNo) {
+        // SPB tanpa PO
+        query = query.eq("no_spb", spbNo).is("no_po", null);
+      } else if (poNo) {
+        // PO tanpa SPB
+        query = query.is("no_spb", null).eq("no_po", poNo);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data ?? []) as SPBItemDetail[];
+    },
+    enabled: !!(spbNo || poNo),
+  });
+
+  return {
+    items: data ?? [],
+    isLoading,
+    error: error as Error | null,
+    refetch,
+  };
+};
+
+================================================================================
+FILE: ../src/features/stock-in/api.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-in/api.ts
+================================================================================
+
+
+
+================================================================================
+FILE: ../src/features/stock-in/pages/StockInListPage.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-in/pages/StockInListPage.tsx
+================================================================================
+
+
+
+================================================================================
+FILE: ../src/features/stock-in/useStockEntryMutations.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-in/useStockEntryMutations.ts
+================================================================================
+
+import { useMutation } from "@tanstack/react-query";
+import { App } from "antd";
+import { supabaseClient } from "../utility/supabaseClient";
+import { TABLES } from "../utility/constants";
+import { USE_MOCK } from "../utility/config";
+import type { StockEntry } from "../types";
+
+export interface CreateStockEntryInput {
+  productId: number;
+  supplierId: number | null;
+  quantity: number;
+  unitPrice: number;
+  date: string;
+  note?: string | null;
+}
+
+export const useCreateStockEntry = () => {
+  const { message } = App.useApp();
+
+  return useMutation({
+    mutationFn: async (input: CreateStockEntryInput) => {
+      // === MODE MOCK ===
+      if (USE_MOCK) {
+        await new Promise((r) => setTimeout(r, 500));
+        // Simulasi sukses
+        return { id: Date.now(), ...input } as unknown as StockEntry;
+      }
+
+      // === MODE SUPABASE ===
+      const { data, error } = await supabaseClient
+        .from(TABLES.stockEntries)
+        .insert({
+          product_id: input.productId,
+          supplier_id: input.supplierId,
+          quantity: input.quantity,
+          unit_price: input.unitPrice,
+          date: input.date,
+          note: input.note ?? null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as StockEntry;
+    },
+    onSuccess: () => {
+      message.success("Barang masuk berhasil disimpan");
+    },
+    onError: (error: Error) => {
+      message.error(error.message || "Gagal menyimpan barang masuk");
+    },
+  });
+};
+
+================================================================================
+FILE: ../src/features/stock-opname/api.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-opname/api.ts
+================================================================================
+
+
+
+================================================================================
+FILE: ../src/features/stock-opname/pages/StockOpnamePage.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-opname/pages/StockOpnamePage.tsx
+================================================================================
+
+
+
+================================================================================
+FILE: ../src/features/stock-out/api.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-out/api.ts
+================================================================================
+
+
+
+================================================================================
+FILE: ../src/features/stock-out/components/SetupWizard.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-out/components/SetupWizard.tsx
 ================================================================================
 
 import { useEffect, useRef, useState } from "react";
@@ -1107,235 +2362,8 @@ export const SetupWizard = ({
 };
 
 ================================================================================
-FILE: ../src/components/inventory/InventoryTable.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/components/inventory/InventoryTable.tsx
-================================================================================
-
-import { useState } from "react";
-import { Table, Typography, Tag, Space, Card, Input } from "antd";
-import type { ColumnsType } from "antd/es/table";
-import { formatNumber } from "../../utility/format";
-import { SendOutlined, UserOutlined, SearchOutlined } from "@ant-design/icons";
-import type { Product, StockExit, StockExitItem } from "../../types";
-
-const { Text } = Typography;
-
-interface OutboundRow extends StockExitItem { transactionId: number; time: string; person: string; destination: string | null; }
-
-type InventoryTableProps = 
-  | { type: "stock"; dataSource: Product[]; loading?: boolean }
-  | { type: "outbound"; dataSource: StockExit[]; loading?: boolean };
-
-export const InventoryTable = (props: InventoryTableProps) => {
-  const { type, loading } = props;
-  const [searchText, setSearchText] = useState("");
-
-  const stockColumns: ColumnsType<Product> = [
-    { dataIndex: "name", title: "Nama Item", render: (v: string) => <Text strong style={{ fontSize: 14 }}>{v}</Text> },
-    { dataIndex: "size", title: "Ukuran", width: 200, render: (v: string | null) => v ? <Text type="secondary">{v}</Text> : "-" },
-    { dataIndex: "stock", title: "Stok Tersedia", width: 160, align: "right", defaultSortOrder: "descend", sorter: (a, b) => a.stock - b.stock, render: (v, r) => <Tag color={v > 0 ? "blue" : "red"} style={{ fontSize: 13 }}>{formatNumber(v)} {r.unit}</Tag> },
-  ];
-
-  const outboundColumns: ColumnsType<OutboundRow> = [
-    { title: "Waktu", dataIndex: "time", width: 100, render: (v: string) => <Text strong style={{ color: "#1677ff" }}>{v}</Text> },
-    { title: "Nama Item", dataIndex: "itemName", render: (v: string, r) => <Space direction="vertical" size={0}><Text strong>{v}</Text>{r.size && <Text type="secondary" style={{ fontSize: 12 }}>{r.size}</Text>}</Space> },
-    { title: "Jumlah", dataIndex: "quantity", width: 140, align: "right", render: (v, r) => <Text strong style={{ color: "#ff4d4f", fontSize: 14 }}>{formatNumber(v)} <Text type="secondary" style={{ fontSize: 12 }}>{r.unit}</Text></Text> },
-    { title: "Lokasi", dataIndex: "destination", width: 200, render: (v) => v ? <Tag icon={<SendOutlined />} color="cyan">{v}</Tag> : <Text type="secondary">-</Text> },
-    { title: "PIC", dataIndex: "person", width: 180, render: (v: string) => <Text style={{ fontSize: 13, color: "#595959" }}><UserOutlined /> {v}</Text> },
-  ];
-
-  const lowerSearch = searchText.trim().toLowerCase();
-
-  const stockData = type === "stock" ? props.dataSource.filter((item) => !lowerSearch || item.name.toLowerCase().includes(lowerSearch) || (item.size && item.size.toLowerCase().includes(lowerSearch))) : [];
-  const outboundData = type === "outbound" ? props.dataSource.flatMap((exit) => exit.items.map((item) => ({ ...item, transactionId: exit.id, time: exit.time, person: exit.person, destination: exit.destination }))).filter((item) => !lowerSearch || item.itemName.toLowerCase().includes(lowerSearch) || item.person.toLowerCase().includes(lowerSearch)) : [];
-
-  return (
-    <Card variant="borderless" style={{ borderRadius: 12, border: "1px solid #f0f0f0", overflow: "hidden" }} styles={{ body: { padding: 0 } }}>
-      <div style={{ padding: "16px 20px", borderBottom: "1px solid #f0f0f0" }}>
-        <Input placeholder="Cari..." prefix={<SearchOutlined />} allowClear size="large" value={searchText} onChange={(e) => setSearchText(e.target.value)} style={{ maxWidth: 400 }} />
-      </div>
-      {type === "stock" ? <Table<Product> dataSource={stockData} rowKey="id" loading={loading} pagination={{ pageSize: 20, size: "small" }} scroll={{ x: 750 }} columns={stockColumns} rowClassName={(_, i) => (i % 2 === 0 ? "table-row-light" : "table-row-dark")} /> : <Table<OutboundRow> dataSource={outboundData} rowKey={(r) => `${r.transactionId}-${r.itemId}`} loading={loading} pagination={{ pageSize: 20, size: "small" }} scroll={{ x: 750 }} columns={outboundColumns} rowClassName={(_, i) => (i % 2 === 0 ? "table-row-light" : "table-row-dark")} />}
-    </Card>
-  );
-};
-
-================================================================================
-FILE: ../src/components/layout/AdminLayout.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/components/layout/AdminLayout.tsx
-================================================================================
-
-import { useState, type PropsWithChildren } from "react";
-import { ThemedLayoutV2, ThemedSiderV2 } from "@refinedev/antd";
-import { useGetIdentity, useLogout } from "@refinedev/core";
-import { useNavigate } from "react-router-dom";
-import { Button, Tag, Typography } from "antd";
-import { LogoutOutlined, LoginOutlined, DownOutlined, UpOutlined, SafetyCertificateOutlined, UserOutlined } from "@ant-design/icons";
-import { GlobalSearch } from "../common/GlobalSearch"; // ✅ Mount Global Search
-
-const { Text } = Typography;
-
-interface IdentityUser { id: string; name: string; email?: string; role: "admin" | "user"; }
-
-const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
-  const [openMenu, setOpenMenu] = useState(false);
-  const { data: identity } = useGetIdentity<IdentityUser>();
-  const { mutate: logout } = useLogout();
-  const navigate = useNavigate();
-  const isAdmin = identity?.role === "admin";
-
-  return (
-    <div style={{ width: "100%", userSelect: "none" }}>
-      <div onClick={() => setOpenMenu((prev) => !prev)} style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", gap: 10, cursor: "pointer", padding: "4px 6px", borderRadius: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: isAdmin ? "linear-gradient(135deg, #1677ff, #0e4fb8)" : "linear-gradient(135deg, #52c41a, #389e0d)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14 }}>{isAdmin ? "AS" : "US"}</div>
-          {!collapsed && (
-            <div style={{ lineHeight: 1.2 }}>
-              <div style={{ fontWeight: 700, fontSize: 15, color: "#1f1f1f" }}>Admin Stock</div>
-              <Text type="secondary" style={{ fontSize: 11 }}>{isAdmin ? "Mode Admin" : "User (Public)"}</Text>
-            </div>
-          )}
-        </div>
-        {!collapsed && <span style={{ fontSize: 11, color: "#8c8c8c" }}>{openMenu ? <UpOutlined /> : <DownOutlined />}</span>}
-      </div>
-
-      {openMenu && !collapsed && (
-        <div style={{ marginTop: 8, padding: "10px 12px", background: "#f5f7fa", borderRadius: 10, border: "1px solid #e6ebf1" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-            <Text style={{ fontSize: 12 }} strong ellipsis>{identity?.name ?? "User"}</Text>
-            <Tag color={isAdmin ? "blue" : "green"} icon={isAdmin ? <SafetyCertificateOutlined /> : <UserOutlined />} style={{ margin: 0, fontSize: 11 }}>{isAdmin ? "Admin" : "Public"}</Tag>
-          </div>
-          {isAdmin ? <Button danger type="primary" size="small" block icon={<LogoutOutlined />} onClick={() => { setOpenMenu(false); logout(); }}>Logout</Button> : <Button type="primary" size="small" block icon={<LoginOutlined />} onClick={() => { setOpenMenu(false); navigate("/login"); }}>Login Admin</Button>}
-        </div>
-      )}
-    </div>
-  );
-};
-
-export const AdminLayout = ({ children }: PropsWithChildren) => (
-  <ThemedLayoutV2
-    Header={() => null}
-    Sider={() => <ThemedSiderV2 Title={CustomLogoWithDropdown} render={({ items }) => <>{items}</>} />}
-  >
-    <GlobalSearch />
-    {children}
-  </ThemedLayoutV2>
-);
-
-================================================================================
-FILE: ../src/hooks/useDashboardStats.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/hooks/useDashboardStats.ts
-================================================================================
-
-import { useQuery } from "@tanstack/react-query";
-import dayjs from "dayjs";
-import { supabaseClient } from "../utility/supabaseClient";
-import { TABLES } from "../utility/constants";
-import { USE_MOCK } from "../utility/config";
-import { getMockDashboardStats } from "../mocks/dashboard";
-import type { DashboardStats } from "../types";
-
-export interface UseDashboardStatsResult {
-  stats: DashboardStats;
-  isLoading: boolean;
-  refetch: () => void;
-}
-
-const EMPTY_STATS: DashboardStats = {
-  totalProducts: 0,
-  totalStock: 0,
-  todayInbound: 0,
-  todayOutbound: 0,
-};
-
-export const useDashboardStats = (): UseDashboardStatsResult => {
-  const query = useQuery<DashboardStats, Error, DashboardStats>({
-    queryKey: ["dashboard-stats"],
-    refetchInterval: USE_MOCK ? false : 60_000,
-    queryFn: async (): Promise<DashboardStats> => {
-      if (USE_MOCK) {
-        await new Promise((r) => setTimeout(r, 300));
-        return getMockDashboardStats();
-      }
-
-      const today = dayjs().format("YYYY-MM-DD");
-      const startOfDay = dayjs().startOf("day").toISOString();
-      const endOfDay = dayjs().endOf("day").toISOString();
-
-      const [productsRes, inboundRes, outboundRes] = await Promise.all([
-        supabaseClient.from(TABLES.products).select("stok"),
-        supabaseClient
-          .from(TABLES.stockEntries)
-          .select("jumlah_barang_masuk")
-          .eq("tanggal_pengiriman", today),
-        supabaseClient
-          .from(TABLES.stockExits)
-          .select("jumlah_barang_keluar")
-          .gte("created_at", startOfDay)
-          .lte("created_at", endOfDay),
-      ]);
-
-      if (productsRes.error) throw productsRes.error;
-      if (inboundRes.error) throw inboundRes.error;
-      if (outboundRes.error) throw outboundRes.error;
-
-      const totalProducts = productsRes.data?.length ?? 0;
-      const totalStock =
-        productsRes.data?.reduce(
-          (sum, p: { stok: number | null }) => sum + (p.stok ?? 0),
-          0,
-        ) ?? 0;
-
-      const todayInbound =
-        inboundRes.data?.reduce(
-          (sum, e: { jumlah_barang_masuk: number | null }) =>
-            sum + (e.jumlah_barang_masuk ?? 0),
-          0,
-        ) ?? 0;
-
-      const todayOutbound =
-        outboundRes.data?.reduce(
-          (sum, exit: { jumlah_barang_keluar: number | null }) =>
-            sum + (exit.jumlah_barang_keluar ?? 0),
-          0,
-        ) ?? 0;
-
-      return { totalProducts, totalStock, todayInbound, todayOutbound };
-    },
-  });
-
-  return {
-    stats: query.data ?? EMPTY_STATS,
-    isLoading: query.isLoading,
-    refetch: query.refetch,
-  };
-};
-
-================================================================================
-FILE: ../src/hooks/useDebounce.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/hooks/useDebounce.ts
-================================================================================
-
-import { useState, useEffect } from "react";
-
-export function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-}
-
-================================================================================
-FILE: ../src/hooks/useEntryFlow.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/hooks/useEntryFlow.ts
+FILE: ../src/features/stock-out/hooks/useEntryFlow.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-out/hooks/useEntryFlow.ts
 ================================================================================
 
 import { useCallback, useState } from "react";
@@ -1498,235 +2526,211 @@ export const useEntryFlow = () => {
 };
 
 ================================================================================
-FILE: ../src/hooks/useKeyboardShortcut.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/hooks/useKeyboardShortcut.ts
+FILE: ../src/features/stock-out/pages/EntryPage.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-out/pages/EntryPage.tsx
 ================================================================================
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Button, Card, Col, Empty, InputNumber, Row, Select, Space, Switch, Tag, Typography, App, Table } from "antd";
+import { ArrowLeftOutlined, CheckCircleOutlined, CloseCircleOutlined, EnvironmentOutlined, SwapOutlined, UserOutlined } from "@ant-design/icons";
+import { useQueryClient } from "@tanstack/react-query";
+import { useProductSearch } from "../../hooks/useProductSearch";
+import { usePersons } from "../../hooks/usePersons";
+import { useKeyboardShortcut } from "../../hooks/useKeyboardShortcut";
+import { useDebounce } from "../../hooks/useDebounce";
+import { SetupWizard } from "../../components/entry/SetupWizard";
+import { mockWorkplaces } from "../../mocks/entry";
+import { supabaseClient } from "../../utility/supabaseClient";
+import { USE_MOCK } from "../../utility/config";
+import { formatNumber } from "../../utility/format";
+import type { Product, Person, Workplace, OutboundLine } from "../../types"; // Menggunakan OutboundLine dari types/index
 
-interface UseKeyboardShortcutOptions {
-  key: string;
-  ctrlKey?: boolean;
-  shiftKey?: boolean;
-  altKey?: boolean;
-  metaKey?: boolean;
-  enabled?: boolean;
-  preventDefault?: boolean;
-  ignoreInputs?: boolean;
-  handler: (event: KeyboardEvent) => void;
-}
+const { Title, Text } = Typography;
 
-const isEditableElement = (el: EventTarget | null): boolean => {
-  if (!(el instanceof HTMLElement)) return false;
-  const tag = el.tagName.toLowerCase();
+export const EntryPage = () => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { message } = App.useApp();
+  const queryClient = useQueryClient();
+  const { persons } = usePersons();
+
+  const initialPerson = searchParams.get("person") || "";
+  const initialWorkplace = searchParams.get("workplace") || "";
+
+  const [personName, setPersonName] = useState<string>(initialPerson);
+  const [workplaceName, setWorkplaceName] = useState<string>(initialWorkplace);
+  const [isBreakdown, setIsBreakdown] = useState<boolean>(true);
+  const [wizardOpen, setWizardOpen] = useState<boolean>(!initialPerson || !initialWorkplace);
+  const [wizardStep, setWizardStep] = useState<"person" | "workplace">("person");
+
+  const [keyword, setKeyword] = useState("");
+  const debouncedKeyword = useDebounce(keyword, 250);
+  const { products, isLoading: isLoadingProducts } = useProductSearch(debouncedKeyword, 30);
+
+  const [activeItem, setActiveItem] = useState<Product | null>(null);
+  const [activeQty, setActiveQty] = useState<number>(1);
+  const [lines, setLines] = useState<OutboundLine[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const searchRef = useRef<any>(null);
+  const qtyRef = useRef<HTMLInputElement>(null);
+  const phase = activeItem ? "quantity" : "search";
+
+  useEffect(() => {
+    if (wizardOpen) return;
+    if (phase === "search") setTimeout(() => searchRef.current?.focus(), 100);
+    else if (phase === "quantity") setTimeout(() => qtyRef.current?.focus(), 100);
+  }, [phase, wizardOpen]);
+
+  const handleWizardSelect = (val: Person | Workplace) => {
+    if (wizardStep === "person") {
+      setPersonName(val.name);
+      setWizardStep("workplace");
+    } else {
+      setWorkplaceName(val.name);
+      setWizardOpen(false);
+      setSearchParams({ person: personName, workplace: val.name });
+    }
+  };
+
+  const handleProductSelect = (productId: number) => {
+    const item = products.find((p) => p.id === productId);
+    if (item) {
+      if (item.stock <= 0) return message.error(`Stok ${item.name} sedang habis`);
+      setActiveItem(item);
+      setActiveQty(1);
+      setKeyword("");
+    }
+  };
+
+  const confirmQuantity = () => {
+    if (!activeItem) return;
+    if (activeQty <= 0) return message.warning("Jumlah minimal 1");
+
+    const existingQty = lines.find((l) => l.itemId === activeItem.id)?.quantity ?? 0;
+    // ✅ PERBAIKAN: Validasi ketat sisi client sebelum submit
+    if (existingQty + activeQty > activeItem.stock) {
+      return message.warning(`Jumlah melebihi sisa stok! Maksimal tambahan: ${activeItem.stock - existingQty} ${activeItem.unit}`);
+    }
+
+    setLines((prev) => {
+      const idx = prev.findIndex((l) => l.itemId === activeItem.id);
+      if (idx >= 0) {
+        const copy = [...prev];
+        copy[idx] = { ...copy[idx], quantity: copy[idx].quantity + activeQty };
+        return copy;
+      }
+      return [{ itemId: activeItem.id, itemName: activeItem.name, size: activeItem.size, unit: activeItem.unit, maxStock: activeItem.stock, quantity: activeQty }, ...prev];
+    });
+    setActiveItem(null);
+    setActiveQty(1);
+  };
+
+  const handleFinish = async () => {
+    if (lines.length === 0) return message.warning("Tambahkan minimal 1 barang");
+    if (!personName || !workplaceName) return setWizardOpen(true);
+
+    setIsSubmitting(true);
+    try {
+      if (!USE_MOCK) {
+        // ✅ PERBAIKAN: Gunakan RPC untuk transaksi atomik
+        const { error } = await supabaseClient.rpc("issue_stock", {
+          p_items: lines.map(l => ({ itemId: l.itemId, quantity: l.quantity, size: l.size, unit: l.unit, itemName: l.itemName })),
+          p_person: personName,
+          p_destination: workplaceName,
+          p_breakdown: isBreakdown
+        });
+        if (error) throw error;
+      }
+      message.success(`Pengeluaran ${lines.length} jenis barang berhasil disimpan!`);
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
+      await queryClient.invalidateQueries({ queryKey: ["stock-exits"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      navigate("/dashboard");
+    } catch (err: any) {
+      message.error(err?.message || "Gagal menyimpan pengeluaran barang (cek stok)");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  useKeyboardShortcut({ key: "Enter", ctrlKey: true, enabled: lines.length > 0 && !isSubmitting && !wizardOpen && !activeItem, preventDefault: true, handler: handleFinish });
+
   return (
-    tag === "input" ||
-    tag === "textarea" ||
-    tag === "select" ||
-    el.isContentEditable
+    <div style={{ maxWidth: 920, margin: "0 auto", paddingBottom: 32 }}>
+      <SetupWizard open={wizardOpen} step={wizardStep} title={wizardStep === "person" ? "Pilih Nama Pekerja" : "Pilih Lokasi Pekerjaan"} placeholder={wizardStep === "person" ? "Ketik nama pekerja..." : "Ketik lokasi pekerjaan..."} options={wizardStep === "person" ? persons : mockWorkplaces} onSelect={handleWizardSelect} onBack={wizardStep === "workplace" ? () => setWizardStep("person") : undefined} onClose={() => { if (!personName || !workplaceName) navigate("/dashboard"); else setWizardOpen(false); }} />
+
+      <div style={{ marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+        <Space align="center">
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate("/dashboard")} type="text" size="large" />
+          <div>
+            <Title level={3} style={{ margin: 0 }}>Pengeluaran Barang</Title>
+            <Text type="secondary">Pilih barang yang diambil dan tentukan jumlahnya</Text>
+          </div>
+        </Space>
+        <Card size="small" style={{ borderRadius: 10, background: isBreakdown ? "#e6f4ff" : "#fffbe6", borderColor: isBreakdown ? "#91caff" : "#ffe58f" }}>
+          <Space align="center" size={10}>
+            <div>
+              <Text strong style={{ fontSize: 13, display: "block" }}>Status: {isBreakdown ? "Breakdown" : "Non Breakdown"}</Text>
+            </div>
+            <Switch checked={isBreakdown} onChange={setIsBreakdown} />
+          </Space>
+        </Card>
+      </div>
+
+      <Card variant="borderless" style={{ borderRadius: 12, marginBottom: 16 }} styles={{ body: { padding: 16 } }}>
+        <Row justify="space-between" align="middle">
+          <Col>
+            <Space size={12} wrap>
+              <Tag icon={<UserOutlined />} color="blue" style={{ fontSize: 14, padding: "6px 12px" }}>Pekerja: <strong>{personName || "-"}</strong></Tag>
+              <Tag icon={<EnvironmentOutlined />} color="cyan" style={{ fontSize: 14, padding: "6px 12px" }}>Lokasi: <strong>{workplaceName || "-"}</strong></Tag>
+            </Space>
+          </Col>
+          <Col><Button size="small" icon={<SwapOutlined />} onClick={() => { setWizardStep("person"); setWizardOpen(true); }}>Ubah Sesi</Button></Col>
+        </Row>
+      </Card>
+
+      <Card variant="borderless" style={{ borderRadius: 12, marginBottom: 16 }} styles={{ body: { padding: 20 } }}>
+        {phase === "search" && (
+          <Select showSearch autoFocus ref={searchRef} size="large" style={{ width: "100%" }} placeholder="Ketik nama, ukuran, atau kode barang..." filterOption={false} value={null} loading={isLoadingProducts} onSearch={setKeyword} onChange={handleProductSelect} options={products.map((p) => ({ value: p.id, label: `${p.name} ${p.size ? `(${p.size})` : ""} — Stok: ${p.stock} ${p.unit}` }))} notFoundContent={isLoadingProducts ? "Mencari data..." : "Barang tidak ditemukan"} />
+        )}
+        {phase === "quantity" && activeItem && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+              <Text strong style={{ fontSize: 16 }}>{activeItem.name} {activeItem.size ? `(${activeItem.size})` : ""}</Text>
+              <Tag color="blue">Sisa Stok: {activeItem.stock} {activeItem.unit}</Tag>
+            </div>
+            <Space.Compact style={{ width: "100%" }}>
+              <Button size="large" onClick={() => setActiveQty((q) => Math.max(1, q - 1))} style={{ width: 64, height: 50 }}>−</Button>
+              <InputNumber ref={qtyRef as never} value={activeQty} onChange={(val) => setActiveQty(Number(val) || 1)} size="large" min={1} max={activeItem.stock} controls={false} onPressEnter={(e) => { e.preventDefault(); confirmQuantity(); }} onKeyDown={(e) => { if (e.key === "Escape") setActiveItem(null); if (e.key === "ArrowUp") setActiveQty((q) => Math.min(activeItem.stock, q + 1)); if (e.key === "ArrowDown") setActiveQty((q) => Math.max(1, q - 1)); }} style={{ flex: 1, textAlign: "center", fontSize: 22, fontWeight: 600, height: 50 }} />
+              <Button size="large" onClick={() => setActiveQty((q) => Math.min(activeItem.stock, q + 1))} style={{ width: 64, height: 50 }}>+</Button>
+            </Space.Compact>
+            <Space style={{ marginTop: 14, width: "100%", justifyContent: "space-between" }}>
+              <Space size="small"><Tag>Enter</Tag> <Text type="secondary">tambah</Text> <Tag>Esc</Tag> <Text type="secondary">batal</Text></Space>
+              <Space><Button onClick={() => setActiveItem(null)}>Batal</Button><Button type="primary" onClick={confirmQuantity}>Tambah</Button></Space>
+            </Space>
+          </div>
+        )}
+      </Card>
+
+      <Card title={`📦 Daftar Pengeluaran (${lines.length} jenis)`} variant="borderless" style={{ borderRadius: 12 }} styles={{ body: { padding: 0 } }} extra={<Button type="primary" icon={<CheckCircleOutlined />} disabled={lines.length === 0} loading={isSubmitting} onClick={handleFinish}>Simpan (Ctrl+Enter)</Button>}>
+        {lines.length === 0 ? <div style={{ padding: 32 }}><Empty description="Belum ada barang di daftar" /></div> : (
+          <Table dataSource={lines} rowKey="itemId" pagination={false} size="middle" columns={[
+            { title: "Nama Barang", dataIndex: "itemName", render: (t, r) => <Space direction="vertical" size={0}><Text strong>{t}</Text>{r.size && <Text type="secondary">{r.size}</Text>}</Space> },
+            { title: "Jumlah", dataIndex: "quantity", align: "right", render: (v, r) => <Tag color="red" style={{ fontSize: 14 }}>{formatNumber(v)} {r.unit}</Tag> },
+            { title: "", align: "center", width: 60, render: (_, r) => <Button type="text" danger icon={<CloseCircleOutlined />} onClick={() => setLines((p) => p.filter((x) => x.itemId !== r.itemId))} /> },
+          ]} />
+        )}
+      </Card>
+    </div>
   );
 };
-
-export const useKeyboardShortcut = ({
-  key,
-  ctrlKey = false,
-  shiftKey = false,
-  altKey = false,
-  metaKey = false,
-  enabled = true,
-  preventDefault = true,
-  ignoreInputs = false,
-  handler,
-}: UseKeyboardShortcutOptions) => {
-  useEffect(() => {
-    if (!enabled) return;
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      // Normalisasi nama key (mengabaikan case untuk huruf 'm' dan 'M')
-      const isKeyMatch = event.key.toLowerCase() === key.toLowerCase() || event.key === key;
-      
-      if (!isKeyMatch) return;
-      if (event.ctrlKey !== ctrlKey) return;
-      if (event.shiftKey !== shiftKey) return;
-      if (event.altKey !== altKey) return;
-      if (event.metaKey !== metaKey) return;
-      if (ignoreInputs && isEditableElement(event.target)) return;
-
-      if (preventDefault) event.preventDefault();
-      handler(event);
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [
-    key,
-    ctrlKey,
-    shiftKey,
-    altKey,
-    metaKey,
-    enabled,
-    preventDefault,
-    ignoreInputs,
-    handler,
-  ]);
-};
+export default EntryPage;
 
 ================================================================================
-FILE: ../src/hooks/useLowStock.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/hooks/useLowStock.ts
-================================================================================
-
-import { useQuery } from "@tanstack/react-query";
-import { supabaseClient } from "../utility/supabaseClient";
-import { TABLES } from "../utility/constants";
-import { USE_MOCK } from "../utility/config";
-import { mockLowStockProducts } from "../mocks/products";
-import { mapProduct } from "../utility/mappers";
-import type { Product } from "../types";
-
-const LOW_STOCK_THRESHOLD = 5;
-
-export const useLowStock = (limit = 5) => {
-  const { data, isLoading, refetch } = useQuery<Product[]>({
-    queryKey: ["low-stock", limit],
-    queryFn: async () => {
-      if (USE_MOCK) {
-        await new Promise((r) => setTimeout(r, 300));
-        return mockLowStockProducts.slice(0, limit);
-      }
-
-      const { data, error } = await supabaseClient
-        .from(TABLES.products)
-        .select("*")
-        .lte("stok", LOW_STOCK_THRESHOLD)
-        .order("stok", { ascending: true })
-        .limit(limit);
-
-      if (error) throw error;
-
-      return (data ?? []).map((row) => {
-        const product = mapProduct(row as Record<string, unknown>);
-        return {
-          ...product,
-          minStock: LOW_STOCK_THRESHOLD,
-          status: product.stock <= 0 ? "out" : "low",
-        };
-      });
-    },
-  });
-
-  return {
-    items: data ?? [],
-    total: data?.length ?? 0,
-    isLoading,
-    refetch,
-  };
-};
-
-================================================================================
-FILE: ../src/hooks/useMonitoringSPB.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/hooks/useMonitoringSPB.ts
-================================================================================
-
-import { useQuery } from "@tanstack/react-query";
-import { supabaseClient } from "../utility/supabaseClient";
-import { USE_MOCK } from "../utility/config";
-import type { SPBDocumentGroup } from "../types";
-
-const getSortNumber = (str: string | null) => {
-  if (!str) return 999999;
-  const match = str.match(/\d+/);
-  return match ? parseInt(match[0], 10) : 999999;
-};
-
-export const useMonitoringSPB = () => {
-  const { data, isLoading, error, refetch } = useQuery<SPBDocumentGroup[]>({
-    queryKey: ["monitoring-spb"],
-    queryFn: async () => {
-      if (USE_MOCK) return [];
-      
-      // ✅ PERBAIKAN: Mengambil data dari VIEW (agregasi server-side)
-      const { data, error } = await supabaseClient
-        .from("v_spb_grouped")
-        .select("*")
-        .order("tanggal", { ascending: false });
-
-      if (error) throw error;
-
-      return (data ?? []).map((row: any) => ({
-        id: `${row.no_spb || "NO_SPB"}_${row.no_po || "NO_PO"}`,
-        spbNo: row.no_spb,
-        poNo: row.no_po,
-        date: row.tanggal || "-",
-        status: row.status,
-        itemsCount: row.items_count,
-        sortNumber: getSortNumber(row.no_spb) + getSortNumber(row.no_po) * 0.01,
-      }));
-    },
-  });
-
-  return { data: data ?? [], isLoading, error: error as Error | null, refetch };
-};
-
-================================================================================
-FILE: ../src/hooks/useMonitoringSPBDetail.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/hooks/useMonitoringSPBDetail.ts
-================================================================================
-
-import { useQuery } from "@tanstack/react-query";
-import { supabaseClient } from "../utility/supabaseClient";
-import { TABLES } from "../utility/constants";
-
-export interface SPBItemDetail {
-  id: number;
-  no_spb: string | null;
-  no_po: string | null;
-  nama_barang: string;
-  jumlah_permintaan: number | null;
-  satuan: string | null;
-  status: string;
-  tanggal_po: string | null;
-  tanggal_datang: string | null;
-  tanggal_pembuatan_spb?: string | null;
-}
-
-export const useMonitoringSPBDetail = (
-  spbNo: string | null,
-  poNo: string | null,
-) => {
-  const { data, isLoading, error, refetch } = useQuery<SPBItemDetail[]>({
-    queryKey: ["monitoring-spb-detail", spbNo, poNo],
-    queryFn: async () => {
-      let query = supabaseClient.from(TABLES.spb).select("*");
-
-      if (spbNo && poNo) {
-        query = query.eq("no_spb", spbNo).eq("no_po", poNo);
-      } else if (spbNo) {
-        // SPB tanpa PO
-        query = query.eq("no_spb", spbNo).is("no_po", null);
-      } else if (poNo) {
-        // PO tanpa SPB
-        query = query.is("no_spb", null).eq("no_po", poNo);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return (data ?? []) as SPBItemDetail[];
-    },
-    enabled: !!(spbNo || poNo),
-  });
-
-  return {
-    items: data ?? [],
-    isLoading,
-    error: error as Error | null,
-    refetch,
-  };
-};
-
-================================================================================
-FILE: ../src/hooks/usePersons.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/hooks/usePersons.ts
+FILE: ../src/features/stock-out/usePersons.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-out/usePersons.ts
 ================================================================================
 
 import { useQuery } from "@tanstack/react-query";
@@ -1765,159 +2769,8 @@ export const usePersons = () => {
 };
 
 ================================================================================
-FILE: ../src/hooks/useProducts.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/hooks/useProducts.ts
-================================================================================
-
-import { useQuery } from "@tanstack/react-query";
-import { supabaseClient } from "../utility/supabaseClient";
-import { TABLES } from "../utility/constants";
-import { USE_MOCK } from "../utility/config";
-import { mockProducts } from "../mocks/products";
-import { mapProduct } from "../utility/mappers";
-import type { Product } from "../types";
-
-export const useProducts = (category?: string) => {
-  const { data, isLoading, refetch } = useQuery<Product[]>({
-    queryKey: ["products", category ?? "all"],
-    queryFn: async () => {
-      if (USE_MOCK) {
-        await new Promise((r) => setTimeout(r, 300));
-        const filtered = category
-          ? mockProducts.filter((p) => p.category === category)
-          : mockProducts;
-        return [...filtered].sort((a, b) => b.stock - a.stock);
-      }
-
-      let query = supabaseClient
-        .from(TABLES.products)
-        .select("*")
-        // ✅ Urutkan berdasarkan stok terbanyak terlebih dahulu
-        .order("stok", { ascending: false })
-        .order("nama", { ascending: true });
-
-      if (category) {
-        query = query.eq("kategori", category);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return (data ?? []).map(mapProduct);
-    },
-  });
-
-  return {
-    products: data ?? [],
-    isLoading,
-    refetch,
-  };
-};
-
-================================================================================
-FILE: ../src/hooks/useProductSearch.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/hooks/useProductSearch.ts
-================================================================================
-
-import { useQuery } from "@tanstack/react-query";
-import { supabaseClient } from "../utility/supabaseClient";
-import { TABLES } from "../utility/constants";
-import { USE_MOCK } from "../utility/config";
-import { mockProducts } from "../mocks/products";
-import { mapProduct } from "../utility/mappers";
-import type { Product } from "../types";
-
-export const useProductSearch = (keyword: string, limit = 30) => {
-  const sanitize = (str: string) => str.replace(/[%_()\\'"]/g, "");
-  const trimmed = sanitize(keyword).trim();
-
-  const { data, isLoading, refetch } = useQuery<Product[]>({
-    queryKey: ["product-search", trimmed, limit],
-    queryFn: async () => {
-      if (USE_MOCK) {
-        if (!trimmed) return mockProducts.slice(0, limit);
-        const lower = trimmed.toLowerCase();
-        return mockProducts.filter((p) => p.name.toLowerCase().includes(lower) || p.code.toLowerCase().includes(lower)).slice(0, limit);
-      }
-
-      let query = supabaseClient.from(TABLES.products).select("*").limit(limit).order("nama", { ascending: true }); 
-      if (trimmed) {
-        const words = trimmed.split(/\s+/).filter(Boolean);
-        const orConditions = words.map((w) => `nama.ilike.%${w}%,kode.ilike.%${w}%`).join(",");
-        query = query.or(orConditions);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return (data ?? []).map(mapProduct);
-    },
-    staleTime: 10_000,
-  });
-
-  return { products: data ?? [], isLoading, refetch };
-};
-
-================================================================================
-FILE: ../src/hooks/useStockEntryMutations.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/hooks/useStockEntryMutations.ts
-================================================================================
-
-import { useMutation } from "@tanstack/react-query";
-import { App } from "antd";
-import { supabaseClient } from "../utility/supabaseClient";
-import { TABLES } from "../utility/constants";
-import { USE_MOCK } from "../utility/config";
-import type { StockEntry } from "../types";
-
-export interface CreateStockEntryInput {
-  productId: number;
-  supplierId: number | null;
-  quantity: number;
-  unitPrice: number;
-  date: string;
-  note?: string | null;
-}
-
-export const useCreateStockEntry = () => {
-  const { message } = App.useApp();
-
-  return useMutation({
-    mutationFn: async (input: CreateStockEntryInput) => {
-      // === MODE MOCK ===
-      if (USE_MOCK) {
-        await new Promise((r) => setTimeout(r, 500));
-        // Simulasi sukses
-        return { id: Date.now(), ...input } as unknown as StockEntry;
-      }
-
-      // === MODE SUPABASE ===
-      const { data, error } = await supabaseClient
-        .from(TABLES.stockEntries)
-        .insert({
-          product_id: input.productId,
-          supplier_id: input.supplierId,
-          quantity: input.quantity,
-          unit_price: input.unitPrice,
-          date: input.date,
-          note: input.note ?? null,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data as StockEntry;
-    },
-    onSuccess: () => {
-      message.success("Barang masuk berhasil disimpan");
-    },
-    onError: (error: Error) => {
-      message.error(error.message || "Gagal menyimpan barang masuk");
-    },
-  });
-};
-
-================================================================================
-FILE: ../src/hooks/useStockExits.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/hooks/useStockExits.ts
+FILE: ../src/features/stock-out/useStockExits.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-out/useStockExits.ts
 ================================================================================
 
 import { useQuery } from "@tanstack/react-query";
@@ -1955,68 +2808,6 @@ export const useStockExits = ({ onlyToday = false, breakdown, limit = 50 }: Opti
     refetchInterval: USE_MOCK ? false : 30_000,
   });
   return { exits: data ?? [], isLoading, refetch };
-};
-
-================================================================================
-FILE: ../src/hooks/useStockInChart.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/hooks/useStockInChart.ts
-================================================================================
-
-import { useQuery } from "@tanstack/react-query";
-import dayjs from "dayjs";
-import { supabaseClient } from "../utility/supabaseClient";
-import { TABLES } from "../utility/constants";
-import { USE_MOCK } from "../utility/config";
-import { mockStockInChart } from "../mocks/stockEntries";
-import type { StockInChartItem } from "../types";
-
-export const useStockInChart = (days = 30) => {
-  const { data, isLoading, refetch } = useQuery<StockInChartItem[]>({
-    queryKey: ["stock-in-chart", days],
-    queryFn: async () => {
-      if (USE_MOCK) {
-        await new Promise((r) => setTimeout(r, 300));
-        return mockStockInChart.slice(-days);
-      }
-
-      const fromDate = dayjs().subtract(days, "day").format("YYYY-MM-DD");
-
-      const { data, error } = await supabaseClient
-        .from(TABLES.stockEntries)
-        .select("tanggal_pengiriman, jumlah_barang_masuk")
-        .gte("tanggal_pengiriman", fromDate)
-        .order("tanggal_pengiriman", { ascending: true });
-
-      if (error) throw error;
-
-      const grouped = (data ?? []).reduce<Record<string, number>>(
-        (
-          acc,
-          row: {
-            tanggal_pengiriman: string | null;
-            jumlah_barang_masuk: number | null;
-          },
-        ) => {
-          if (!row.tanggal_pengiriman) return acc;
-          acc[row.tanggal_pengiriman] =
-            (acc[row.tanggal_pengiriman] ?? 0) + (row.jumlah_barang_masuk ?? 0);
-          return acc;
-        },
-        {},
-      );
-
-      return Object.entries(grouped).map(([date, total]) => ({
-        date,
-        total,
-      }));
-    },
-  });
-
-  return {
-    items: data ?? [],
-    isLoading,
-    refetch,
-  };
 };
 
 ================================================================================
@@ -2370,1169 +3161,430 @@ export const mockStockExits: StockExit[] = [
 ];
 
 ================================================================================
-FILE: ../src/pages/dashboard/index.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/pages/dashboard/index.tsx
+FILE: ../src/shared/components/ErrorBoundary.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/components/ErrorBoundary.tsx
+================================================================================
+
+import React, { Component, ErrorInfo, ReactNode } from "react";
+import { Result, Button, Typography } from "antd";
+
+const { Paragraph, Text } = Typography;
+
+interface Props {
+  children: ReactNode;
+}
+
+interface State {
+  hasError: boolean;
+  error: Error | null;
+}
+
+export class ErrorBoundary extends Component<Props, State> {
+  public state: State = { hasError: false, error: null };
+
+  public static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
+
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Uncaught error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 40, display: "flex", justifyContent: "center" }}>
+          <Result
+            status="500"
+            title="Terjadi Kesalahan (500)"
+            subTitle="Maaf, aplikasi mengalami masalah internal."
+            extra={
+              <Button type="primary" onClick={() => window.location.reload()}>
+                Muat Ulang Halaman
+              </Button>
+            }
+          >
+            <div style={{ textAlign: "left", background: "#f5f5f5", padding: 16, borderRadius: 8 }}>
+              <Text strong>Detail Error:</Text>
+              <Paragraph type="danger" copyable style={{ marginTop: 8 }}>
+                {this.state.error?.message}
+              </Paragraph>
+            </div>
+          </Result>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+================================================================================
+FILE: ../src/shared/components/GlobalSearch.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/components/GlobalSearch.tsx
+================================================================================
+
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { Input, Modal, Spin, Empty, Tag, Typography } from "antd";
+import { SearchOutlined } from "@ant-design/icons";
+import { useKeyboardShortcut } from "../../hooks/useKeyboardShortcut";
+import { useDebounce } from "../../hooks/useDebounce";
+import { useProductSearch } from "../../hooks/useProductSearch";
+import type { Product } from "../../types";
+
+const { Text } = Typography;
+
+export const GlobalSearch = () => {
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [keyword, setKeyword] = useState("");
+  const [activeIndex, setActiveIndex] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const debouncedKeyword = useDebounce(keyword, 250);
+  const { products, isLoading } = useProductSearch(debouncedKeyword);
+
+  useEffect(() => {
+    if (open) {
+      setKeyword("");
+      setActiveIndex(0);
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (activeIndex >= products.length) setActiveIndex(0);
+  }, [products.length, activeIndex]);
+
+  const handleSelect = useCallback(
+    (product: Product) => {
+      setOpen(false);
+      navigate(`/products/create?productId=${product.id}`);
+    },
+    [navigate],
+  );
+
+  // ⌨️ Ctrl+K → buka palette pencarian global
+  useKeyboardShortcut({
+    key: "k",
+    ctrlKey: true,
+    enabled: !open,
+    handler: () => setOpen(true),
+  });
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveIndex((i) => Math.min(i + 1, Math.max(0, products.length - 1)));
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveIndex((i) => Math.max(i - 1, 0));
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      const selected = products[activeIndex];
+      if (selected) handleSelect(selected);
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      setOpen(false);
+    }
+  };
+
+  return (
+    <Modal
+      open={open}
+      onCancel={() => setOpen(false)}
+      footer={null}
+      closable={false}
+      width={560}
+      destroyOnClose
+      styles={{ body: { padding: 0 } }}
+      style={{ top: 80 }}
+    >
+      <div style={{ padding: 12, borderBottom: "1px solid #f0f0f0" }}>
+        <Input
+          ref={inputRef as never}
+          size="large"
+          prefix={<SearchOutlined />}
+          placeholder="Cari produk berdasarkan nama atau kode (Ctrl+K)..."
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+          onKeyDown={handleKeyDown}
+          variant="borderless"
+          autoFocus
+        />
+      </div>
+
+      <div style={{ maxHeight: 360, overflowY: "auto", padding: 8 }}>
+        {isLoading && (
+          <div style={{ textAlign: "center", padding: 24 }}>
+            <Spin />
+          </div>
+        )}
+
+        {!isLoading && products.length === 0 && (
+          <Empty
+            description="Produk tidak ditemukan"
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            style={{ padding: 24 }}
+          />
+        )}
+
+        {!isLoading &&
+          products.map((product, index) => (
+            <div
+              key={product.id}
+              onMouseEnter={() => setActiveIndex(index)}
+              onClick={() => handleSelect(product)}
+              style={{
+                padding: "10px 12px",
+                borderRadius: 8,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                background: index === activeIndex ? "#e6f4ff" : "transparent",
+              }}
+            >
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontWeight: 500, fontSize: 14 }}>
+                  {product.name}{" "}
+                  {product.size && (
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      ({product.size})
+                    </Text>
+                  )}
+                </div>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {product.code} · Stok: {product.stock} {product.unit}
+                </Text>
+              </div>
+              <Tag color="blue" style={{ margin: 0 }}>
+                Tambah Stok
+              </Tag>
+            </div>
+          ))}
+      </div>
+
+      <div
+        style={{
+          padding: "8px 16px",
+          borderTop: "1px solid #f0f0f0",
+          display: "flex",
+          gap: 16,
+          fontSize: 12,
+          color: "#8c8c8c",
+        }}
+      >
+        <span>↑↓ navigasi</span>
+        <span>↵ pilih</span>
+        <span>esc tutup</span>
+      </div>
+    </Modal>
+  );
+};
+
+================================================================================
+FILE: ../src/shared/components/Rupiah.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/components/Rupiah.tsx
+================================================================================
+
+import { formatRupiah } from "../../utility/format";
+
+interface Props {
+  value: number | null | undefined;
+  bold?: boolean;
+}
+
+export const RupiahText = ({ value, bold }: Props) => (
+  <span style={{ fontWeight: bold ? 600 : 400 }}>{formatRupiah(value)}</span>
+);
+
+================================================================================
+FILE: ../src/shared/components/StatusBadge.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/components/StatusBadge.tsx
+================================================================================
+
+import { Tag } from "antd";
+import type { StockStatus } from "../../types";
+import { COLORS, STOCK_STATUS_LABELS } from "../../utility/constants";
+
+interface Props {
+  status?: StockStatus;
+}
+
+export const StatusBadge = ({ status }: Props) => {
+  if (!status) return null;
+
+  return (
+    <Tag color={COLORS.status[status]}>
+      {STOCK_STATUS_LABELS[status]}
+    </Tag>
+  );
+};
+
+================================================================================
+FILE: ../src/shared/hooks/useDebounce.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/hooks/useDebounce.ts
+================================================================================
+
+import { useState, useEffect } from "react";
+
+export function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+================================================================================
+FILE: ../src/shared/hooks/useKeyboardShortcut.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/hooks/useKeyboardShortcut.ts
 ================================================================================
 
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Col, Row, Typography } from "antd";
-import { AppstoreOutlined, InboxOutlined, ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
-import { SetupWizard } from "../../components/entry/SetupWizard";
-import { QuickEntryPanel } from "../../components/dashboard/QuickPanel";
-import { StatCard } from "../../components/dashboard/StatCard";
-import { StockTable } from "../../components/dashboard/StockTable";
-import { StockExitList } from "../../components/dashboard/StockExitList";
-import { LowStockTable } from "../../components/dashboard/LowStockTable";
-import { StockInChart } from "../../components/dashboard/StockInChart";
-import { useEntryFlow } from "../../hooks/useEntryFlow";
-import { useProducts } from "../../hooks/useProducts";
-import { useStockExits } from "../../hooks/useStockExits";
-import { useDashboardStats } from "../../hooks/useDashboardStats";
-import { useKeyboardShortcut } from "../../hooks/useKeyboardShortcut";
-import { formatFullDate } from "../../utility/format";
-import { COLORS } from "../../utility/constants";
 
-const { Title, Text } = Typography;
+interface UseKeyboardShortcutOptions {
+  key: string;
+  ctrlKey?: boolean;
+  shiftKey?: boolean;
+  altKey?: boolean;
+  metaKey?: boolean;
+  enabled?: boolean;
+  preventDefault?: boolean;
+  ignoreInputs?: boolean;
+  handler: (event: KeyboardEvent) => void;
+}
 
-export default function DashboardPage() {
-  const navigate = useNavigate();
-  const { products, isLoading: isLoadingProducts } = useProducts();
-  const { stats, isLoading: isLoadingStats } = useDashboardStats();
+const isEditableElement = (el: EventTarget | null): boolean => {
+  if (!(el instanceof HTMLElement)) return false;
+  const tag = el.tagName.toLowerCase();
+  return (
+    tag === "input" ||
+    tag === "textarea" ||
+    tag === "select" ||
+    el.isContentEditable
+  );
+};
 
-  const materialProducts = products.filter((p) => p.category === "Material");
-  const { exits, isLoading: isLoadingExits } = useStockExits({ onlyToday: true });
-  const flow = useEntryFlow();
-
-  // ✅ PERBAIKAN: Ganti Tab dengan Alt+M (Standard A11y)
-  useKeyboardShortcut({
-    key: "m", altKey: true, ignoreInputs: true, enabled: !flow.wizardOpen,
-    handler: () => flow.openWizard(),
-  });
-
+export const useKeyboardShortcut = ({
+  key,
+  ctrlKey = false,
+  shiftKey = false,
+  altKey = false,
+  metaKey = false,
+  enabled = true,
+  preventDefault = true,
+  ignoreInputs = false,
+  handler,
+}: UseKeyboardShortcutOptions) => {
   useEffect(() => {
-    if (flow.isReady && flow.person && flow.workplace) {
-      const personName = encodeURIComponent(flow.person.name);
-      const workplaceName = encodeURIComponent(flow.workplace.name);
-      flow.resetSession();
-      navigate(`/entry?person=${personName}&workplace=${workplaceName}`);
-    }
-  }, [flow, navigate]);
-
-  return (
-    <>
-      <SetupWizard open={flow.wizardOpen} step={flow.step === "done" ? "person" : (flow.step as "person" | "workplace")} title={flow.currentWizardData?.title ?? ""} placeholder={flow.currentWizardData?.placeholder ?? ""} options={flow.currentWizardData?.options ?? []} onSelect={flow.selectWizardValue} onBack={flow.step !== "person" ? flow.backWizard : undefined} onClose={() => flow.closeWizard()} />
-
-      <div style={{ marginBottom: 16 }}>
-        <Title level={3} style={{ marginBottom: 4 }}>Dashboard</Title>
-        <Text type="secondary">{formatFullDate(new Date())}</Text>
-      </div>
-
-      <QuickEntryPanel onTriggerStart={() => flow.openWizard()} />
-
-      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-        <Col xs={24} sm={12} lg={6}><StatCard title="Total Barang" value={stats.totalProducts} icon={<AppstoreOutlined />} color={COLORS.primary} suffix="item" loading={isLoadingStats} /></Col>
-        <Col xs={24} sm={12} lg={6}><StatCard title="Total Stok" value={stats.totalStock} icon={<InboxOutlined />} color={COLORS.success} loading={isLoadingStats} /></Col>
-        <Col xs={24} sm={12} lg={6}><StatCard title="Masuk Hari Ini" value={stats.todayInbound} icon={<ArrowDownOutlined />} color={COLORS.warning} loading={isLoadingStats} /></Col>
-        <Col xs={24} sm={12} lg={6}><StatCard title="Keluar Hari Ini" value={stats.todayOutbound} icon={<ArrowUpOutlined />} color={COLORS.danger} loading={isLoadingStats} /></Col>
-      </Row>
-
-      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-        <Col xs={24} lg={16}><StockTable products={materialProducts} loading={isLoadingProducts} /></Col>
-        <Col xs={24} lg={8}><StockExitList exits={exits} loading={isLoadingExits} /></Col>
-      </Row>
-
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={14}><StockInChart /></Col>
-        <Col xs={24} lg={10}><LowStockTable /></Col>
-      </Row>
-    </>
-  );
-}
-
-================================================================================
-FILE: ../src/pages/entry/index.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/pages/entry/index.tsx
-================================================================================
-
-import { useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { Button, Card, Col, Empty, InputNumber, Row, Select, Space, Switch, Tag, Typography, App, Table } from "antd";
-import { ArrowLeftOutlined, CheckCircleOutlined, CloseCircleOutlined, EnvironmentOutlined, SwapOutlined, UserOutlined } from "@ant-design/icons";
-import { useQueryClient } from "@tanstack/react-query";
-import { useProductSearch } from "../../hooks/useProductSearch";
-import { usePersons } from "../../hooks/usePersons";
-import { useKeyboardShortcut } from "../../hooks/useKeyboardShortcut";
-import { useDebounce } from "../../hooks/useDebounce";
-import { SetupWizard } from "../../components/entry/SetupWizard";
-import { mockWorkplaces } from "../../mocks/entry";
-import { supabaseClient } from "../../utility/supabaseClient";
-import { USE_MOCK } from "../../utility/config";
-import { formatNumber } from "../../utility/format";
-import type { Product, Person, Workplace, OutboundLine } from "../../types"; // Menggunakan OutboundLine dari types/index
-
-const { Title, Text } = Typography;
-
-export const EntryPage = () => {
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const { message } = App.useApp();
-  const queryClient = useQueryClient();
-  const { persons } = usePersons();
-
-  const initialPerson = searchParams.get("person") || "";
-  const initialWorkplace = searchParams.get("workplace") || "";
-
-  const [personName, setPersonName] = useState<string>(initialPerson);
-  const [workplaceName, setWorkplaceName] = useState<string>(initialWorkplace);
-  const [isBreakdown, setIsBreakdown] = useState<boolean>(true);
-  const [wizardOpen, setWizardOpen] = useState<boolean>(!initialPerson || !initialWorkplace);
-  const [wizardStep, setWizardStep] = useState<"person" | "workplace">("person");
-
-  const [keyword, setKeyword] = useState("");
-  const debouncedKeyword = useDebounce(keyword, 250);
-  const { products, isLoading: isLoadingProducts } = useProductSearch(debouncedKeyword, 30);
-
-  const [activeItem, setActiveItem] = useState<Product | null>(null);
-  const [activeQty, setActiveQty] = useState<number>(1);
-  const [lines, setLines] = useState<OutboundLine[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const searchRef = useRef<any>(null);
-  const qtyRef = useRef<HTMLInputElement>(null);
-  const phase = activeItem ? "quantity" : "search";
-
-  useEffect(() => {
-    if (wizardOpen) return;
-    if (phase === "search") setTimeout(() => searchRef.current?.focus(), 100);
-    else if (phase === "quantity") setTimeout(() => qtyRef.current?.focus(), 100);
-  }, [phase, wizardOpen]);
-
-  const handleWizardSelect = (val: Person | Workplace) => {
-    if (wizardStep === "person") {
-      setPersonName(val.name);
-      setWizardStep("workplace");
-    } else {
-      setWorkplaceName(val.name);
-      setWizardOpen(false);
-      setSearchParams({ person: personName, workplace: val.name });
-    }
-  };
-
-  const handleProductSelect = (productId: number) => {
-    const item = products.find((p) => p.id === productId);
-    if (item) {
-      if (item.stock <= 0) return message.error(`Stok ${item.name} sedang habis`);
-      setActiveItem(item);
-      setActiveQty(1);
-      setKeyword("");
-    }
-  };
-
-  const confirmQuantity = () => {
-    if (!activeItem) return;
-    if (activeQty <= 0) return message.warning("Jumlah minimal 1");
-
-    const existingQty = lines.find((l) => l.itemId === activeItem.id)?.quantity ?? 0;
-    // ✅ PERBAIKAN: Validasi ketat sisi client sebelum submit
-    if (existingQty + activeQty > activeItem.stock) {
-      return message.warning(`Jumlah melebihi sisa stok! Maksimal tambahan: ${activeItem.stock - existingQty} ${activeItem.unit}`);
-    }
-
-    setLines((prev) => {
-      const idx = prev.findIndex((l) => l.itemId === activeItem.id);
-      if (idx >= 0) {
-        const copy = [...prev];
-        copy[idx] = { ...copy[idx], quantity: copy[idx].quantity + activeQty };
-        return copy;
-      }
-      return [{ itemId: activeItem.id, itemName: activeItem.name, size: activeItem.size, unit: activeItem.unit, maxStock: activeItem.stock, quantity: activeQty }, ...prev];
-    });
-    setActiveItem(null);
-    setActiveQty(1);
-  };
-
-  const handleFinish = async () => {
-    if (lines.length === 0) return message.warning("Tambahkan minimal 1 barang");
-    if (!personName || !workplaceName) return setWizardOpen(true);
-
-    setIsSubmitting(true);
-    try {
-      if (!USE_MOCK) {
-        // ✅ PERBAIKAN: Gunakan RPC untuk transaksi atomik
-        const { error } = await supabaseClient.rpc("issue_stock", {
-          p_items: lines.map(l => ({ itemId: l.itemId, quantity: l.quantity, size: l.size, unit: l.unit, itemName: l.itemName })),
-          p_person: personName,
-          p_destination: workplaceName,
-          p_breakdown: isBreakdown
-        });
-        if (error) throw error;
-      }
-      message.success(`Pengeluaran ${lines.length} jenis barang berhasil disimpan!`);
-      await queryClient.invalidateQueries({ queryKey: ["products"] });
-      await queryClient.invalidateQueries({ queryKey: ["stock-exits"] });
-      await queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      navigate("/dashboard");
-    } catch (err: any) {
-      message.error(err?.message || "Gagal menyimpan pengeluaran barang (cek stok)");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  useKeyboardShortcut({ key: "Enter", ctrlKey: true, enabled: lines.length > 0 && !isSubmitting && !wizardOpen && !activeItem, preventDefault: true, handler: handleFinish });
-
-  return (
-    <div style={{ maxWidth: 920, margin: "0 auto", paddingBottom: 32 }}>
-      <SetupWizard open={wizardOpen} step={wizardStep} title={wizardStep === "person" ? "Pilih Nama Pekerja" : "Pilih Lokasi Pekerjaan"} placeholder={wizardStep === "person" ? "Ketik nama pekerja..." : "Ketik lokasi pekerjaan..."} options={wizardStep === "person" ? persons : mockWorkplaces} onSelect={handleWizardSelect} onBack={wizardStep === "workplace" ? () => setWizardStep("person") : undefined} onClose={() => { if (!personName || !workplaceName) navigate("/dashboard"); else setWizardOpen(false); }} />
-
-      <div style={{ marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-        <Space align="center">
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate("/dashboard")} type="text" size="large" />
-          <div>
-            <Title level={3} style={{ margin: 0 }}>Pengeluaran Barang</Title>
-            <Text type="secondary">Pilih barang yang diambil dan tentukan jumlahnya</Text>
-          </div>
-        </Space>
-        <Card size="small" style={{ borderRadius: 10, background: isBreakdown ? "#e6f4ff" : "#fffbe6", borderColor: isBreakdown ? "#91caff" : "#ffe58f" }}>
-          <Space align="center" size={10}>
-            <div>
-              <Text strong style={{ fontSize: 13, display: "block" }}>Status: {isBreakdown ? "Breakdown" : "Non Breakdown"}</Text>
-            </div>
-            <Switch checked={isBreakdown} onChange={setIsBreakdown} />
-          </Space>
-        </Card>
-      </div>
-
-      <Card variant="borderless" style={{ borderRadius: 12, marginBottom: 16 }} styles={{ body: { padding: 16 } }}>
-        <Row justify="space-between" align="middle">
-          <Col>
-            <Space size={12} wrap>
-              <Tag icon={<UserOutlined />} color="blue" style={{ fontSize: 14, padding: "6px 12px" }}>Pekerja: <strong>{personName || "-"}</strong></Tag>
-              <Tag icon={<EnvironmentOutlined />} color="cyan" style={{ fontSize: 14, padding: "6px 12px" }}>Lokasi: <strong>{workplaceName || "-"}</strong></Tag>
-            </Space>
-          </Col>
-          <Col><Button size="small" icon={<SwapOutlined />} onClick={() => { setWizardStep("person"); setWizardOpen(true); }}>Ubah Sesi</Button></Col>
-        </Row>
-      </Card>
-
-      <Card variant="borderless" style={{ borderRadius: 12, marginBottom: 16 }} styles={{ body: { padding: 20 } }}>
-        {phase === "search" && (
-          <Select showSearch autoFocus ref={searchRef} size="large" style={{ width: "100%" }} placeholder="Ketik nama, ukuran, atau kode barang..." filterOption={false} value={null} loading={isLoadingProducts} onSearch={setKeyword} onChange={handleProductSelect} options={products.map((p) => ({ value: p.id, label: `${p.name} ${p.size ? `(${p.size})` : ""} — Stok: ${p.stock} ${p.unit}` }))} notFoundContent={isLoadingProducts ? "Mencari data..." : "Barang tidak ditemukan"} />
-        )}
-        {phase === "quantity" && activeItem && (
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
-              <Text strong style={{ fontSize: 16 }}>{activeItem.name} {activeItem.size ? `(${activeItem.size})` : ""}</Text>
-              <Tag color="blue">Sisa Stok: {activeItem.stock} {activeItem.unit}</Tag>
-            </div>
-            <Space.Compact style={{ width: "100%" }}>
-              <Button size="large" onClick={() => setActiveQty((q) => Math.max(1, q - 1))} style={{ width: 64, height: 50 }}>−</Button>
-              <InputNumber ref={qtyRef as never} value={activeQty} onChange={(val) => setActiveQty(Number(val) || 1)} size="large" min={1} max={activeItem.stock} controls={false} onPressEnter={(e) => { e.preventDefault(); confirmQuantity(); }} onKeyDown={(e) => { if (e.key === "Escape") setActiveItem(null); if (e.key === "ArrowUp") setActiveQty((q) => Math.min(activeItem.stock, q + 1)); if (e.key === "ArrowDown") setActiveQty((q) => Math.max(1, q - 1)); }} style={{ flex: 1, textAlign: "center", fontSize: 22, fontWeight: 600, height: 50 }} />
-              <Button size="large" onClick={() => setActiveQty((q) => Math.min(activeItem.stock, q + 1))} style={{ width: 64, height: 50 }}>+</Button>
-            </Space.Compact>
-            <Space style={{ marginTop: 14, width: "100%", justifyContent: "space-between" }}>
-              <Space size="small"><Tag>Enter</Tag> <Text type="secondary">tambah</Text> <Tag>Esc</Tag> <Text type="secondary">batal</Text></Space>
-              <Space><Button onClick={() => setActiveItem(null)}>Batal</Button><Button type="primary" onClick={confirmQuantity}>Tambah</Button></Space>
-            </Space>
-          </div>
-        )}
-      </Card>
-
-      <Card title={`📦 Daftar Pengeluaran (${lines.length} jenis)`} variant="borderless" style={{ borderRadius: 12 }} styles={{ body: { padding: 0 } }} extra={<Button type="primary" icon={<CheckCircleOutlined />} disabled={lines.length === 0} loading={isSubmitting} onClick={handleFinish}>Simpan (Ctrl+Enter)</Button>}>
-        {lines.length === 0 ? <div style={{ padding: 32 }}><Empty description="Belum ada barang di daftar" /></div> : (
-          <Table dataSource={lines} rowKey="itemId" pagination={false} size="middle" columns={[
-            { title: "Nama Barang", dataIndex: "itemName", render: (t, r) => <Space direction="vertical" size={0}><Text strong>{t}</Text>{r.size && <Text type="secondary">{r.size}</Text>}</Space> },
-            { title: "Jumlah", dataIndex: "quantity", align: "right", render: (v, r) => <Tag color="red" style={{ fontSize: 14 }}>{formatNumber(v)} {r.unit}</Tag> },
-            { title: "", align: "center", width: 60, render: (_, r) => <Button type="text" danger icon={<CloseCircleOutlined />} onClick={() => setLines((p) => p.filter((x) => x.itemId !== r.itemId))} /> },
-          ]} />
-        )}
-      </Card>
-    </div>
-  );
-};
-export default EntryPage;
-
-================================================================================
-FILE: ../src/pages/inventory/index.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/pages/inventory/index.tsx
-================================================================================
-
-import { useState } from "react";
-import { Typography, Tabs, Space } from "antd";
-import { formatFullDate } from "../../utility/format";
-import { InventoryTable } from "../../components/inventory/InventoryTable";
-import { useProducts } from "../../hooks/useProducts";
-import { useStockExits } from "../../hooks/useStockExits";
-
-const { Title, Text } = Typography;
-
-enum InventoryTabKey {
-  MATERIAL = "material",
-  TOOLS = "tools",
-  OUTBOUND_BREAKDOWN = "outbound-breakdown",
-  OUTBOUND_NON_BREAKDOWN = "outbound-non-breakdown",
-}
-
-export const InventoryPage = () => {
-  const [activeTab, setActiveTab] = useState<string>(InventoryTabKey.MATERIAL);
-
-  const { products: materials, isLoading: isLoadingMaterials } =
-    useProducts("Material");
-
-  const { products: tools, isLoading: isLoadingTools } =
-    useProducts("Alat Bantu");
-
-  const { exits: breakdownExits, isLoading: isLoadingBreakdown } =
-    useStockExits({ breakdown: true });
-
-  const { exits: nonBreakdownExits, isLoading: isLoadingNonBreakdown } =
-    useStockExits({ breakdown: false });
-
-  const tabItems = [
-    {
-      key: InventoryTabKey.MATERIAL,
-      label: `Stok Persediaan Material (${materials.length})`,
-      children: (
-        <InventoryTable
-          type="stock"
-          dataSource={materials}
-          loading={isLoadingMaterials}
-        />
-      ),
-    },
-    {
-      key: InventoryTabKey.TOOLS,
-      // ✅ Rename jadi Stok Persediaan Alat
-      label: `Stok Persediaan Alat (${tools.length})`,
-      children: (
-        <InventoryTable
-          type="stock"
-          dataSource={tools}
-          loading={isLoadingTools}
-        />
-      ),
-    },
-    {
-      key: InventoryTabKey.OUTBOUND_BREAKDOWN,
-      label: `Pengeluaran (Breakdown) (${breakdownExits.length})`,
-      children: (
-        <InventoryTable
-          type="outbound"
-          dataSource={breakdownExits}
-          loading={isLoadingBreakdown}
-        />
-      ),
-    },
-    {
-      key: InventoryTabKey.OUTBOUND_NON_BREAKDOWN,
-      label: `Pengeluaran (Diluar Breakdown) (${nonBreakdownExits.length})`,
-      children: (
-        <InventoryTable
-          type="outbound"
-          dataSource={nonBreakdownExits}
-          loading={isLoadingNonBreakdown}
-        />
-      ),
-    },
-  ];
-
-  return (
-    <Space direction="vertical" size="large" style={{ width: "100%" }}>
-      <div>
-        <Title level={3} style={{ marginBottom: 4 }}>
-          Manajemen Persediaan & Pengeluaran
-        </Title>
-        <Text type="secondary">{formatFullDate(new Date())}</Text>
-      </div>
-
-      <Tabs
-        activeKey={activeTab}
-        onChange={setActiveTab}
-        type="card"
-        size="large"
-        items={tabItems}
-        destroyInactiveTabPane={false}
-      />
-    </Space>
-  );
-};
-
-export default InventoryPage;
-
-================================================================================
-FILE: ../src/pages/login/index.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/pages/login/index.tsx
-================================================================================
-
-import { useState } from "react";
-import { useLogin } from "@refinedev/core";
-import { Button, Card, Form, Input, Typography, Alert, Space } from "antd";
-import { UserOutlined, LockOutlined } from "@ant-design/icons";
-import { USE_MOCK } from "../../utility/config";
-
-const { Title, Text } = Typography;
-
-interface LoginForm {
-  email: string;
-  password: string;
-}
-
-export const LoginPage = () => {
-  const { mutate: login, isLoading } = useLogin<LoginForm>();
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const handleSubmit = (values: LoginForm) => {
-    setErrorMsg(null);
-    login(values, {
-      onError: (error) => {
-        setErrorMsg(error?.message ?? "Login gagal, coba lagi");
-      },
-    });
-  };
-
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background:
-          "linear-gradient(135deg, #1677ff 0%, #0e4fb8 50%, #062d6e 100%)",
-        padding: 16,
-      }}
-    >
-      <Card
-        style={{
-          width: "100%",
-          maxWidth: 420,
-          borderRadius: 16,
-          boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
-        }}
-        styles={{ body: { padding: 32 } }}
-      >
-        {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div
-            style={{
-              width: 64,
-              height: 64,
-              margin: "0 auto 12px",
-              borderRadius: 16,
-              background: "linear-gradient(135deg, #1677ff, #0e4fb8)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#fff",
-              fontSize: 28,
-              fontWeight: 700,
-            }}
-          >
-            AS
-          </div>
-          <Title level={3} style={{ margin: 0 }}>
-            Admin Stok
-          </Title>
-          <Text type="secondary">Masuk untuk mengelola inventaris</Text>
-        </div>
-
-        {/* Error */}
-        {errorMsg && (
-          <Alert
-            type="error"
-            message={errorMsg}
-            showIcon
-            closable
-            onClose={() => setErrorMsg(null)}
-            style={{ marginBottom: 16 }}
-          />
-        )}
-
-        {/* Form */}
-        <Form<LoginForm>
-          layout="vertical"
-          onFinish={handleSubmit}
-          autoComplete="off"
-          requiredMark={false}
-          initialValues={
-            USE_MOCK
-              ? { email: "admin@admin.com", password: "admin123" }
-              : undefined
-          }
-        >
-          <Form.Item
-            name="email"
-            label="Email"
-            rules={[
-              { required: true, message: "Email wajib diisi" },
-              { type: "email", message: "Format email tidak valid" },
-            ]}
-          >
-            <Input
-              size="large"
-              prefix={<UserOutlined />}
-              placeholder="admin@admin.com"
-              autoFocus
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="password"
-            label="Password"
-            rules={[{ required: true, message: "Password wajib diisi" }]}
-          >
-            <Input.Password
-              size="large"
-              prefix={<LockOutlined />}
-              placeholder="••••••••"
-            />
-          </Form.Item>
-
-          <Form.Item style={{ marginBottom: 12 }}>
-            <Button
-              type="primary"
-              htmlType="submit"
-              size="large"
-              block
-              loading={isLoading}
-            >
-              Masuk
-            </Button>
-          </Form.Item>
-        </Form>
-
-        {/* Info mock */}
-        {USE_MOCK && (
-          <Alert
-            type="info"
-            showIcon
-            style={{ marginTop: 8 }}
-            message="Mode Demo"
-            description={
-              <Space direction="vertical" size={2}>
-                <Text style={{ fontSize: 12 }}>
-                  Email: <Text code>admin@admin.com</Text>
-                </Text>
-                <Text style={{ fontSize: 12 }}>
-                  Password: <Text code>admin123</Text>
-                </Text>
-              </Space>
-            }
-          />
-        )}
-      </Card>
-    </div>
-  );
-};
-
-
-================================================================================
-FILE: ../src/pages/monitoring-spb/detail.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/pages/monitoring-spb/detail.tsx
-================================================================================
-
-import { useMemo } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import {
-  Typography, Card, Row, Col, Tag, Table, Button,
-  Spin, Empty, Space, Result,
-} from "antd";
-import { ArrowLeftOutlined } from "@ant-design/icons";
-import { useMonitoringSPBDetail } from "../../hooks/useMonitoringSPBDetail";
-import type { SPBItemDetail } from "../../hooks/useMonitoringSPBDetail";
-import { formatDate } from "../../utility/format";
-
-const { Title, Text } = Typography;
-
-const DELIVERED = ["DATANG SESUAI", "DATANG KURANG", "DATANG LEBIH"];
-
-export const MonitoringSPBDetailPage = () => {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const spbNo = searchParams.get("spb");
-  const poNo = searchParams.get("po");
-
-  const { items, isLoading, error } = useMonitoringSPBDetail(spbNo, poNo);
-
-  const statuses = useMemo(() => {
-    if (items.length === 0) {
-      return {
-        belumDiPo: false,
-        sudahDiPo: false,
-        datangSebagian: false,
-        selesai: false,
-      };
-    }
-    const somePo = items.some((it) => it.no_po && it.tanggal_po);
-    const someDelivered = items.some((it) => DELIVERED.includes(it.status));
-    const allDelivered = items.every((it) => DELIVERED.includes(it.status));
-
-    return {
-      belumDiPo: !somePo,
-      sudahDiPo: somePo,
-      datangSebagian: someDelivered && !allDelivered,
-      selesai: allDelivered,
-    };
-  }, [items]);
-
-  const StatusCard = ({ title, active }: { title: string; active: boolean }) => (
-    <Card
-      size="small"
-      style={{
-        backgroundColor: active ? "#f6ffed" : "#f5f5f5",
-        borderColor: active ? "#b7eb8f" : "#d9d9d9",
-        textAlign: "center",
-      }}
-    >
-      <span
-        style={{
-          color: active ? "#52c41a" : "#8c8c8c",
-          fontWeight: active ? "bold" : "normal",
-        }}
-      >
-        {title}
-      </span>
-    </Card>
-  );
-
-  const columns = [
-    { title: "Nama Barang", dataIndex: "nama_barang", key: "nama_barang" },
-    {
-      title: "Qty",
-      dataIndex: "jumlah_permintaan",
-      key: "jumlah_permintaan",
-      align: "right" as const,
-    },
-    { title: "Satuan", dataIndex: "satuan", key: "satuan" },
-    { title: "No PO", dataIndex: "no_po", key: "no_po" },
-    {
-      title: "Tgl PO",
-      dataIndex: "tanggal_po",
-      key: "tanggal_po",
-      render: (v: string | null) => (v ? formatDate(v) : "-"),
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status: string) => {
-        let color: "green" | "red" | "orange" | "default" = "default";
-        if (["DATANG SESUAI", "DATANG LEBIH"].includes(status)) color = "green";
-        else if (status === "DATANG KURANG") color = "orange";
-        else if (status === "BELUM DATANG") color = "red";
-        return <Tag color={color}>{status}</Tag>;
-      },
-    },
-    {
-      title: "Tgl Datang",
-      dataIndex: "tanggal_datang",
-      key: "tanggal_datang",
-      render: (v: string | null) => (v ? formatDate(v) : "-"),
-    },
-  ];
-
-  return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", paddingBottom: 32 }}>
-      {/* Header */}
-      <Space align="center" style={{ marginBottom: 16 }}>
-        <Button
-          type="text"
-          size="large"
-          icon={<ArrowLeftOutlined />}
-          onClick={() => navigate("/monitoring-spb")}
-        />
-        <div>
-          <Title level={3} style={{ margin: 0 }}>
-            Detail SPB / PO
-          </Title>
-          <Text type="secondary">
-            {spbNo ? `SPB: ${spbNo}` : ""}
-            {spbNo && poNo ? " · " : ""}
-            {poNo ? `PO: ${poNo}` : ""}
-          </Text>
-        </div>
-      </Space>
-
-      {isLoading && (
-        <div style={{ textAlign: "center", padding: 50 }}>
-          <Spin size="large" />
-        </div>
-      )}
-
-      {!isLoading && error && (
-        <Result
-          status="error"
-          title="Gagal memuat detail"
-          subTitle={error.message}
-        />
-      )}
-
-      {!isLoading && !error && items.length === 0 && (
-        <Empty description="Dokumen tidak ditemukan atau sudah dihapus" />
-      )}
-
-      {!isLoading && !error && items.length > 0 && (
-        <>
-          {/* Status Cards */}
-          <Row gutter={[8, 8]} style={{ marginBottom: 16 }}>
-            <Col xs={12} md={6}><StatusCard title="Belum di PO" active={statuses.belumDiPo} /></Col>
-            <Col xs={12} md={6}><StatusCard title="Sudah di PO" active={statuses.sudahDiPo} /></Col>
-            <Col xs={12} md={6}><StatusCard title="Datang Sebagian" active={statuses.datangSebagian} /></Col>
-            <Col xs={12} md={6}><StatusCard title="SPB Selesai" active={statuses.selesai} /></Col>
-          </Row>
-
-          <Card
-            title={`Daftar Barang (${items.length})`}
-            variant="borderless"
-            style={{ borderRadius: 12 }}
-            styles={{ body: { padding: 0 } }}
-          >
-            <Table<SPBItemDetail>
-              dataSource={items}
-              columns={columns}
-              rowKey="id"
-              pagination={{ pageSize: 20 }}
-              scroll={{ x: "max-content" }}
-            />
-          </Card>
-        </>
-      )}
-    </div>
-  );
-};
-
-export default MonitoringSPBDetailPage;
-
-================================================================================
-FILE: ../src/pages/monitoring-spb/index.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/pages/monitoring-spb/index.tsx
-================================================================================
-
-import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  Typography, Card, Space, Tag, Row, Col, Divider,
-  Spin, Segmented, Empty, Alert,
-} from "antd";
-import {
-  useMonitoringSPB,
-  type SPBDocumentGroup,
-} from "../../hooks/useMonitoringSPB";
-import { formatFullDate, formatDate } from "../../utility/format";
-import {
-  CheckCircleOutlined,
-  SyncOutlined,
-  FileTextOutlined,
-  ArrowRightOutlined,
-} from "@ant-design/icons";
-
-const { Title, Text } = Typography;
-
-type FilterType =
-  | "Semua"
-  | "Sudah di PO"
-  | "Belum di PO"
-  | "Datang"
-  | "SPB Selesai";
-
-// Status yang dianggap "sudah datang"
-const DELIVERED = ["DATANG SESUAI", "DATANG KURANG", "DATANG LEBIH"];
-// Status yang dianggap "selesai tanpa masalah"
-const COMPLETED = ["DATANG SESUAI", "DATANG LEBIH"];
-
-export const MonitoringSPBPage = () => {
-  const { data, isLoading, error } = useMonitoringSPB();
-  const navigate = useNavigate();
-  const [filter, setFilter] = useState<FilterType>("Semua");
-
-  // ✅ "Baru ditambahkan" = 4 dokumen dengan tanggal terbaru
-  const recentItems = useMemo(() => {
-    const time = (d: string) =>
-      d && d !== "-" ? new Date(d).getTime() || 0 : 0;
-    return [...data]
-      .sort((a, b) => time(b.date) - time(a.date))
-      .slice(0, 4);
-  }, [data]);
-
-  const filteredAndSortedData = useMemo(() => {
-    const filtered = data.filter((item) => {
-      switch (filter) {
-        case "Sudah di PO":
-          return item.poNo !== null;
-        case "Belum di PO":
-          return item.poNo === null;
-        case "Datang":
-          // ✅ ikutkan DATANG KURANG (sebagian datang)
-          return DELIVERED.includes(item.status);
-        case "SPB Selesai":
-          // ✅ hanya yang benar-benar selesai (tidak kurang)
-          return COMPLETED.includes(item.status);
-        default:
-          return true;
-      }
-    });
-
-    // Yang selesai diletakkan paling bawah, sisanya urut sortNumber
-    return filtered.sort((a, b) => {
-      const aDone = COMPLETED.includes(a.status);
-      const bDone = COMPLETED.includes(b.status);
-      if (aDone && !bDone) return 1;
-      if (!aDone && bDone) return -1;
-      return a.sortNumber - b.sortNumber;
-    });
-  }, [data, filter]);
-
-  // ✅ Navigasi ke detail
-  const handleCardClick = (item: SPBDocumentGroup) => {
-    const params = new URLSearchParams();
-    if (item.spbNo) params.set("spb", item.spbNo);
-    if (item.poNo) params.set("po", item.poNo);
-    navigate(`/monitoring-spb/detail?${params.toString()}`);
-  };
-
-  const renderCardContent = (item: SPBDocumentGroup) => {
-    const hasSPB = item.spbNo !== null;
-    const hasPO = item.poNo !== null;
-
-    const isDone = COMPLETED.includes(item.status);
-    const statusColor = isDone
-      ? "success"
-      : item.status === "BELUM DATANG"
-      ? "error"
-      : "processing";
-    const statusIcon = isDone ? <CheckCircleOutlined /> : <SyncOutlined spin />;
-
-    return (
-      <Card
-        hoverable
-        onClick={() => handleCardClick(item)}
-        style={{
-          borderRadius: 12,
-          height: "100%",
-          border: "1px solid #f0f0f0",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-          cursor: "pointer",
-          transition: "all 0.2s",
-        }}
-        styles={{ body: { padding: 16 } }}
-      >
-        <Space direction="vertical" style={{ width: "100%" }} size={2}>
-          {hasSPB && (
-            <div>
-              <Text type="secondary" style={{ fontSize: 11 }}>No. SPB</Text>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>{item.spbNo}</div>
-            </div>
-          )}
-
-          {hasSPB && hasPO && <Divider style={{ margin: "8px 0" }} />}
-
-          {hasPO && (
-            <div>
-              <Text type="secondary" style={{ fontSize: 11 }}>No. PO</Text>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>{item.poNo}</div>
-            </div>
-          )}
-
-          <div style={{ marginTop: 12 }}>
-            <Tag icon={statusIcon} color={statusColor} style={{ margin: 0 }}>
-              Status: {item.status}
-            </Tag>
-            <div style={{ marginTop: 8, fontSize: 12, color: "#8c8c8c" }}>
-              Total: {item.itemsCount} Barang
-            </div>
-          </div>
-
-          {/* ✅ Hint visual bahwa card bisa diklik */}
-          <div
-            style={{
-              marginTop: 12,
-              paddingTop: 12,
-              borderTop: "1px dashed #f0f0f0",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              color: "#1677ff",
-              fontSize: 12,
-              fontWeight: 500,
-            }}
-          >
-            <span>Lihat detail</span>
-            <ArrowRightOutlined />
-          </div>
-        </Space>
-      </Card>
-    );
-  };
-
-  if (isLoading) {
-    return (
-      <div style={{ textAlign: "center", padding: 50 }}>
-        <Spin size="large" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert
-        type="error"
-        showIcon
-        message="Gagal memuat data SPB"
-        description={(error as Error)?.message ?? "Coba muat ulang halaman"}
-      />
-    );
-  }
-
-  return (
-    <div style={{ maxWidth: 1000, margin: "0 auto", paddingBottom: 32 }}>
-      <div style={{ marginBottom: 24 }}>
-        <Space align="center">
-          <div
-            style={{
-              width: 42, height: 42, borderRadius: 10,
-              background: "#1677ff15", color: "#1677ff",
-              display: "flex", alignItems: "center",
-              justifyContent: "center", fontSize: 20,
-            }}
-          >
-            <FileTextOutlined />
-          </div>
-          <div>
-            <Title level={3} style={{ margin: 0 }}>Monitoring SPB</Title>
-            <Text type="secondary">
-              {data.length} Dokumen Terdaftar · Diperbarui{" "}
-              {formatFullDate(new Date())}
-            </Text>
-          </div>
-        </Space>
-      </div>
-
-      {/* Baru ditambahkan */}
-      {recentItems.length > 0 && (
-        <div style={{ marginBottom: 32 }}>
-          <Text strong style={{ fontSize: 16, display: "block", marginBottom: 12 }}>
-            Baru ditambahkan
-          </Text>
-          <div style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 8 }}>
-            {recentItems.map((item) => (
-              <div key={item.id} style={{ minWidth: 200, flexShrink: 0 }}>
-                <Card
-                  size="small"
-                  hoverable
-                  onClick={() => handleCardClick(item)}
-                  style={{
-                    borderRadius: 10,
-                    background: "#fafafa",
-                    cursor: "pointer",
-                  }}
-                >
-                  <Space direction="vertical" size={0}>
-                    <Text strong>
-                      {item.spbNo && item.poNo
-                        ? `SPB: ${item.spbNo} · PO: ${item.poNo}`
-                        : item.spbNo
-                        ? `SPB: ${item.spbNo}`
-                        : `PO: ${item.poNo}`}
-                    </Text>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                      {item.date !== "-" ? formatDate(item.date) : "-"}
-                    </Text>
-                  </Space>
-                </Card>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div style={{ marginBottom: 20 }}>
-        <Segmented<FilterType>
-          size="large"
-          options={["Semua", "Sudah di PO", "Belum di PO", "Datang", "SPB Selesai"]}
-          value={filter}
-          onChange={setFilter}
-          style={{ padding: 4, fontWeight: 500 }}
-        />
-      </div>
-
-      <Row gutter={[16, 16]}>
-        {filteredAndSortedData.map((item) => (
-          <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
-            {renderCardContent(item)}
-          </Col>
-        ))}
-      </Row>
-
-      {filteredAndSortedData.length === 0 && (
-        <div style={{ textAlign: "center", padding: 40, width: "100%" }}>
-          <Empty description="Tidak ada data SPB/PO untuk kategori ini." />
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default MonitoringSPBPage;
-
-================================================================================
-FILE: ../src/pages/products/create.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/pages/products/create.tsx
-================================================================================
-
-import { useState } from "react";
-import { Button, Card, Col, DatePicker, Form, Input, InputNumber, Row, Select, Space, Table, Typography, App } from "antd";
-import { PlusOutlined, SaveOutlined, AppstoreAddOutlined } from "@ant-design/icons";
-import { useQueryClient } from "@tanstack/react-query";
-import dayjs from "dayjs";
-import { supabaseClient } from "../../utility/supabaseClient";
-import { USE_MOCK } from "../../utility/config";
-import { useProductSearch } from "../../hooks/useProductSearch";
-import { useDebounce } from "../../hooks/useDebounce";
-import { formatNumber, formatDate } from "../../utility/format";
-import type { Product } from "../../types";
-
-const { Title, Text } = Typography;
-
-interface StockEntryFormValues { productId: number; jumlah: number; tanggal_pengiriman: dayjs.Dayjs; spesifikasi?: string; merk?: string; }
-
-export const ProductCreatePage = () => {
-  const [form] = Form.useForm<StockEntryFormValues>();
-  const { message } = App.useApp();
-  const queryClient = useQueryClient();
-
-  const [keyword, setKeyword] = useState("");
-  const debouncedKeyword = useDebounce(keyword, 250);
-  const { products, isLoading } = useProductSearch(debouncedKeyword, 30);
-  
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [recentEntries, setRecentEntries] = useState<any[]>([]);
-
-  const handleProductSelect = (val: number) => setSelectedProduct(products.find((p) => p.id === val) || null);
-
-  const handleSubmit = async (values: StockEntryFormValues) => {
-    if (!selectedProduct) return;
-    setIsSubmitting(true);
-    
-    try {
-      if (!USE_MOCK) {
-        // ✅ PERBAIKAN: Gunakan RPC Supabase untuk atomicity (stok masuk)
-        const { error } = await supabaseClient.rpc("receive_stock", {
-          p_product_id: selectedProduct.id,
-          p_quantity: values.jumlah,
-          p_date: values.tanggal_pengiriman.format("YYYY-MM-DD"),
-          p_merk: values.merk || null,
-          p_spesifikasi: values.spesifikasi || null
-        });
-        if (error) throw error;
-      }
-
-      message.success(`Berhasil menambah ${formatNumber(values.jumlah)} ${selectedProduct.unit} ke ${selectedProduct.name}!`);
-      setRecentEntries((prev) => [{ key: Date.now(), nama: selectedProduct.name, ukuran: selectedProduct.size, jumlah: values.jumlah, satuan: selectedProduct.unit, tanggal: values.tanggal_pengiriman.format("YYYY-MM-DD") }, ...prev]);
+    if (!enabled) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      // Normalisasi nama key (mengabaikan case untuk huruf 'm' dan 'M')
+      const isKeyMatch = event.key.toLowerCase() === key.toLowerCase() || event.key === key;
       
-      form.resetFields();
-      setSelectedProduct(null);
-      setKeyword("");
-      await queryClient.invalidateQueries({ queryKey: ["products"] });
-      await queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
-    } catch (err: any) {
-      message.error(err?.message || "Gagal menyimpan data barang masuk");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+      if (!isKeyMatch) return;
+      if (event.ctrlKey !== ctrlKey) return;
+      if (event.shiftKey !== shiftKey) return;
+      if (event.altKey !== altKey) return;
+      if (event.metaKey !== metaKey) return;
+      if (ignoreInputs && isEditableElement(event.target)) return;
+
+      if (preventDefault) event.preventDefault();
+      handler(event);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [
+    key,
+    ctrlKey,
+    shiftKey,
+    altKey,
+    metaKey,
+    enabled,
+    preventDefault,
+    ignoreInputs,
+    handler,
+  ]);
+};
+
+================================================================================
+FILE: ../src/shared/layout/AdminLayout.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/layout/AdminLayout.tsx
+================================================================================
+
+import { useState, type PropsWithChildren } from "react";
+import { ThemedLayoutV2, ThemedSiderV2 } from "@refinedev/antd";
+import { useGetIdentity, useLogout } from "@refinedev/core";
+import { useNavigate } from "react-router-dom";
+import { Button, Tag, Typography } from "antd";
+import { LogoutOutlined, LoginOutlined, DownOutlined, UpOutlined, SafetyCertificateOutlined, UserOutlined } from "@ant-design/icons";
+import { GlobalSearch } from "../common/GlobalSearch"; // ✅ Mount Global Search
+
+const { Text } = Typography;
+
+interface IdentityUser { id: string; name: string; email?: string; role: "admin" | "user"; }
+
+const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
+  const [openMenu, setOpenMenu] = useState(false);
+  const { data: identity } = useGetIdentity<IdentityUser>();
+  const { mutate: logout } = useLogout();
+  const navigate = useNavigate();
+  const isAdmin = identity?.role === "admin";
 
   return (
-    <div style={{ maxWidth: 860, margin: "0 auto", paddingBottom: 32 }}>
-      <div style={{ marginBottom: 16 }}>
-        <Space align="center" size={10}>
-          <div style={{ width: 42, height: 42, borderRadius: 10, background: "#1677ff15", color: "#1677ff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}><AppstoreAddOutlined /></div>
-          <div><Title level={3} style={{ margin: 0 }}>Tambah Barang Masuk</Title><Text type="secondary">Pilih barang dan tambahkan stoknya</Text></div>
-        </Space>
+    <div style={{ width: "100%", userSelect: "none" }}>
+      <div onClick={() => setOpenMenu((prev) => !prev)} style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", gap: 10, cursor: "pointer", padding: "4px 6px", borderRadius: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: isAdmin ? "linear-gradient(135deg, #1677ff, #0e4fb8)" : "linear-gradient(135deg, #52c41a, #389e0d)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14 }}>{isAdmin ? "AS" : "US"}</div>
+          {!collapsed && (
+            <div style={{ lineHeight: 1.2 }}>
+              <div style={{ fontWeight: 700, fontSize: 15, color: "#1f1f1f" }}>Admin Stock</div>
+              <Text type="secondary" style={{ fontSize: 11 }}>{isAdmin ? "Mode Admin" : "User (Public)"}</Text>
+            </div>
+          )}
+        </div>
+        {!collapsed && <span style={{ fontSize: 11, color: "#8c8c8c" }}>{openMenu ? <UpOutlined /> : <DownOutlined />}</span>}
       </div>
 
-      <Card variant="borderless" style={{ borderRadius: 14, marginBottom: 24 }} styles={{ body: { padding: 24 } }}>
-        <Form<StockEntryFormValues> form={form} layout="vertical" onFinish={handleSubmit} initialValues={{ tanggal_pengiriman: dayjs() }} requiredMark={false}>
-          <Row gutter={[16, 8]}>
-            <Col xs={24}>
-              <Form.Item name="productId" label="Nama Barang" rules={[{ required: true }]}>
-                <Select showSearch size="large" filterOption={false} loading={isLoading} onSearch={setKeyword} onChange={handleProductSelect} options={products.map((p) => ({ value: p.id, label: `${p.name} ${p.size ? `(${p.size})` : ""} — Sisa: ${p.stock} ${p.unit}` }))} notFoundContent={isLoading ? "Mencari data..." : "Tidak ditemukan"} />
-              </Form.Item>
-            </Col>
-            <Col xs={12} sm={8}>
-              <Form.Item name="jumlah" label="Jumlah" rules={[{ required: true }]}><InputNumber size="large" min={1} style={{ width: "100%" }} addonAfter={selectedProduct?.unit || ""} /></Form.Item>
-            </Col>
-            <Col xs={12} sm={16}>
-              <Form.Item name="tanggal_pengiriman" label="Tgl Pengiriman" rules={[{ required: true }]}><DatePicker size="large" style={{ width: "100%" }} format="DD MMM YYYY" /></Form.Item>
-            </Col>
-            <Col xs={24} sm={12}><Form.Item name="merk" label="Merk (Opsional)"><Input size="large" /></Form.Item></Col>
-            <Col xs={24} sm={12}><Form.Item name="spesifikasi" label="Spesifikasi (Opsional)"><Input size="large" /></Form.Item></Col>
-          </Row>
-          <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}><Button type="primary" size="large" htmlType="submit" icon={<SaveOutlined />} loading={isSubmitting} disabled={!selectedProduct}>Simpan Stok</Button></div>
-        </Form>
-      </Card>
-
-      {recentEntries.length > 0 && (
-        <Card title={<Space><PlusOutlined /><span>Baru Saja Ditambahkan</span></Space>} variant="borderless" style={{ borderRadius: 14 }} styles={{ body: { padding: 0 } }}>
-          <Table dataSource={recentEntries} pagination={false} size="small" scroll={{ x: 500 }} columns={[{ dataIndex: "nama", title: "Nama", ellipsis: true }, { dataIndex: "ukuran", title: "Ukuran", width: 140, render: (v) => v ?? "-" }, { title: "Jumlah", width: 120, align: "right", render: (_, r) => <Text strong style={{ color: "#52c41a" }}>+{formatNumber(r.jumlah)} <Text type="secondary" style={{fontSize: 12}}>{r.satuan}</Text></Text> }, { dataIndex: "tanggal", title: "Tgl Kirim", width: 110, render: (v) => formatDate(v) }]} />
-        </Card>
+      {openMenu && !collapsed && (
+        <div style={{ marginTop: 8, padding: "10px 12px", background: "#f5f7fa", borderRadius: 10, border: "1px solid #e6ebf1" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <Text style={{ fontSize: 12 }} strong ellipsis>{identity?.name ?? "User"}</Text>
+            <Tag color={isAdmin ? "blue" : "green"} icon={isAdmin ? <SafetyCertificateOutlined /> : <UserOutlined />} style={{ margin: 0, fontSize: 11 }}>{isAdmin ? "Admin" : "Public"}</Tag>
+          </div>
+          {isAdmin ? <Button danger type="primary" size="small" block icon={<LogoutOutlined />} onClick={() => { setOpenMenu(false); logout(); }}>Logout</Button> : <Button type="primary" size="small" block icon={<LoginOutlined />} onClick={() => { setOpenMenu(false); navigate("/login"); }}>Login Admin</Button>}
+        </div>
       )}
     </div>
   );
 };
-export default ProductCreatePage;
+
+export const AdminLayout = ({ children }: PropsWithChildren) => (
+  <ThemedLayoutV2
+    Header={() => null}
+    Sider={() => <ThemedSiderV2 Title={CustomLogoWithDropdown} render={({ items }) => <>{items}</>} />}
+  >
+    <GlobalSearch />
+    {children}
+  </ThemedLayoutV2>
+);
 
 ================================================================================
-FILE: ../src/types/index.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/types/index.ts
-================================================================================
-
-export interface Category { id: number; name: string; createdAt: string; }
-export interface Supplier { id: number; name: string; contact: string | null; phone: string | null; address: string | null; createdAt: string; }
-export type StockStatus = "safe" | "low" | "out";
-
-export interface Product {
-  id: number; code: string; name: string; size: string | null; specification: string | null;
-  category: string; categoryId: number | null; categoryName?: string | null;
-  unit: string; stock: number; minStock: number; costPrice: number; status?: StockStatus; createdAt: string;
-}
-
-export interface StockEntry {
-  id: number; entryNumber: string; productId: number; supplierId: number | null; quantity: number;
-  unitPrice: number; total: number; date: string; note: string | null; createdAt: string;
-  product?: Pick<Product, "id" | "code" | "name" | "unit">; supplier?: Pick<Supplier, "id" | "name">;
-}
-
-export interface StockExitItem { itemId: number; itemName: string; size: string | null; unit: string; quantity: number; }
-export interface StockExit {
-  id: number; nomorTransaksi: string; timestamp: string; date: string; time: string;
-  person: string; destination: string | null; isBreakdown: boolean; items: StockExitItem[];
-}
-
-export interface Person { id: string; name: string; teamId?: string; }
-export interface Workplace { id: string; name: string; }
-export type SetupStep = "workplace" | "person" | "done";
-
-export interface EntryLine { itemId: number; itemName: string; size?: string | null; unit: string; maxStock?: number; quantity: number; }
-export interface OutboundLine { itemId: number; itemName: string; size: string | null; unit: string; maxStock: number; quantity: number; }
-export interface PendingLine { itemId: number; itemName: string; size: string | null; unit: string; quantity: number; }
-
-export interface DashboardStats { totalProducts: number; totalStock: number; todayInbound: number; todayOutbound: number; }
-export interface StockInChartItem { date: string; total: number; }
-
-export interface SPBDocumentGroup {
-  id: string; spbNo: string | null; poNo: string | null; date: string; status: string; itemsCount: number; sortNumber: number;
-}
-export interface SPBItemDetail {
-  id: number; no_spb: string | null; no_po: string | null; nama_barang: string;
-  jumlah_permintaan: number | null; satuan: string | null; status: string;
-  tanggal_po: string | null; tanggal_datang: string | null; tanggal_pembuatan_spb?: string | null;
-}
-
-================================================================================
-FILE: ../src/utility/config.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/utility/config.ts
+FILE: ../src/shared/lib/config.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/lib/config.ts
 ================================================================================
 
 // Set true untuk pakai mock, false untuk pakai Supabase
@@ -3540,8 +3592,8 @@ export const USE_MOCK = false;
 
 
 ================================================================================
-FILE: ../src/utility/constants.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/utility/constants.ts
+FILE: ../src/shared/lib/constants.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/lib/constants.ts
 ================================================================================
 
 export const COLORS = {
@@ -3581,8 +3633,8 @@ export const STOCK_STATUS_LABELS = {
 } as const;
 
 ================================================================================
-FILE: ../src/utility/format.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/utility/format.ts
+FILE: ../src/shared/lib/format.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/lib/format.ts
 ================================================================================
 
 import dayjs from "dayjs";
@@ -3610,8 +3662,8 @@ export const formatShortDate = (date: string | Date): string =>
   dayjs(date).format("DD/MM");
 
 ================================================================================
-FILE: ../src/utility/mappers.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/utility/mappers.ts
+FILE: ../src/shared/lib/mappers.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/lib/mappers.ts
 ================================================================================
 
 import type { Product, StockExit, StockExitItem } from "../types";
@@ -3661,8 +3713,8 @@ export const mapStockExits = (rows: any[]): StockExit[] => {
 };
 
 ================================================================================
-FILE: ../src/utility/supabaseClient.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/utility/supabaseClient.ts
+FILE: ../src/shared/lib/supabaseClient.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/lib/supabaseClient.ts
 ================================================================================
 
 import { createClient } from "@refinedev/supabase";
@@ -3687,6 +3739,53 @@ export const supabaseClient = createClient(
     },
   },
 );
+
+================================================================================
+FILE: ../src/shared/types.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/types.ts
+================================================================================
+
+export interface Category { id: number; name: string; createdAt: string; }
+export interface Supplier { id: number; name: string; contact: string | null; phone: string | null; address: string | null; createdAt: string; }
+export type StockStatus = "safe" | "low" | "out";
+
+export interface Product {
+  id: number; code: string; name: string; size: string | null; specification: string | null;
+  category: string; categoryId: number | null; categoryName?: string | null;
+  unit: string; stock: number; minStock: number; costPrice: number; status?: StockStatus; createdAt: string;
+}
+
+export interface StockEntry {
+  id: number; entryNumber: string; productId: number; supplierId: number | null; quantity: number;
+  unitPrice: number; total: number; date: string; note: string | null; createdAt: string;
+  product?: Pick<Product, "id" | "code" | "name" | "unit">; supplier?: Pick<Supplier, "id" | "name">;
+}
+
+export interface StockExitItem { itemId: number; itemName: string; size: string | null; unit: string; quantity: number; }
+export interface StockExit {
+  id: number; nomorTransaksi: string; timestamp: string; date: string; time: string;
+  person: string; destination: string | null; isBreakdown: boolean; items: StockExitItem[];
+}
+
+export interface Person { id: string; name: string; teamId?: string; }
+export interface Workplace { id: string; name: string; }
+export type SetupStep = "workplace" | "person" | "done";
+
+export interface EntryLine { itemId: number; itemName: string; size?: string | null; unit: string; maxStock?: number; quantity: number; }
+export interface OutboundLine { itemId: number; itemName: string; size: string | null; unit: string; maxStock: number; quantity: number; }
+export interface PendingLine { itemId: number; itemName: string; size: string | null; unit: string; quantity: number; }
+
+export interface DashboardStats { totalProducts: number; totalStock: number; todayInbound: number; todayOutbound: number; }
+export interface StockInChartItem { date: string; total: number; }
+
+export interface SPBDocumentGroup {
+  id: string; spbNo: string | null; poNo: string | null; date: string; status: string; itemsCount: number; sortNumber: number;
+}
+export interface SPBItemDetail {
+  id: number; no_spb: string | null; no_po: string | null; nama_barang: string;
+  jumlah_permintaan: number | null; satuan: string | null; status: string;
+  tanggal_po: string | null; tanggal_datang: string | null; tanggal_pembuatan_spb?: string | null;
+}
 
 ================================================================================
 FILE: ../src/vite-env.d.ts

@@ -2,10 +2,10 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input, Modal, Spin, Empty, Tag, Typography } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
-import { useKeyboardShortcut } from "../../hooks/useKeyboardShortcut";
-import { useDebounce } from "../../hooks/useDebounce";
-import { useProductSearch } from "../../hooks/useProductSearch";
-import type { Product } from "../../types";
+import { useKeyboardShortcut } from "../hooks/useKeyboardShortcut";
+import { useDebounce } from "../hooks/useDebounce";
+import { useProductSearch } from "../../features/products/useProductSearch";
+import type { Product } from "../types";
 
 const { Text } = Typography;
 

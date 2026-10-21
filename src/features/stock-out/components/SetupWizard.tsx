@@ -15,7 +15,7 @@ import {
   UserOutlined,
   EnvironmentOutlined,
 } from "@ant-design/icons";
-import type { Person, Workplace } from "../../types";
+import type { Person, Workplace } from "../../../shared/types";
 
 const { Title, Text } = Typography;
 

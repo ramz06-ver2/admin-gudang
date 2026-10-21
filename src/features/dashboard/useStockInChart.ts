@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { supabaseClient } from "../utility/supabaseClient";
-import { TABLES } from "../utility/constants";
-import { USE_MOCK } from "../utility/config";
-import { mockStockInChart } from "../mocks/stockEntries";
-import type { StockInChartItem } from "../types";
+import { supabaseClient } from "../../shared/lib/supabaseClient";
+import { TABLES } from "../../shared/lib/constants";
+import { USE_MOCK } from "../../shared/lib/config";
+import { mockStockInChart } from "../../mocks/stockEntries";
+import type { StockInChartItem } from "../../shared/types";
 
 export const useStockInChart = (days = 30) => {
   const { data, isLoading, refetch } = useQuery<StockInChartItem[]>({

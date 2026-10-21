@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { supabaseClient } from "../utility/supabaseClient";
-import { TABLES } from "../utility/constants";
-import { USE_MOCK } from "../utility/config";
-import { getMockDashboardStats } from "../mocks/dashboard";
-import type { DashboardStats } from "../types";
+import { supabaseClient } from "../../shared/lib/supabaseClient";
+import { TABLES } from "../../shared/lib/constants";
+import { USE_MOCK } from "../../shared/lib/config";
+import { getMockDashboardStats } from "../../mocks/dashboard";
+import type { DashboardStats } from "../../shared/types";
 
 export interface UseDashboardStatsResult {
   stats: DashboardStats;

@@ -3,16 +3,16 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button, Card, Col, Empty, InputNumber, Row, Select, Space, Switch, Tag, Typography, App, Table } from "antd";
 import { ArrowLeftOutlined, CheckCircleOutlined, CloseCircleOutlined, EnvironmentOutlined, SwapOutlined, UserOutlined } from "@ant-design/icons";
 import { useQueryClient } from "@tanstack/react-query";
-import { useProductSearch } from "../../hooks/useProductSearch";
-import { usePersons } from "../../hooks/usePersons";
-import { useKeyboardShortcut } from "../../hooks/useKeyboardShortcut";
-import { useDebounce } from "../../hooks/useDebounce";
-import { SetupWizard } from "../../components/entry/SetupWizard";
-import { mockWorkplaces } from "../../mocks/entry";
-import { supabaseClient } from "../../utility/supabaseClient";
-import { USE_MOCK } from "../../utility/config";
-import { formatNumber } from "../../utility/format";
-import type { Product, Person, Workplace, OutboundLine } from "../../types"; // Menggunakan OutboundLine dari types/index
+import { useProductSearch } from "../../products/useProductSearch";
+import { usePersons } from "../usePersons";
+import { useKeyboardShortcut } from "../../../shared/hooks/useKeyboardShortcut";
+import { useDebounce } from "../../../shared/hooks/useDebounce";
+import { SetupWizard } from "../components/SetupWizard";
+import { mockWorkplaces } from "../../../mocks/entry";
+import { supabaseClient } from "../../../shared/lib/supabaseClient";
+import { USE_MOCK } from "../../../shared/lib/config";
+import { formatNumber } from "../../../shared/lib/format";
+import type { Product, Person, Workplace, OutboundLine } from "../../../shared/types"; // Menggunakan OutboundLine dari types/index
 
 const { Title, Text } = Typography;
 

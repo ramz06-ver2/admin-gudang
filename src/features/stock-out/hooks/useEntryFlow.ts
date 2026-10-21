@@ -1,13 +1,13 @@
 import { useCallback, useState } from "react";
-import { mockWorkplaces } from "../mocks/entry";
-import { usePersons } from "./usePersons";
+import { mockWorkplaces } from "../../../mocks/entry";
+import { usePersons } from "../usePersons";
 import type {
   EntryLine,
   Person,
   Product,
   SetupStep,
   Workplace,
-} from "../types";
+} from "../../../shared/types";
 
 export type EntryPhase = "search" | "quantity";
 

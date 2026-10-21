@@ -1,6 +1,6 @@
 import { Card, Table, Typography, Tag } from "antd";
-import { formatNumber } from "../../utility/format";
-import type { Product } from "../../types";
+import { formatNumber } from "../../../shared/lib/format";
+import type { Product } from "../../../shared/types";
 
 const { Text } = Typography;
 

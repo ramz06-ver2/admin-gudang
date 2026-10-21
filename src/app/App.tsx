@@ -7,18 +7,18 @@ import { dataProvider } from "@refinedev/supabase";
 import { App as AntdApp, ConfigProvider, Spin } from "antd";
 import { DashboardOutlined, AppstoreOutlined, FileTextOutlined, PlusCircleOutlined, SendOutlined } from "@ant-design/icons";
 
-import { supabaseClient } from "./utility/supabaseClient";
-import { authProvider } from "./authProvider";
-import { AdminLayout } from "./components/layout/AdminLayout";
+import { supabaseClient } from "../shared/lib/supabaseClient";
+import { authProvider } from "./providers/authProvider";
+import { AdminLayout } from "../shared/layout/AdminLayout";
 
-// ✅ PERBAIKAN: Lazy Loading untuk optimasi bundle
-const DashboardPage = lazy(() => import("./pages/dashboard"));
-const EntryPage = lazy(() => import("./pages/entry"));
-const InventoryPage = lazy(() => import("./pages/inventory"));
-const LoginPage = lazy(() => import("./pages/login"));
-const MonitoringSPBPage = lazy(() => import("./pages/monitoring-spb"));
-const MonitoringSPBDetailPage = lazy(() => import("./pages/monitoring-spb/detail"));
-const ProductCreatePage = lazy(() => import("./pages/products/create"));
+// ✅ Jauh lebih bersih. Syaratnya: setiap file di bawah ini wajib punya "export default"
+const DashboardPage = lazy(() => import("../features/dashboard/pages/DashboardPage"));
+const EntryPage = lazy(() => import("../features/stock-out/pages/EntryPage"));
+const InventoryPage = lazy(() => import("../features/products/pages/InventoryPage"));
+const LoginPage = lazy(() => import("../features/auth/pages/LoginPage"));
+const MonitoringSPBPage = lazy(() => import("../features/spb/pages/MonitoringSPBPage"));
+const MonitoringSPBDetailPage = lazy(() => import("../features/spb/pages/MonitoringSPBDetailPage"));
+const ProductCreatePage = lazy(() => import("../features/products/pages/ProductCreatePage"));
 
 const PageLoader = () => (
   <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
@@ -49,7 +49,7 @@ function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-                {/* ✅ PERBAIKAN: Rute Publik (Read-Only) */}
+                {/* Rute Publik */}
                 <Route element={<AdminLayout><Outlet /></AdminLayout>}>
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/inventory" element={<InventoryPage />} />
@@ -57,9 +57,9 @@ function App() {
                   <Route path="/monitoring-spb/detail" element={<MonitoringSPBDetailPage />} />
                 </Route>
 
-                {/* ✅ PERBAIKAN: Rute Admin (Write) Dilindungi */}
+                {/* Rute Admin */}
                 <Route element={
-                  <Authenticated key="admin-routes" fallback={<Navigate to="/login" />}>
+                  <Authenticated key="admin-routes" fallback={<Navigate to="/login" replace />}>
                     <AdminLayout><Outlet /></AdminLayout>
                   </Authenticated>
                 }>

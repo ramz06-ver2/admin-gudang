@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabaseClient } from "../utility/supabaseClient";
-import { TABLES } from "../utility/constants";
-import { USE_MOCK } from "../utility/config";
-import { mockProducts } from "../mocks/products";
-import { mapProduct } from "../utility/mappers";
-import type { Product } from "../types";
+import { supabaseClient } from "../../shared/lib/supabaseClient";
+import { TABLES } from "../../shared/lib/constants";
+import { USE_MOCK } from "../../shared/lib/config";
+import { mockProducts } from "../../mocks/products";
+import { mapProduct } from "../../shared/lib/mappers";
+import type { Product } from "../../shared/types";
 
 export const useProducts = (category?: string) => {
   const { data, isLoading, refetch } = useQuery<Product[]>({

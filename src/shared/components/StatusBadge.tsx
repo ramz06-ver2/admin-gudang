@@ -1,6 +1,6 @@
 import { Tag } from "antd";
-import type { StockStatus } from "../../types";
-import { COLORS, STOCK_STATUS_LABELS } from "../../utility/constants";
+import type { StockStatus } from "../types";
+import { COLORS, STOCK_STATUS_LABELS } from "../lib/constants";
 
 interface Props {
   status?: StockStatus;

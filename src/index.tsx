@@ -1,9 +1,12 @@
 import React from "react";
 import "antd/dist/reset.css";
-import "./App.css"; // ✅ PERBAIKAN: Import CSS
+// Hapus import "./App.css"; karena filenya sudah dihapus
+
 import { createRoot } from "react-dom/client";
-import { ErrorBoundary } from "./components/common/ErrorBoundary";
-import App from "./App";
+
+// ✅ Path disesuaikan dengan arsitektur baru
+import { ErrorBoundary } from "./shared/components/ErrorBoundary";
+import App from "./app/App";
 
 const container = document.getElementById("root") as HTMLElement;
 const root = createRoot(container);

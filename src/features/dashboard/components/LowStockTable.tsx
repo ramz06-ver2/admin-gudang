@@ -1,7 +1,9 @@
 import { Card, Empty, Skeleton, Table } from "antd";
-import { useLowStock } from "../../hooks/useLowStock";
-import { StatusBadge } from "../common/StatusBadge";
-import type { Product } from "../../types";
+
+// ✅ Path import disesuaikan dengan arsitektur baru
+import { useLowStock } from "../useLowStock"; // Hook sekarang berada di dalam fitur dashboard
+import { StatusBadge } from "../../../shared/components/StatusBadge"; // Komponen umum naik ke shared
+import type { Product } from "../../../shared/types"; // Tipe naik ke shared
 
 export const LowStockTable = () => {
   const { items, isLoading } = useLowStock(5);

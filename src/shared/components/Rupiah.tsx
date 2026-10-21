@@ -1,4 +1,4 @@
-import { formatRupiah } from "../../utility/format";
+import { formatRupiah } from "../lib/format";
 
 interface Props {
   value: number | null | undefined;

@@ -1,6 +1,8 @@
 import type { AuthProvider, AuthActionResponse, CheckResponse } from "@refinedev/core";
-import { supabaseClient } from "./utility/supabaseClient";
-import { USE_MOCK } from "./utility/config";
+
+// ✅ Path import disesuaikan dengan arsitektur baru (naik 2 tingkat ke shared/lib)
+import { supabaseClient } from "../../shared/lib/supabaseClient";
+import { USE_MOCK } from "../../shared/lib/config";
 
 const STORAGE_KEY = "mock-auth-user";
 

@@ -1,9 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
 import { App } from "antd";
-import { supabaseClient } from "../utility/supabaseClient";
-import { TABLES } from "../utility/constants";
-import { USE_MOCK } from "../utility/config";
-import type { StockEntry } from "../types";
+import { supabaseClient } from "../../shared/lib/supabaseClient";
+import { TABLES } from "../../shared/lib/constants";
+import { USE_MOCK } from "../../shared/lib/config";
+import type { StockEntry } from "../../shared/types";
 
 export interface CreateStockEntryInput {
   productId: number;
