@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { renderHook, fireEvent } from "@testing-library/react";
-import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
+import { useKeyboardShortcut } from "@/shared/hooks/useKeyboardShortcut";
 
 describe("useKeyboardShortcut", () => {
   it("memanggil handler saat tombol cocok", () => {

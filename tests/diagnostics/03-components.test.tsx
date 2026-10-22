@@ -14,7 +14,7 @@ type AnyComponent = ComponentType<Record<string, unknown>>;
 // ============================================
 // Mock supabase
 // ============================================
-vi.mock("@/utility/supabaseClient", () => ({
+vi.mock("@/shared/lib/supabaseClient", () => ({
   supabaseClient: {
     auth: {
       getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
@@ -87,7 +87,7 @@ describe("DIAGNOSTIC 03 — Component Renders", () => {
   describe("Pure components", () => {
     it("renders StatCard", async () => {
       const StatCard = await loadComponent(
-        "@/components/dashboard/StatCard",
+        "@/features/dashboard/components/StatCard",
         "StatCard",
       );
       safeRender(<StatCard title="Test" value={100} />);
@@ -96,7 +96,7 @@ describe("DIAGNOSTIC 03 — Component Renders", () => {
 
     it("renders StatusBadge (safe)", async () => {
       const StatusBadge = await loadComponent(
-        "@/components/common/StatusBadge",
+        "@/shared/components/StatusBadge",
         "StatusBadge",
       );
       safeRender(<StatusBadge status="safe" />);
@@ -105,7 +105,7 @@ describe("DIAGNOSTIC 03 — Component Renders", () => {
 
     it("renders StatusBadge (low)", async () => {
       const StatusBadge = await loadComponent(
-        "@/components/common/StatusBadge",
+        "@/shared/components/StatusBadge",
         "StatusBadge",
       );
       safeRender(<StatusBadge status="low" />);
@@ -114,7 +114,7 @@ describe("DIAGNOSTIC 03 — Component Renders", () => {
 
     it("renders StatusBadge (out)", async () => {
       const StatusBadge = await loadComponent(
-        "@/components/common/StatusBadge",
+        "@/shared/components/StatusBadge",
         "StatusBadge",
       );
       safeRender(<StatusBadge status="out" />);
@@ -128,7 +128,7 @@ describe("DIAGNOSTIC 03 — Component Renders", () => {
   describe("Data components (mock mode)", () => {
     it("renders LowStockTable", async () => {
       const LowStockTable = await loadComponent(
-        "@/components/dashboard/LowStockTable",
+        "@/features/dashboard/components/LowStockTable",
         "LowStockTable",
       );
 
@@ -137,7 +137,7 @@ describe("DIAGNOSTIC 03 — Component Renders", () => {
 
     it("renders StockInChart", async () => {
       const StockInChart = await loadComponent(
-        "@/components/dashboard/StockInChart",
+        "@/features/dashboard/components/StockInChart",
         "StockInChart",
       );
 
@@ -146,7 +146,7 @@ describe("DIAGNOSTIC 03 — Component Renders", () => {
 
     it("renders GlobalSearch", async () => {
       const GlobalSearch = await loadComponent(
-        "@/components/common/GlobalSearch",
+        "@/shared/components/GlobalSearch",
         "GlobalSearch",
       );
 
@@ -159,18 +159,18 @@ describe("DIAGNOSTIC 03 — Component Renders", () => {
   // ----------------------------------------
   describe("Pages (butuh Refine context)", () => {
     it("LoginPage module bisa di-load", async () => {
-      const mod = (await import("@/pages/login")) as AnyModule;
+      const mod = (await import("@/features/auth/pages/LoginPage")) as AnyModule;
       expect(mod.LoginPage).toBeDefined();
     });
 
     it("DashboardPage module bisa di-load", async () => {
-      const mod = (await import("@/pages/dashboard")) as AnyModule;
-      expect(mod.DashboardPage).toBeDefined();
+      const mod = (await import("@/features/dashboard/pages/DashboardPage")) as AnyModule;
+      expect(mod.default).toBeDefined();
     });
 
     it("StockEntryCreatePage module bisa di-load", async () => {
-      const mod = (await import("@/pages/stock-entries/create")) as AnyModule;
-      expect(mod.StockEntryCreatePage).toBeDefined();
+      const mod = (await import("@/features/products/pages/ProductCreatePage")) as AnyModule;
+      expect(mod.ProductCreatePage).toBeDefined();
     });
 
     // Note: Render penuh untuk pages tidak dilakukan di sini karena

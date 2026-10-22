@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mapProduct } from "@/utility/mappers";
+import { mapProduct } from "../../src/shared/lib/mappers";
 
 describe("FOCUS: Product Mapper", () => {
   it("Mapping lengkap", () => {

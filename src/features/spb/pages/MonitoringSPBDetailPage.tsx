@@ -1,17 +1,15 @@
 import { useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  Typography, Card, Row, Col, Tag, Table, Button,
+  Typography, Card, Row, Col, Table, Button,
   Spin, Empty, Space, Result,
 } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { useMonitoringSPBDetail } from "../useMonitoringSPBDetail";
-import type { SPBItemDetail } from "../useMonitoringSPBDetail";
+import type { SPBItemDetail } from "../../../shared/types";
 import { formatDate } from "../../../shared/lib/format";
 
 const { Title, Text } = Typography;
-
-const DELIVERED = ["DATANG SESUAI", "DATANG KURANG", "DATANG LEBIH"];
 
 export const MonitoringSPBDetailPage = () => {
   const navigate = useNavigate();
@@ -23,22 +21,13 @@ export const MonitoringSPBDetailPage = () => {
 
   const statuses = useMemo(() => {
     if (items.length === 0) {
-      return {
-        belumDiPo: false,
-        sudahDiPo: false,
-        datangSebagian: false,
-        selesai: false,
-      };
+      return { belumDiPo: false, sudahDiPo: false };
     }
     const somePo = items.some((it) => it.no_po && it.tanggal_po);
-    const someDelivered = items.some((it) => DELIVERED.includes(it.status));
-    const allDelivered = items.every((it) => DELIVERED.includes(it.status));
 
     return {
       belumDiPo: !somePo,
       sudahDiPo: somePo,
-      datangSebagian: someDelivered && !allDelivered,
-      selesai: allDelivered,
     };
   }, [items]);
 
@@ -79,18 +68,6 @@ export const MonitoringSPBDetailPage = () => {
       render: (v: string | null) => (v ? formatDate(v) : "-"),
     },
     {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status: string) => {
-        let color: "green" | "red" | "orange" | "default" = "default";
-        if (["DATANG SESUAI", "DATANG LEBIH"].includes(status)) color = "green";
-        else if (status === "DATANG KURANG") color = "orange";
-        else if (status === "BELUM DATANG") color = "red";
-        return <Tag color={color}>{status}</Tag>;
-      },
-    },
-    {
       title: "Tgl Datang",
       dataIndex: "tanggal_datang",
       key: "tanggal_datang",
@@ -100,7 +77,6 @@ export const MonitoringSPBDetailPage = () => {
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", paddingBottom: 32 }}>
-      {/* Header */}
       <Space align="center" style={{ marginBottom: 16 }}>
         <Button
           type="text"
@@ -120,32 +96,15 @@ export const MonitoringSPBDetailPage = () => {
         </div>
       </Space>
 
-      {isLoading && (
-        <div style={{ textAlign: "center", padding: 50 }}>
-          <Spin size="large" />
-        </div>
-      )}
-
-      {!isLoading && error && (
-        <Result
-          status="error"
-          title="Gagal memuat detail"
-          subTitle={error.message}
-        />
-      )}
-
-      {!isLoading && !error && items.length === 0 && (
-        <Empty description="Dokumen tidak ditemukan atau sudah dihapus" />
-      )}
+      {isLoading && <div style={{ textAlign: "center", padding: 50 }}><Spin size="large" /></div>}
+      {!isLoading && error && <Result status="error" title="Gagal memuat detail" subTitle={error.message} />}
+      {!isLoading && !error && items.length === 0 && <Empty description="Dokumen tidak ditemukan atau sudah dihapus" />}
 
       {!isLoading && !error && items.length > 0 && (
         <>
-          {/* Status Cards */}
           <Row gutter={[8, 8]} style={{ marginBottom: 16 }}>
-            <Col xs={12} md={6}><StatusCard title="Belum di PO" active={statuses.belumDiPo} /></Col>
-            <Col xs={12} md={6}><StatusCard title="Sudah di PO" active={statuses.sudahDiPo} /></Col>
-            <Col xs={12} md={6}><StatusCard title="Datang Sebagian" active={statuses.datangSebagian} /></Col>
-            <Col xs={12} md={6}><StatusCard title="SPB Selesai" active={statuses.selesai} /></Col>
+            <Col xs={12} md={12}><StatusCard title="Belum di PO" active={statuses.belumDiPo} /></Col>
+            <Col xs={12} md={12}><StatusCard title="Sudah di PO" active={statuses.sudahDiPo} /></Col>
           </Row>
 
           <Card

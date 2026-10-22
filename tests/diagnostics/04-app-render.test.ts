@@ -3,15 +3,9 @@ import { createElement } from "react";
 import { render, screen } from "@testing-library/react";
 import type { ComponentType } from "react";
 
-// ============================================
-// Tipe longgar
-// ============================================
 type AnyModule = Record<string, unknown>;
 
-// ============================================
-// Mock supabase
-// ============================================
-vi.mock("@/utility/supabaseClient", () => ({
+vi.mock("@/shared/lib/supabaseClient", () => ({
   supabaseClient: {
     auth: {
       getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
@@ -37,94 +31,42 @@ vi.mock("@ant-design/plots", () => ({
   Line: () => null,
 }));
 
-// ============================================
-// Helper
-// ============================================
 async function loadApp(): Promise<ComponentType> {
-  const mod = (await import("@/App")) as AnyModule;
+  const mod = (await import("@/app/App")) as AnyModule;
   return mod.default as ComponentType;
 }
 
-// ============================================
-// Tests
-// ============================================
 describe("DIAGNOSTIC 04 — Full App Render", () => {
-  it(
-    "Step 1: App.tsx module loads",
-    async () => {
-      const mod = (await import("@/App")) as AnyModule;
-      expect(mod).toBeDefined();
-      expect(mod.default).toBeDefined();
-      expect(typeof mod.default).toBe("function");
-    },
-    30_000,
-  );
+  it("Step 1: App.tsx module loads", async () => {
+    const mod = (await import("@/app/App")) as AnyModule;
+    expect(mod).toBeDefined();
+    expect(mod.default).toBeDefined();
+    expect(typeof mod.default).toBe("function");
+  });
 
-  it(
-    "Step 2: App renders without throwing synchronously",
-    async () => {
-      const App = await loadApp();
-
-      let renderError: Error | null = null;
-      try {
-        render(createElement(App));
-      } catch (e) {
-        renderError = e as Error;
-      }
-
-      expect(renderError).toBeNull();
-    },
-    30_000,
-  );
-
-  it(
-    "Step 3: App renders and produces DOM output",
-    async () => {
-      const App = await loadApp();
-      const { container } = render(createElement(App));
-
-      await new Promise((r) => setTimeout(r, 500));
-
-      expect(container).toBeTruthy();
-      expect(document.body.innerHTML.length).toBeGreaterThan(0);
-    },
-    30_000,
-  );
-
-  it(
-    "Step 4: login page appears (auth belum login)",
-    async () => {
-      const App = await loadApp();
+  it("Step 2: App renders without throwing synchronously", async () => {
+    const App = await loadApp();
+    let renderError: Error | null = null;
+    try {
       render(createElement(App));
+    } catch (e) {
+      renderError = e as Error;
+    }
+    expect(renderError).toBeNull();
+  });
 
-      // ⬇️ "Admin Stok" — dengan huruf "k", bukan "ck"
-      const heading = await screen.findByText(
-        /admin stok/i,
-        {},
-        { timeout: 10_000 },
-      );
-      expect(heading).toBeInTheDocument();
-    },
-    30_000,
-  );
+  it("Step 3: App renders and produces DOM output", async () => {
+    const App = await loadApp();
+    const { container } = render(createElement(App));
+    await new Promise((r) => setTimeout(r, 500));
+    expect(container).toBeTruthy();
+    expect(document.body.innerHTML.length).toBeGreaterThan(0);
+  });
 
-  it(
-    "Step 5: form login punya input email & password",
-    async () => {
-      const App = await loadApp();
-      render(createElement(App));
-
-      // ⬇️ "Admin Stok" — dengan huruf "k", bukan "ck"
-      await screen.findByText(/admin stok/i, {}, { timeout: 10_000 });
-
-      expect(
-        screen.getByPlaceholderText("admin@admin.com"),
-      ).toBeInTheDocument();
-      expect(screen.getByPlaceholderText("••••••••")).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /masuk/i }),
-      ).toBeInTheDocument();
-    },
-    30_000,
-  );
+  it("Step 4: App renders default route (Dashboard) successfully", async () => {
+    const App = await loadApp();
+    render(createElement(App));
+    const heading = await screen.findByText(/Dashboard/i, {}, { timeout: 10_000 });
+    expect(heading).toBeInTheDocument();
+  });
 });

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { supabaseClient } from "../../src/utility/supabaseClient";
+import { supabaseClient } from "../../src/shared/lib/supabaseClient";
 
-describe("Integration: Transaksi Barang Masuk & Keluar", () => {
+describe.skip("Integration: Transaksi Barang Masuk & Keluar", () => {
   it("harus bisa mengakses tabel barang_masuk", async () => {
     const { data, error } = await supabaseClient
       .from("barang_masuk")

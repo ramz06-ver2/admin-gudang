@@ -31,11 +31,13 @@ export interface PendingLine { itemId: number; itemName: string; size: string | 
 export interface DashboardStats { totalProducts: number; totalStock: number; todayInbound: number; todayOutbound: number; }
 export interface StockInChartItem { date: string; total: number; }
 
+// ✅ BARU: Tidak ada lagi properti status
 export interface SPBDocumentGroup {
-  id: string; spbNo: string | null; poNo: string | null; date: string; status: string; itemsCount: number; sortNumber: number;
+  id: string; spbNo: string | null; poNo: string | null; date: string; itemsCount: number; sortNumber: number;
 }
+
 export interface SPBItemDetail {
   id: number; no_spb: string | null; no_po: string | null; nama_barang: string;
-  jumlah_permintaan: number | null; satuan: string | null; status: string;
+  jumlah_permintaan: number | null; satuan: string | null;
   tanggal_po: string | null; tanggal_datang: string | null; tanggal_pembuatan_spb?: string | null;
 }

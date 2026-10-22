@@ -6,7 +6,7 @@ type AnyModule = Record<string, unknown>;
 // ============================================
 // Mock SEBELUM import
 // ============================================
-vi.mock("@/utility/supabaseClient", () => ({
+vi.mock("@/shared/lib/supabaseClient", () => ({
   supabaseClient: {
     auth: {
       getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
@@ -82,34 +82,34 @@ describe("DIAGNOSTIC 01 — Module Imports", () => {
   // Local source files
   // ============================================
   describe("Local source files", () => {
-    it("import @/utility/config", async () => {
-      const mod = (await import("@/utility/config")) as AnyModule;
+    it("import @/shared/lib/config", async () => {
+      const mod = (await import("@/shared/lib/config")) as AnyModule;
       expect(mod.USE_MOCK).toBeDefined();
     });
 
-    it("import @/utility/constants", async () => {
-      const mod = (await import("@/utility/constants")) as AnyModule;
+    it("import @/shared/lib/constants", async () => {
+      const mod = (await import("@/shared/lib/constants")) as AnyModule;
       expect(mod.COLORS).toBeDefined();
       expect(mod.TABLES).toBeDefined();
     });
 
-    it("import @/utility/format", async () => {
-      const mod = (await import("@/utility/format")) as AnyModule;
+    it("import @/shared/lib/format", async () => {
+      const mod = (await import("@/shared/lib/format")) as AnyModule;
       expect(mod.formatRupiah).toBeDefined();
     });
 
-    it("import @/types (types only, no runtime export)", async () => {
-      const mod = (await import("@/types")) as AnyModule;
+    it("import @/shared/types (types only, no runtime export)", async () => {
+      const mod = (await import("@/shared/types")) as AnyModule;
       expect(mod).toBeDefined();
     });
 
-    it("import @/authProvider", async () => {
-      const mod = (await import("@/authProvider")) as AnyModule;
+    it("import @/app/providers/authProvider", async () => {
+      const mod = (await import("@/app/providers/authProvider")) as AnyModule;
       expect(mod.authProvider).toBeDefined();
     });
 
-    it("import @/App", async () => {
-      const mod = (await import("@/App")) as AnyModule;
+    it("import @/app/App", async () => {
+      const mod = (await import("@/app/App")) as AnyModule;
       expect(mod.default).toBeDefined();
     });
   });
@@ -118,19 +118,19 @@ describe("DIAGNOSTIC 01 — Module Imports", () => {
   // Pages
   // ============================================
   describe("Pages", () => {
-    it("import @/pages/login", async () => {
-      const mod = (await import("@/pages/login")) as AnyModule;
+    it("import @/features/auth/pages/LoginPage", async () => {
+      const mod = (await import("@/features/auth/pages/LoginPage")) as AnyModule;
       expect(mod.LoginPage).toBeDefined();
     });
 
-    it("import @/pages/dashboard", async () => {
-      const mod = (await import("@/pages/dashboard")) as AnyModule;
-      expect(mod.DashboardPage).toBeDefined();
+    it("import @/features/dashboard/pages/DashboardPage", async () => {
+      const mod = (await import("@/features/dashboard/pages/DashboardPage")) as AnyModule;
+      expect(mod.default).toBeDefined();
     });
 
-    it("import @/pages/stock-entries/create", async () => {
-      const mod = (await import("@/pages/stock-entries/create")) as AnyModule;
-      expect(mod.StockEntryCreatePage).toBeDefined();
+    it("import @/features/products/pages/ProductCreatePage", async () => {
+      const mod = (await import("@/features/products/pages/ProductCreatePage")) as AnyModule;
+      expect(mod.ProductCreatePage).toBeDefined();
     });
   });
 
@@ -138,33 +138,33 @@ describe("DIAGNOSTIC 01 — Module Imports", () => {
   // Hooks
   // ============================================
   describe("Hooks", () => {
-    it("import @/hooks/useDashboardStats", async () => {
-      const mod = (await import("@/hooks/useDashboardStats")) as AnyModule;
+    it("import @/features/dashboard/useDashboardStats", async () => {
+      const mod = (await import("@/features/dashboard/useDashboardStats")) as AnyModule;
       expect(mod.useDashboardStats).toBeDefined();
     });
 
-    it("import @/hooks/useLowStock", async () => {
-      const mod = (await import("@/hooks/useLowStock")) as AnyModule;
+    it("import @/features/dashboard/useLowStock", async () => {
+      const mod = (await import("@/features/dashboard/useLowStock")) as AnyModule;
       expect(mod.useLowStock).toBeDefined();
     });
 
-    it("import @/hooks/useStockInChart", async () => {
-      const mod = (await import("@/hooks/useStockInChart")) as AnyModule;
+    it("import @/features/dashboard/useStockInChart", async () => {
+      const mod = (await import("@/features/dashboard/useStockInChart")) as AnyModule;
       expect(mod.useStockInChart).toBeDefined();
     });
 
-    it("import @/hooks/useKeyboardShortcut", async () => {
-      const mod = (await import("@/hooks/useKeyboardShortcut")) as AnyModule;
+    it("import @/shared/hooks/useKeyboardShortcut", async () => {
+      const mod = (await import("@/shared/hooks/useKeyboardShortcut")) as AnyModule;
       expect(mod.useKeyboardShortcut).toBeDefined();
     });
 
-    it("import @/hooks/useProductSearch", async () => {
-      const mod = (await import("@/hooks/useProductSearch")) as AnyModule;
+    it("import @/features/products/useProductSearch", async () => {
+      const mod = (await import("@/features/products/useProductSearch")) as AnyModule;
       expect(mod.useProductSearch).toBeDefined();
     });
 
-    it("import @/hooks/useStockEntryMutations", async () => {
-      const mod = (await import("@/hooks/useStockEntryMutations")) as AnyModule;
+    it("import @/features/stock-in/useStockEntryMutations", async () => {
+      const mod = (await import("@/features/stock-in/useStockEntryMutations")) as AnyModule;
       expect(mod.useCreateStockEntry).toBeDefined();
     });
   });
@@ -173,28 +173,28 @@ describe("DIAGNOSTIC 01 — Module Imports", () => {
   // Components
   // ============================================
   describe("Components", () => {
-    it("import @/components/common/GlobalSearch", async () => {
-      const mod = (await import("@/components/common/GlobalSearch")) as AnyModule;
+    it("import @/shared/components/GlobalSearch", async () => {
+      const mod = (await import("@/shared/components/GlobalSearch")) as AnyModule;
       expect(mod.GlobalSearch).toBeDefined();
     });
 
-    it("import @/components/common/StatusBadge", async () => {
-      const mod = (await import("@/components/common/StatusBadge")) as AnyModule;
+    it("import @/shared/components/StatusBadge", async () => {
+      const mod = (await import("@/shared/components/StatusBadge")) as AnyModule;
       expect(mod.StatusBadge).toBeDefined();
     });
 
-    it("import @/components/dashboard/StatCard", async () => {
-      const mod = (await import("@/components/dashboard/StatCard")) as AnyModule;
+    it("import @/features/dashboard/components/StatCard", async () => {
+      const mod = (await import("@/features/dashboard/components/StatCard")) as AnyModule;
       expect(mod.StatCard).toBeDefined();
     });
 
-    it("import @/components/dashboard/StockInChart", async () => {
-      const mod = (await import("@/components/dashboard/StockInChart")) as AnyModule;
+    it("import @/features/dashboard/components/StockInChart", async () => {
+      const mod = (await import("@/features/dashboard/components/StockInChart")) as AnyModule;
       expect(mod.StockInChart).toBeDefined();
     });
 
-    it("import @/components/dashboard/LowStockTable", async () => {
-      const mod = (await import("@/components/dashboard/LowStockTable")) as AnyModule;
+    it("import @/features/dashboard/components/LowStockTable", async () => {
+      const mod = (await import("@/features/dashboard/components/LowStockTable")) as AnyModule;
       expect(mod.LowStockTable).toBeDefined();
     });
   });

@@ -15,23 +15,30 @@ export const useMonitoringSPB = () => {
     queryFn: async () => {
       if (USE_MOCK) return [];
       
-      // ✅ PERBAIKAN: Mengambil data dari VIEW (agregasi server-side)
       const { data, error } = await supabaseClient
         .from("v_spb_grouped")
-        .select("*")
-        .order("tanggal", { ascending: false });
+        .select("*");
 
       if (error) throw error;
 
-      return (data ?? []).map((row: any) => ({
+      const formattedData = (data ?? []).map((row: any) => ({
         id: `${row.no_spb || "NO_SPB"}_${row.no_po || "NO_PO"}`,
         spbNo: row.no_spb,
         poNo: row.no_po,
         date: row.tanggal || "-",
-        status: row.status,
         itemsCount: row.items_count,
         sortNumber: getSortNumber(row.no_spb) + getSortNumber(row.no_po) * 0.01,
       }));
+
+      // Sortir berdasarkan tanggal terbaru (descending)
+      return formattedData.sort((a, b) => {
+        const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
+        const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
+        if (dateA === dateB) {
+            return a.sortNumber - b.sortNumber;
+        }
+        return dateB - dateA;
+      });
     },
   });
 

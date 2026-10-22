@@ -1,6 +1,5 @@
-import type { Product, StockExit, StockExitItem } from "../types";
+import type { Product, StockExit } from "../types";
 
-// ✅ PERBAIKAN: Tipe eksplisit menghindari unknown/any
 interface DBProductRow {
   id: number; kode: string; nama: string; ukuran: string | null; spesifikasi: string | null;
   kategori: string; satuan: string; stok: number; created_at: string;
@@ -9,7 +8,7 @@ interface DBProductRow {
 export const mapProduct = (row: any): Product => {
   const r = row as DBProductRow;
   return {
-    id: r.id, code: r.kode, name: r.nama, size: r.ukuran, specification: r.spesifikasi,
+    id: r.id, code: r.kode, name: r.nama, size: r.ukuran ?? null, specification: r.spesifikasi ?? null,
     category: r.kategori ?? "Material", categoryId: null, categoryName: null,
     unit: r.satuan ?? "pcs", stock: r.stok ?? 0, minStock: 0, costPrice: 0,
     status: undefined, createdAt: r.created_at ?? new Date().toISOString(),

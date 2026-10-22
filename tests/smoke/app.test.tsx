@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 
 // Mock supabase
-vi.mock("@/utility/supabaseClient", () => ({
+vi.mock("@/shared/lib/supabaseClient", () => ({
   supabaseClient: {
     auth: {
       getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
@@ -31,23 +31,23 @@ type AnyModule = Record<string, unknown>;
 
 describe("Smoke: App module", () => {
   it("App.tsx bisa di-import", async () => {
-    const mod = (await import("@/App")) as AnyModule;
+    const mod = (await import("@/app/App")) as AnyModule;
     expect(mod.default).toBeDefined();
     expect(typeof mod.default).toBe("function");
   });
 
   it("authProvider bisa di-import", async () => {
-    const mod = (await import("@/authProvider")) as AnyModule;
+    const mod = (await import("@/app/providers/authProvider")) as AnyModule;
     expect(mod.authProvider).toBeDefined();
   });
 
   it("semua halaman bisa di-import", async () => {
-    const dashboard = (await import("@/pages/dashboard")) as AnyModule;
-    const login = (await import("@/pages/login")) as AnyModule;
-    const stockEntry = (await import("@/pages/stock-entries/create")) as AnyModule;
+    const dashboard = (await import("@/features/dashboard/pages/DashboardPage")) as AnyModule;
+    const login = (await import("@/features/auth/pages/LoginPage")) as AnyModule;
+    const stockEntry = (await import("@/features/products/pages/ProductCreatePage")) as AnyModule;
 
-    expect(dashboard.DashboardPage).toBeDefined();
+    expect(dashboard.default).toBeDefined();
     expect(login.LoginPage).toBeDefined();
-    expect(stockEntry.StockEntryCreatePage).toBeDefined();
+    expect(stockEntry.ProductCreatePage).toBeDefined();
   });
 });

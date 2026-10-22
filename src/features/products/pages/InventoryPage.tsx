@@ -92,7 +92,7 @@ export const InventoryPage = () => {
         type="card"
         size="large"
         items={tabItems}
-        destroyInactiveTabPane={false}
+        destroyOnHidden={false}
       />
     </Space>
   );

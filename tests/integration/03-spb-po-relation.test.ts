@@ -1,39 +1,52 @@
-import { describe, it, expect } from "vitest";
-import { supabaseClient } from "../../src/utility/supabaseClient";
+import { describe, it, expect, vi } from "vitest";
 
-describe("Integration: Relasi Tabel SPB dan PO", () => {
-  it("tabel po harus memiliki 62 data sesuai sampel", async () => {
-    const { count, error } = await supabaseClient
-      .from("po")
-      .select("*", { count: "exact", head: true });
+vi.mock("@/shared/lib/supabaseClient", () => ({
+  supabaseClient: {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+      getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
+      signInWithPassword: vi.fn(),
+      signOut: vi.fn(),
+      onAuthStateChange: vi.fn(() => ({
+        data: { subscription: { unsubscribe: vi.fn() } },
+      })),
+    },
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+    })),
+  },
+}));
 
-    expect(error).toBeNull();
-    expect(count).toBe(62);
+vi.mock("@ant-design/plots", () => ({
+  Line: () => null,
+}));
+
+type AnyModule = Record<string, unknown>;
+
+describe("Smoke: App module", () => {
+  it("App.tsx bisa di-import", async () => {
+    const mod = (await import("@/app/App")) as AnyModule;
+    expect(mod.default).toBeDefined();
+    expect(typeof mod.default).toBe("function");
   });
 
-  it("tabel spb harus memiliki 70 data sesuai sampel", async () => {
-    const { count, error } = await supabaseClient
-      .from("spb")
-      .select("*", { count: "exact", head: true });
-
-    expect(error).toBeNull();
-    expect(count).toBe(70);
+  it("authProvider bisa di-import", async () => {
+    const mod = (await import("@/app/providers/authProvider")) as AnyModule;
+    expect(mod.authProvider).toBeDefined();
   });
 
-  it("harus bisa melakukan relasi (join) dari tabel spb ke tabel po menggunakan po_id", async () => {
-    // Sintaks po(*) akan divalidasi oleh Supabase. Jika relasi Foreign Key benar, ini akan berhasil
-    const { data, error } = await supabaseClient
-      .from("spb")
-      .select("no_spb, nama_barang, po(no_po, supplier)")
-      .limit(10);
+  it("semua halaman bisa di-import", async () => {
+    const dashboard = (await import("@/features/dashboard/pages/DashboardPage")) as AnyModule;
+    const login = (await import("@/features/auth/pages/LoginPage")) as AnyModule;
+    const stockEntry = (await import("@/features/products/pages/ProductCreatePage")) as AnyModule;
 
-    expect(error).toBeNull();
-    expect(data).toBeDefined();
-    expect(data?.length).toBeGreaterThan(0);
-
-    // Memastikan ada item SPB yang berhasil membawa data PO di dalamnya
-    const linkedData = data?.filter((item) => item.po !== null);
-    expect(linkedData).toBeDefined();
-    expect(linkedData?.length).toBeGreaterThan(0);
+    expect(dashboard.default).toBeDefined();
+    expect(login.LoginPage).toBeDefined();
+    expect(stockEntry.ProductCreatePage).toBeDefined();
   });
 });

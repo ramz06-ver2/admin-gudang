@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { useProducts } from "@/hooks/useProducts";
-import { useProductSearch } from "@/hooks/useProductSearch";
+import { useProducts } from "../../src/features/products/useProducts";
+import { useProductSearch } from "../../src/features/products/useProductSearch";
 
 function wrapper({ children }: { children: ReactNode }) {
   const qc = new QueryClient({

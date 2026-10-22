@@ -1,19 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
-
-export interface SPBItemDetail {
-  id: number;
-  no_spb: string | null;
-  no_po: string | null;
-  nama_barang: string;
-  jumlah_permintaan: number | null;
-  satuan: string | null;
-  status: string;
-  tanggal_po: string | null;
-  tanggal_datang: string | null;
-  tanggal_pembuatan_spb?: string | null;
-}
+import type { SPBItemDetail } from "../../shared/types";
 
 export const useMonitoringSPBDetail = (
   spbNo: string | null,
@@ -24,19 +12,27 @@ export const useMonitoringSPBDetail = (
     queryFn: async () => {
       let query = supabaseClient.from(TABLES.spb).select("*");
 
-      if (spbNo && poNo) {
-        query = query.eq("no_spb", spbNo).eq("no_po", poNo);
-      } else if (spbNo) {
-        // SPB tanpa PO
-        query = query.eq("no_spb", spbNo).is("no_po", null);
+      if (spbNo) {
+        // 💥 HACK: Ganti karakter '#' dengan '_' (SQL Wildcard)
+        // Ini mencegah URL terpotong oleh sistem dan menjamin data pasti terbaca!
+        const safeSpbNo = spbNo.replace(/#/g, "_");
+        query = query.ilike("no_spb", safeSpbNo);
       } else if (poNo) {
-        // PO tanpa SPB
-        query = query.is("no_spb", null).eq("no_po", poNo);
+        const safePoNo = poNo.replace(/#/g, "_");
+        query = query.is("no_spb", null).ilike("id_po", safePoNo);
       }
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data ?? []) as SPBItemDetail[];
+
+      // Pemetaan data agar tidak error di tabel UI
+      return (data ?? []).map((row: any) => ({
+        ...row,
+        no_po: row.id_po && String(row.id_po).trim() !== "" ? String(row.id_po) : "-",
+        nama_barang: row.nama_barang || "Nama Barang Kosong",
+        jumlah_permintaan: row.jumlah_permintaan || 0,
+        satuan: row.satuan || "-",
+      })) as SPBItemDetail[];
     },
     enabled: !!(spbNo || poNo),
   });
