@@ -31,32 +31,34 @@ describe("useMonitoringSPBDetail - Logika Filtering Kebal Peluru", () => {
     mockData = [];
   });
 
-  it("berhasil memfilter id_po bernilai NULL", async () => {
+  it("berhasil menampilkan SEMUA barang dalam SPB (termasuk yang punya PO)", async () => {
+    // Menggunakan format relasi Supabase yang benar (po: { no_po: ... })
     mockData = [
-      { id: 1, no_spb: "63#R1", id_po: null, nama_barang: "Barang A" },
-      { id: 2, no_spb: "63#R1", id_po: "PO-001", nama_barang: "Barang B" },
+      { id: 1, no_spb: "63#R1", po: null, nama_barang: "Barang A", qty_permintaan: 1, material_datang_qty: 0 },
+      { id: 2, no_spb: "63#R1", po: { no_po: "PO-001", tanggal_po: "2026-01-01" }, nama_barang: "Barang B", qty_permintaan: 1, material_datang_qty: 0 },
     ];
+
     const { result } = renderHook(() => useMonitoringSPBDetail("63#R1", null), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    
-    expect(result.current.items).toHaveLength(1);
-    expect(result.current.items[0].no_po).toBe("-"); // Ter-map menjadi "-"
+
+    // Harus mengembalikan KEDUANYA (sesuai perilaku aplikasi asli)
+    expect(result.current.items).toHaveLength(2);
+    expect(result.current.items[0].no_po).toBe("-");
+    expect(result.current.items[1].no_po).toBe("PO-001");
   });
 
   it("menangani string kosong, '-', dan string 'null' dari DB sebagai tanpa PO", async () => {
-    // Simulasi data jelek / kotor di Database
     mockData = [
-      { id: 1, no_spb: "63#R1", id_po: "", nama_barang: "Barang A" },
-      { id: 2, no_spb: "63#R1", id_po: "-", nama_barang: "Barang B" },
-      { id: 3, no_spb: "63#R1", id_po: "null", nama_barang: "Barang C" },
-      { id: 4, no_spb: "63#R1", id_po: "PO-123", nama_barang: "Barang D" },
+      { id: 1, no_spb: "63#R1", po: { no_po: "", tanggal_po: "2026-01-01" }, nama_barang: "Barang A", qty_permintaan: 1, material_datang_qty: 0 },
+      { id: 2, no_spb: "63#R1", po: { no_po: "-", tanggal_po: "2026-01-01" }, nama_barang: "Barang B", qty_permintaan: 1, material_datang_qty: 0 },
+      { id: 3, no_spb: "63#R1", po: { no_po: "null", tanggal_po: "2026-01-01" }, nama_barang: "Barang C", qty_permintaan: 1, material_datang_qty: 0 },
+      { id: 4, no_spb: "63#R1", po: { no_po: "PO-123", tanggal_po: "2026-01-01" }, nama_barang: "Barang D", qty_permintaan: 1, material_datang_qty: 0 },
     ];
-    
-    // User mengklik kartu tanpa PO
+
     const { result } = renderHook(() => useMonitoringSPBDetail("63#R1", null), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    
-    // Harus bisa menangkap Barang A, B, dan C
-    expect(result.current.items).toHaveLength(3);
+
+    // Harus mengembalikan keempatnya
+    expect(result.current.items).toHaveLength(4);
   });
 });

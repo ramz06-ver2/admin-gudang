@@ -24,8 +24,9 @@ const { Title, Text } = Typography;
 // Filter murni hanya berdasarkan ketersediaan PO
 type FilterType = "Semua" | "Sudah di PO" | "Belum di PO";
 
-// Helper untuk mengambil angka dari string (contoh: "SPB-37" -> 37)
-const getNumberFromStr = (str: string | null) => {
+// Helper untuk mengambil angka dari SPB, jika kosong ambil dari PO
+const getNumberFromStr = (spb: string | null, po: string | null) => {
+  const str = spb || po;
   if (!str) return 999999;
   const match = str.match(/\d+/);
   return match ? parseInt(match[0], 10) : 999999;
@@ -37,8 +38,7 @@ export default function MonitoringSPBPage() {
   const screens = Grid.useBreakpoint();
   const [filter, setFilter] = useState<FilterType>("Semua");
 
-  // ✅ 1. Card Kecil "Baru ditambahkan"
-  // Urutkan berdasarkan tanggal terbaru, lalu ambil 10 teratas
+  // ✅ 1. Card Kecil "Baru ditambahkan" (10 Data Terbaru)
   const recentItems = useMemo(() => {
     const sortedByLatestDate = [...data].sort((a, b) => {
       const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
@@ -79,16 +79,16 @@ export default function MonitoringSPBPage() {
       if (isADatang && !isBDatang) return 1;
       if (!isADatang && isBDatang) return -1;
 
-      // B. Prioritas 2: Urutkan berdasarkan No SPB terkecil ke terbesar
-      const numA = getNumberFromStr(a.spbNo);
-      const numB = getNumberFromStr(b.spbNo);
+      // B. Prioritas 2: Urutkan berdasarkan No SPB (fallback ke No PO) terkecil ke terbesar
+      const numA = getNumberFromStr(a.spbNo, a.poNo);
+      const numB = getNumberFromStr(b.spbNo, b.poNo);
       
       if (numA !== numB) {
         return numA - numB;
       }
       
-      // Fallback jika No SPB sama atau kosong
-      return (a.spbNo || "").localeCompare(b.spbNo || "");
+      // Fallback jika sama atau kosong
+      return (a.spbNo || a.poNo || "").localeCompare(b.spbNo || b.poNo || "");
     });
   }, [data, filter]);
 
@@ -102,7 +102,8 @@ export default function MonitoringSPBPage() {
       item.poNo !== "NO_PO" &&
       item.poNo !== "-"
     ) {
-      params.set("po", String(item.poNo).split(",")[0].trim());
+      // ✅ Kirim semua teks PO (jangan di-split)
+      params.set("po", String(item.poNo));
     }
 
     navigate(`/monitoring-spb/detail?${params.toString()}`);
@@ -257,7 +258,6 @@ export default function MonitoringSPBPage() {
           >
             Baru ditambahkan
           </Text>
-          {/* Menggunakan CSS Grid agar presisi 5 kolom di desktop */}
           <div style={{
             display: "grid",
             gridTemplateColumns: screens.md ? "repeat(5, 1fr)" : "repeat(2, 1fr)",

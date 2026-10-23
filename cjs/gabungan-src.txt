@@ -1777,7 +1777,6 @@ FILE: ../src/features/spb/pages/MonitoringSPBDetailPage.tsx
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/pages/MonitoringSPBDetailPage.tsx
 ================================================================================
 
-// src/features/spb/pages/MonitoringSPBDetailPage.tsx
 import { useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -1828,6 +1827,16 @@ export const MonitoringSPBDetailPage = () => {
     </Card>
   );
 
+  // Helper warna Tag
+  const getStatusColor = (status: string | null | undefined) => {
+    if (status === "Belum PO") return "orange";
+    if (status === "Sudah PO") return "blue";
+    if (status === "Datang Sesuai") return "green";
+    if (status === "Datang Kurang") return "volcano";
+    if (status === "Datang Lebih") return "purple";
+    return "default";
+  };
+
   const mobileColumns = [
     { title: "No", key: "no", width: 40, align: "center" as const, render: (_: any, __: SPBItemDetail, i: number) => i + 1 },
     { title: "Nama Barang", dataIndex: "nama_barang", key: "nama_barang", ellipsis: true, render: (v: string) => <Text strong>{v}</Text> },
@@ -1836,10 +1845,9 @@ export const MonitoringSPBDetailPage = () => {
       render: (_: any, r: SPBItemDetail) => <Text>{r.jumlah_permintaan ?? 0} <Text type="secondary" style={{ fontSize: 12 }}>{r.satuan ?? ""}</Text></Text>,
     },
     {
-      title: "Status", key: "status", width: 74, align: "center" as const,
+      title: "Status", key: "status", width: 90, align: "center" as const,
       render: (_: any, r: SPBItemDetail) => {
-        const sudahPo = r.no_po && r.no_po !== "-";
-        return <Tag color={sudahPo ? "green" : "orange"} style={{ margin: 0, padding: "0 4px", fontSize: 11 }}>{sudahPo ? "Sudah PO" : "Belum PO"}</Tag>;
+        return <Tag color={getStatusColor(r.status)} style={{ margin: 0, padding: "0 4px", fontSize: 11, whiteSpace: "normal", textAlign: "center" }}>{r.status || "Belum PO"}</Tag>;
       },
     },
     {
@@ -1850,7 +1858,6 @@ export const MonitoringSPBDetailPage = () => {
           size="small"
           icon={<InfoCircleOutlined />}
           style={{ fontSize: 12, padding: "0 8px" }}
-          // ✅ Navigasi ke halaman baru
           onClick={() => navigate(`/monitoring-spb/item/${r.id}`)}
         >
           Detail
@@ -1867,14 +1874,13 @@ export const MonitoringSPBDetailPage = () => {
     { title: "Tanggal PO", dataIndex: "tanggal_po", key: "tanggal_po", width: 130, render: (v: string | null) => (v ? formatDate(v) : "-") },
     { title: "Tanggal Datang", dataIndex: "tanggal_datang", key: "tanggal_datang", width: 140, render: (v: string | null) => (v ? formatDate(v) : "-") },
     {
-      title: "Jumlah Datang", dataIndex: "jumlah_permintaan", key: "jumlah_datang", width: 140, align: "right" as const,
+      title: "Jumlah Datang", dataIndex: "qty_datang", key: "jumlah_datang", width: 140, align: "right" as const,
       render: (v: number | null, r: SPBItemDetail) => `${v ?? 0} ${r.satuan ?? ""}`.trim(),
     },
     {
-      title: "Status", key: "status", width: 110,
+      title: "Status", key: "status", width: 130,
       render: (_: any, r: SPBItemDetail) => {
-        const sudahPo = r.no_po && r.no_po !== "-";
-        return <Tag color={sudahPo ? "green" : "orange"}>{sudahPo ? "Sudah PO" : "Belum PO"}</Tag>;
+        return <Tag color={getStatusColor(r.status)}>{r.status || "Belum PO"}</Tag>;
       },
     },
     {
@@ -1884,7 +1890,6 @@ export const MonitoringSPBDetailPage = () => {
           type="primary"
           size="small"
           icon={<InfoCircleOutlined />}
-          // ✅ Navigasi ke halaman baru
           onClick={() => navigate(`/monitoring-spb/item/${r.id}`)}
         >
           Detail
@@ -2091,7 +2096,6 @@ FILE: ../src/features/spb/pages/MonitoringSPBPage.tsx
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/pages/MonitoringSPBPage.tsx
 ================================================================================
 
-// src/features/spb/pages/MonitoringSPBPage.tsx
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -2105,6 +2109,8 @@ import {
   Segmented,
   Empty,
   Alert,
+  Tag,
+  Grid,
 } from "antd";
 import { useMonitoringSPB } from "../useMonitoringSPB";
 import type { SPBDocumentGroup } from "../../../shared/types";
@@ -2116,18 +2122,34 @@ const { Title, Text } = Typography;
 // Filter murni hanya berdasarkan ketersediaan PO
 type FilterType = "Semua" | "Sudah di PO" | "Belum di PO";
 
+// Helper untuk mengambil angka dari string (contoh: "SPB-37" -> 37)
+const getNumberFromStr = (str: string | null) => {
+  if (!str) return 999999;
+  const match = str.match(/\d+/);
+  return match ? parseInt(match[0], 10) : 999999;
+};
+
 export default function MonitoringSPBPage() {
   const { data, isLoading, error } = useMonitoringSPB();
   const navigate = useNavigate();
+  const screens = Grid.useBreakpoint();
   const [filter, setFilter] = useState<FilterType>("Semua");
 
-  // Mengambil 4 dokumen terbaru untuk ditampilkan di atas
+  // ✅ 1. Card Kecil "Baru ditambahkan"
+  // Urutkan berdasarkan tanggal terbaru, lalu ambil 10 teratas
   const recentItems = useMemo(() => {
-    return data.slice(0, 4);
+    const sortedByLatestDate = [...data].sort((a, b) => {
+      const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
+      const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
+      return dateB - dateA;
+    });
+    return sortedByLatestDate.slice(0, 10);
   }, [data]);
 
+  // ✅ 2. Card Besar Utama
   const filteredAndSortedData = useMemo(() => {
-    return data.filter((item) => {
+    // Filter dulu
+    const filtered = data.filter((item) => {
       switch (filter) {
         case "Sudah di PO":
           return (
@@ -2145,24 +2167,50 @@ export default function MonitoringSPBPage() {
           return true;
       }
     });
+
+    // Lalu urutkan
+    return filtered.sort((a, b) => {
+      // A. Prioritas 1: Status "Datang" selalu di bawah
+      const isADatang = a.status === "Datang";
+      const isBDatang = b.status === "Datang";
+      
+      if (isADatang && !isBDatang) return 1;
+      if (!isADatang && isBDatang) return -1;
+
+      // B. Prioritas 2: Urutkan berdasarkan No SPB terkecil ke terbesar
+      const numA = getNumberFromStr(a.spbNo);
+      const numB = getNumberFromStr(b.spbNo);
+      
+      if (numA !== numB) {
+        return numA - numB;
+      }
+      
+      // Fallback jika No SPB sama atau kosong
+      return (a.spbNo || "").localeCompare(b.spbNo || "");
+    });
   }, [data, filter]);
 
   const handleCardClick = (item: SPBDocumentGroup) => {
     const params = new URLSearchParams();
 
     if (item.spbNo) {
-      // Jika ini kartu SPB, HANYA kirim nomor SPB-nya agar aplikasi menarik SEMUA isi SPB tersebut
       params.set("spb", String(item.spbNo));
     } else if (
       item.poNo &&
       item.poNo !== "NO_PO" &&
       item.poNo !== "-"
     ) {
-      // ✅ Jaga-jaga kalau poNo masih berupa number dari view
       params.set("po", String(item.poNo).split(",")[0].trim());
     }
 
     navigate(`/monitoring-spb/detail?${params.toString()}`);
+  };
+
+  const getStatusColor = (status?: string) => {
+    if (status === "Belum PO") return "orange";
+    if (status === "Sudah PO") return "blue";
+    if (status === "Datang") return "green";
+    return "default";
   };
 
   const renderCardContent = (item: SPBDocumentGroup) => {
@@ -2205,14 +2253,23 @@ export default function MonitoringSPBPage() {
               <Text type="secondary" style={{ fontSize: 11 }}>
                 No. PO
               </Text>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>
+              <div style={{ fontWeight: 600, fontSize: 16, wordBreak: "break-word" }}>
                 {item.poNo}
               </div>
             </div>
           )}
 
-          <div style={{ marginTop: 12, fontSize: 12, color: "#8c8c8c" }}>
-            Total: {item.itemsCount} Barang
+          <div style={{ marginTop: 12, fontSize: 12, color: "#8c8c8c", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <div>Total: {item.itemsCount} Barang</div>
+              <div style={{ marginTop: 4 }}>
+                Tanggal: {item.date !== "-" ? formatDate(item.date) : "-"}
+              </div>
+            </div>
+            
+            <Tag color={getStatusColor(item.status)} style={{ margin: 0, fontWeight: 600 }}>
+              {item.status || "Belum PO"}
+            </Tag>
           </div>
 
           <div
@@ -2289,7 +2346,7 @@ export default function MonitoringSPBPage() {
         </Space>
       </div>
 
-      {/* Section Baru Ditambahkan */}
+      {/* Section Baru Ditambahkan (10 Card: 5 Atas, 5 Bawah) */}
       {recentItems.length > 0 && (
         <div style={{ marginBottom: 32 }}>
           <Text
@@ -2298,14 +2355,12 @@ export default function MonitoringSPBPage() {
           >
             Baru ditambahkan
           </Text>
-          <div
-            style={{
-              display: "flex",
-              gap: 16,
-              overflowX: "auto",
-              paddingBottom: 8,
-            }}
-          >
+          {/* Menggunakan CSS Grid agar presisi 5 kolom di desktop */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: screens.md ? "repeat(5, 1fr)" : "repeat(2, 1fr)",
+            gap: 12,
+          }}>
             {recentItems.map((item) => {
               const hasSPB = item.spbNo && item.spbNo !== "NO_SPB";
               const hasPO =
@@ -2314,31 +2369,31 @@ export default function MonitoringSPBPage() {
                 item.poNo !== "-";
 
               return (
-                <div key={item.id} style={{ minWidth: 200, flexShrink: 0 }}>
-                  <Card
-                    size="small"
-                    hoverable
-                    onClick={() => handleCardClick(item)}
-                    style={{
-                      borderRadius: 10,
-                      background: "#fafafa",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <Space direction="vertical" size={0}>
-                      <Text strong>
-                        {hasSPB && hasPO
-                          ? `SPB: ${item.spbNo} · PO: ${item.poNo}`
-                          : hasSPB
-                            ? `SPB: ${item.spbNo}`
-                            : `PO: ${item.poNo}`}
-                      </Text>
-                      <Text type="secondary" style={{ fontSize: 12 }}>
-                        {item.date !== "-" ? formatDate(item.date) : "-"}
-                      </Text>
-                    </Space>
-                  </Card>
-                </div>
+                <Card
+                  key={item.id}
+                  size="small"
+                  hoverable
+                  onClick={() => handleCardClick(item)}
+                  style={{
+                    borderRadius: 10,
+                    background: "#fafafa",
+                    cursor: "pointer",
+                  }}
+                  styles={{ body: { padding: 12 } }}
+                >
+                  <Space direction="vertical" size={0}>
+                    <Text strong style={{ fontSize: 13, display: "block" }} ellipsis>
+                      {hasSPB && hasPO
+                        ? `SPB: ${item.spbNo} · PO: ${item.poNo}`
+                        : hasSPB
+                          ? `SPB: ${item.spbNo}`
+                          : `PO: ${item.poNo}`}
+                    </Text>
+                    <Text type="secondary" style={{ fontSize: 11 }}>
+                      {item.date !== "-" ? formatDate(item.date) : "-"}
+                    </Text>
+                  </Space>
+                </Card>
               );
             })}
           </div>
@@ -2385,7 +2440,6 @@ import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { USE_MOCK } from "../../shared/lib/config";
 import type { SPBDocumentGroup } from "../../shared/types";
 
-// ✅ Terima string | number | null | undefined, aman untuk semua tipe
 const getSortNumber = (val: unknown): number => {
   if (val === null || val === undefined || val === "") return 999999;
   const s = String(val);
@@ -2393,7 +2447,6 @@ const getSortNumber = (val: unknown): number => {
   return match ? parseInt(match[0], 10) : 999999;
 };
 
-// ✅ Helper: paksa jadi string | null
 const toStrOrNull = (val: unknown): string | null => {
   if (val === null || val === undefined || val === "") return null;
   return String(val);
@@ -2406,26 +2459,97 @@ export const useMonitoringSPB = () => {
       if (USE_MOCK) return [];
 
       const { data, error } = await supabaseClient
-        .from("v_spb_grouped")
-        .select("*");
+        .from("spb")
+        .select(`
+          id,
+          no_spb,
+          tgl_spb,
+          material_datang_tgl,
+          qty_permintaan,
+          material_datang_qty,
+          po:po!id_po (
+            no_po,
+            tanggal_po
+          )
+        `);
 
       if (error) throw error;
 
-      const formattedData = (data ?? []).map((row: any) => {
+      const groups = new Map<string, { 
+        data: SPBDocumentGroup; 
+        hasAnyPO: boolean; 
+        hasAnyArrival: boolean;
+        latestTimestamp: number; // ✅ Untuk melacak tanggal paling baru
+      }>();
+
+      (data ?? []).forEach((row: any) => {
         const spbNo = toStrOrNull(row.no_spb);
-        const poNo = toStrOrNull(row.no_po);
-        return {
-          id: `${spbNo ?? "NO_SPB"}_${poNo ?? "NO_PO"}`,
-          spbNo,
-          poNo,
-          date: row.tanggal || "-",
-          itemsCount: row.items_count,
-          sortNumber:
-            getSortNumber(spbNo) + getSortNumber(poNo) * 0.01,
-        };
+        const poData = Array.isArray(row.po) ? row.po[0] : row.po;
+        const poNo = toStrOrNull(poData?.no_po);
+        
+        const key = spbNo || `PO_${poNo}`;
+
+        if (!groups.has(key)) {
+          groups.set(key, {
+            data: {
+              id: key,
+              spbNo,
+              poNo,
+              date: "-", // Awalnya kosong
+              itemsCount: 0,
+              sortNumber: getSortNumber(spbNo) + getSortNumber(poNo) * 0.01,
+              status: "Belum PO"
+            },
+            hasAnyPO: false,
+            hasAnyArrival: false,
+            latestTimestamp: 0
+          });
+        }
+
+        const group = groups.get(key)!;
+        group.data.itemsCount += 1;
+
+        // Cek status PO & Kedatangan
+        if (poNo && poData?.tanggal_po) group.hasAnyPO = true;
+        if (row.material_datang_tgl) group.hasAnyArrival = true;
+
+        if (poNo) {
+          if (!group.data.poNo) group.data.poNo = poNo;
+          else if (!group.data.poNo.includes(poNo)) group.data.poNo += `, ${poNo}`;
+          group.data.sortNumber = getSortNumber(spbNo) + getSortNumber(poNo) * 0.01;
+        }
+
+        // ✅ LOGIKA TANGGAL PALING BARU:
+        // Kumpulkan semua kemungkinan tanggal dari barang ini
+        const datesToCheck = [
+          row.tgl_spb, 
+          poData?.tanggal_po, 
+          row.material_datang_tgl
+        ];
+
+        datesToCheck.forEach((dateStr) => {
+          if (dateStr) {
+            const time = new Date(dateStr).getTime();
+            // Jika tanggal ini valid dan lebih baru dari yang tersimpan di grup
+            if (!isNaN(time) && time > group.latestTimestamp) {
+              group.latestTimestamp = time;
+              group.data.date = dateStr; // Ganti dengan tanggal terbaru
+            }
+          }
+        });
       });
 
-      return formattedData.sort((a, b) => {
+      // Tentukan status akhir & rapikan
+      const result = Array.from(groups.values()).map((g) => {
+        let status = "Belum PO";
+        if (g.hasAnyArrival) status = "Datang";
+        else if (g.hasAnyPO) status = "Sudah PO";
+
+        return { ...g.data, status };
+      });
+
+      // Urutkan berdasarkan tanggal terbaru
+      return result.sort((a, b) => {
         const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
         const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
         if (dateA === dateB) return a.sortNumber - b.sortNumber;
@@ -2455,7 +2579,6 @@ export const useMonitoringSPBDetail = (
     queryKey: ["monitoring-spb-detail", spbNo, poNo],
     queryFn: async () => {
       
-      // 💥 MANTAP! Kita lakukan JOIN ke tabel 'po' untuk menarik 'no_po' asli dan 'tanggal_po'
       let query = supabaseClient.from(TABLES.spb).select(`
         *,
         po (
@@ -2465,10 +2588,8 @@ export const useMonitoringSPBDetail = (
       `);
 
       if (spbNo) {
-        const safeSpbNo = spbNo.replace(/#/g, "_");
-        query = query.ilike("no_spb", `%${safeSpbNo}%`);
+        query = query.eq("no_spb", spbNo);
       } else if (poNo) {
-        // poNo dari URL sekarang berisi Angka ID (misal: "12"), jadi kita gunakan .eq (Sama persis)
         query = query.is("no_spb", null).eq("id_po", poNo);
       }
 
@@ -2476,20 +2597,43 @@ export const useMonitoringSPBDetail = (
       if (error) throw error;
 
       return (data ?? []).map((row: any) => {
-        // Ekstrak data hasil JOIN dari tabel PO
         const dataPo = Array.isArray(row.po) ? row.po[0] : row.po;
+        const noPo = dataPo?.no_po || null;
+        const tglPo = dataPo?.tanggal_po || null;
+        
+        const req = row.qty_permintaan || 0;
+        const arr = row.material_datang_qty || 0;
+        const tglDatang = row.material_datang_tgl || null;
+
+        // ✅ PERBAIKAN LOGIKA STATUS DETAIL
+        let status = "Belum PO";
+        
+        if (tglDatang) {
+          // Jika sudah ada tanggal datang, langsung cek kuantitasnya
+          if (req === arr) {
+            status = "Datang Sesuai";
+          } else if (req < arr) {
+            status = "Datang Lebih";  // Minta 5, datang 10
+          } else if (req > arr) {
+            status = "Datang Kurang"; // Minta 10, datang 5
+          } else {
+            status = "Datang"; // Fallback jika qty null
+          }
+        } else if (noPo && tglPo) {
+          // Jika belum datang, tapi sudah ada nomor dan tanggal PO
+          status = "Sudah PO";
+        }
 
         return {
           ...row,
-          // Tampilkan teks no_po yang ditarik dari tabel relasi!
-          no_po: dataPo?.no_po || "-",
-          tanggal_po: dataPo?.tanggal_po || null,
-
-          // Data SPB Anda
+          no_po: noPo || "-",
+          tanggal_po: tglPo,
           nama_barang: row.nama_barang_spb || "Nama Kosong",
-          jumlah_permintaan: row.qty_permintaan || 0,
+          jumlah_permintaan: req,
           satuan: row.satuan || "-",
-          tanggal_datang: row.material_datang_tgl || null,
+          tanggal_datang: tglDatang,
+          qty_datang: arr,
+          status, // ✅ Masukkan status ke data
         };
       }) as SPBItemDetail[];
     },
@@ -4265,7 +4409,13 @@ export interface DashboardStats { totalProducts: number; totalStock: number; tod
 export interface StockInChartItem { date: string; total: number; }
 
 export interface SPBDocumentGroup {
-  id: string; spbNo: string | null; poNo: string | null; date: string; itemsCount: number; sortNumber: number;
+  id: string; 
+  spbNo: string | null; 
+  poNo: string | null; 
+  date: string; 
+  itemsCount: number; 
+  sortNumber: number;
+  status?: string; // ✅ Status agregat untuk Card (Belum PO, Sudah PO, Datang)
 }
 
 export interface SPBItemDetail {
@@ -4289,7 +4439,7 @@ export interface SPBItemDetail {
   lama_proses?: string | number | null;
   kurang_lebih?: string | null;
   keterangan?: string | null;
-  status?: string | null;
+  status?: string | null; // ✅ Status spesifik untuk detail barang (Datang Sesuai, Datang Lebih, dll)
   tanggal_pembuatan_spb?: string | null;
 }
 

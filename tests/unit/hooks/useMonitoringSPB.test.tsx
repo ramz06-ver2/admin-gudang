@@ -2,78 +2,106 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
+import { supabaseClient } from "@/shared/lib/supabaseClient";
+import { useMonitoringSPB } from "@/features/spb/useMonitoringSPB";
 
-// Setup Mock untuk Supabase Client
-let mockData: any[] = [];
-const mockQuery = {
-  select: vi.fn().mockReturnThis(),
-  eq: vi.fn().mockReturnThis(),
-  is: vi.fn().mockReturnThis(),
-  then: vi.fn((resolve) => resolve({ data: mockData, error: null })),
-};
-
+// Mock Supabase Client
 vi.mock("@/shared/lib/supabaseClient", () => ({
   supabaseClient: {
-    from: vi.fn(() => mockQuery),
+    from: vi.fn(),
   },
 }));
-
-import { useMonitoringSPBDetail } from "@/features/spb/useMonitoringSPBDetail";
 
 function wrapper({ children }: { children: ReactNode }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
 }
 
-describe("useMonitoringSPBDetail - Logika Filtering", () => {
+describe("useMonitoringSPB - Pengujian Grouping SPB 37", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockData = [];
   });
 
-  it("berhasil memfilter item dengan id_po bernilai NULL", async () => {
-    // Simulasi DB mengembalikan 2 barang
-    mockData = [
-      { id: 1, no_spb: "63#R1", id_po: null, nama_barang: "Barang A" },
-      { id: 2, no_spb: "63#R1", id_po: "PO-001", nama_barang: "Barang B" },
+  it("harus menggabungkan semua no_po termasuk '10 REV' di dalam satu grup SPB 37", async () => {
+    // 1. Simulasi data persis seperti gabungan table_spb & table_po
+    const mockData = [
+      // SPB 37 dengan PO 10 REV (ID 198 -> id_po 152)
+      {
+        id: 198,
+        no_spb: "37",
+        tgl_spb: "2026-09-21",
+        material_datang_tgl: "2026-08-01",
+        qty_permintaan: 1,
+        material_datang_qty: 1,
+        po: { no_po: "10 REV", tanggal_po: "2026-07-21" }
+      },
+      // SPB 37 dengan PO 59R1
+      {
+        id: 501,
+        no_spb: "37",
+        tgl_spb: "2026-09-21",
+        material_datang_tgl: null,
+        qty_permintaan: 1,
+        material_datang_qty: 0,
+        po: { no_po: "59R1", tanggal_po: "2026-10-07" }
+      },
+      // SPB 37 dengan PO 58
+      {
+        id: 502,
+        no_spb: "37",
+        tgl_spb: "2026-09-21",
+        material_datang_tgl: null,
+        qty_permintaan: 1,
+        material_datang_qty: 0,
+        po: { no_po: "58", tanggal_po: "2026-09-30" }
+      }
     ];
 
-    const { result } = renderHook(() => useMonitoringSPBDetail("63#R1", null), { wrapper });
+    // Mock query chain: supabaseClient.from().select()
+    const mockSelect = vi.fn().mockResolvedValue({ data: mockData, error: null });
+    (supabaseClient.from as any).mockReturnValue({ select: mockSelect });
+
+    // 2. Jalankan Hook
+    const { result } = renderHook(() => useMonitoringSPB(), { wrapper });
+
+    // 3. Tunggu sampai loading selesai
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    // Seharusnya hanya mengembalikan Barang A karena poNo tidak dikirim (null)
-    expect(result.current.items).toHaveLength(1);
-    expect(result.current.items[0].nama_barang).toBe("Barang A");
-    expect(result.current.items[0].no_po).toBe("-");
+    // 4. Verifikasi
+    expect(result.current.data).toHaveLength(1); // Harus jadi 1 Card
+    const group = result.current.data[0];
+    expect(group.spbNo).toBe("37");
+
+    // Cek apakah "10 REV", "59R1", dan "58" ada di dalam teks poNo
+    const poNumbers = group.poNo?.split(", ") || [];
+    expect(poNumbers).toContain("10 REV");
+    expect(poNumbers).toContain("59R1");
+    expect(poNumbers).toContain("58");
+
+    // Cek Status (karena ada 1 yang datang, status harus "Datang")
+    expect(group.status).toBe("Datang");
   });
 
-  it("kebal bug: memfilter item dengan id_po string kosong ('') saat poNo tidak diberikan", async () => {
-    // Simulasi bug di database: PO kosong tersimpan sebagai string "" 
-    mockData = [
-      { id: 1, no_spb: "63#R1", id_po: "", nama_barang: "Barang C" },
-      { id: 2, no_spb: "63#R1", id_po: "PO-002", nama_barang: "Barang D" },
+  it("harus menangani duplikat PO (seperti 59R1 muncul beberapa kali) tanpa duplikasi teks", async () => {
+    const mockData = [
+      { id: 1, no_spb: "37", po: { no_po: "59R1", tanggal_po: "2026-10-07" }, material_datang_tgl: null, material_datang_qty: 0, qty_permintaan: 1 },
+      { id: 2, no_spb: "37", po: { no_po: "59R1", tanggal_po: "2026-10-07" }, material_datang_tgl: null, material_datang_qty: 0, qty_permintaan: 1 },
+      { id: 3, no_spb: "37", po: { no_po: "10 REV", tanggal_po: "2026-07-21" }, material_datang_tgl: null, material_datang_qty: 0, qty_permintaan: 1 },
     ];
 
-    const { result } = renderHook(() => useMonitoringSPBDetail("63#R1", null), { wrapper });
+    const mockSelect = vi.fn().mockResolvedValue({ data: mockData, error: null });
+    (supabaseClient.from as any).mockReturnValue({ select: mockSelect });
+
+    const { result } = renderHook(() => useMonitoringSPB(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    // Seharusnya JS berhasil mendeteksi string kosong sebagai Barang Tanpa PO
-    expect(result.current.items).toHaveLength(1);
-    expect(result.current.items[0].nama_barang).toBe("Barang C");
-    expect(result.current.items[0].no_po).toBe("-");
-  });
-
-  it("memfilter item sesuai dengan poNo jika diberikan dengan akurat", async () => {
-    mockData = [
-      { id: 1, no_spb: "63#R1", id_po: "PO-001", nama_barang: "Barang A" },
-      { id: 2, no_spb: "63#R1", id_po: "PO-002", nama_barang: "Barang B" },
-    ];
-
-    const { result } = renderHook(() => useMonitoringSPBDetail("63#R1", "PO-002"), { wrapper });
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    // Seharusnya hanya mengembalikan Barang B
-    expect(result.current.items).toHaveLength(1);
-    expect(result.current.items[0].no_po).toBe("PO-002"); // field id_po harus ter-mapping jadi no_po
+    expect(result.current.data).toHaveLength(1);
+    const group = result.current.data[0];
+    
+    // Harus unik: "59R1, 10 REV" (bukan "59R1, 59R1, 10 REV")
+    const poNumbers = group.poNo?.split(", ") || [];
+    expect(poNumbers).toHaveLength(2);
+    expect(poNumbers).toContain("59R1");
+    expect(poNumbers).toContain("10 REV");
   });
 });

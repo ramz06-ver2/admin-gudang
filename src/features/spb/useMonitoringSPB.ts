@@ -21,97 +21,192 @@ export const useMonitoringSPB = () => {
     queryFn: async () => {
       if (USE_MOCK) return [];
 
-      const { data, error } = await supabaseClient
+      // 1. Tarik semua SPB (beserta relasi PO-nya jika ada)
+      const spbPromise = supabaseClient
         .from("spb")
         .select(`
           id,
           no_spb,
           tgl_spb,
           material_datang_tgl,
-          qty_permintaan,
-          material_datang_qty,
+          id_po,
           po:po!id_po (
             no_po,
             tanggal_po
           )
         `);
 
-      if (error) throw error;
+      // 2. Tarik SEMUA PO (untuk mencari PO yang tidak punya SPB)
+      const poPromise = supabaseClient
+        .from("po")
+        .select(`
+          id,
+          no_po,
+          tanggal_po,
+          id_spb,
+          material_datang_tgl
+        `);
+
+      const [spbRes, poRes] = await Promise.all([spbPromise, poPromise]);
+      if (spbRes.error) throw spbRes.error;
+      if (poRes.error) throw poRes.error;
+
+      const spbData = spbRes.data || [];
+      const poData = poRes.data || [];
 
       const groups = new Map<string, { 
         data: SPBDocumentGroup; 
         hasAnyPO: boolean; 
         hasAnyArrival: boolean;
-        latestTimestamp: number; // ✅ Untuk melacak tanggal paling baru
+        latestTimestamp: number;
+        poSet: Set<string>;
       }>();
 
-      (data ?? []).forEach((row: any) => {
+      // ==========================================
+      // PROSES 1: Kelompokkan berdasarkan SPB
+      // ==========================================
+      spbData.forEach((row: any) => {
         const spbNo = toStrOrNull(row.no_spb);
-        const poData = Array.isArray(row.po) ? row.po[0] : row.po;
-        const poNo = toStrOrNull(poData?.no_po);
+        const key = spbNo || `SPB_${row.id}`;
         
-        const key = spbNo || `PO_${poNo}`;
-
         if (!groups.has(key)) {
           groups.set(key, {
             data: {
               id: key,
               spbNo,
-              poNo,
-              date: "-", // Awalnya kosong
+              poNo: null,
+              date: "-",
               itemsCount: 0,
-              sortNumber: getSortNumber(spbNo) + getSortNumber(poNo) * 0.01,
+              sortNumber: getSortNumber(spbNo),
               status: "Belum PO"
             },
             hasAnyPO: false,
             hasAnyArrival: false,
-            latestTimestamp: 0
+            latestTimestamp: 0,
+            poSet: new Set<string>()
           });
         }
 
         const group = groups.get(key)!;
         group.data.itemsCount += 1;
 
-        // Cek status PO & Kedatangan
-        if (poNo && poData?.tanggal_po) group.hasAnyPO = true;
-        if (row.material_datang_tgl) group.hasAnyArrival = true;
-
-        if (poNo) {
-          if (!group.data.poNo) group.data.poNo = poNo;
-          else if (!group.data.poNo.includes(poNo)) group.data.poNo += `, ${poNo}`;
-          group.data.sortNumber = getSortNumber(spbNo) + getSortNumber(poNo) * 0.01;
+        // Cek Tanggal SPB & Datang
+        if (row.tgl_spb) {
+          const time = new Date(row.tgl_spb).getTime();
+          if (!isNaN(time) && time > group.latestTimestamp) {
+            group.latestTimestamp = time;
+            group.data.date = row.tgl_spb;
+          }
+        }
+        if (row.material_datang_tgl) {
+          group.hasAnyArrival = true;
+          const time = new Date(row.material_datang_tgl).getTime();
+          if (!isNaN(time) && time > group.latestTimestamp) {
+            group.latestTimestamp = time;
+            group.data.date = row.material_datang_tgl;
+          }
         }
 
-        // ✅ LOGIKA TANGGAL PALING BARU:
-        // Kumpulkan semua kemungkinan tanggal dari barang ini
-        const datesToCheck = [
-          row.tgl_spb, 
-          poData?.tanggal_po, 
-          row.material_datang_tgl
-        ];
-
-        datesToCheck.forEach((dateStr) => {
-          if (dateStr) {
-            const time = new Date(dateStr).getTime();
-            // Jika tanggal ini valid dan lebih baru dari yang tersimpan di grup
+        // Cek Relasi PO (dari join)
+        const joinedPo = Array.isArray(row.po) ? row.po[0] : row.po;
+        if (joinedPo && joinedPo.no_po) {
+          group.poSet.add(joinedPo.no_po);
+          group.hasAnyPO = true;
+          if (joinedPo.tanggal_po) {
+            const time = new Date(joinedPo.tanggal_po).getTime();
             if (!isNaN(time) && time > group.latestTimestamp) {
               group.latestTimestamp = time;
-              group.data.date = dateStr; // Ganti dengan tanggal terbaru
+              group.data.date = joinedPo.tanggal_po;
+            }
+          }
+        }
+
+        // Cek Relasi PO (dari po.id_spb)
+        const linkedPos = poData.filter((p: any) => String(p.id_spb) === String(row.id));
+        linkedPos.forEach((p: any) => {
+          if (p.no_po) {
+            group.poSet.add(p.no_po);
+            group.hasAnyPO = true;
+            if (p.tanggal_po) {
+              const time = new Date(p.tanggal_po).getTime();
+              if (!isNaN(time) && time > group.latestTimestamp) {
+                group.latestTimestamp = time;
+                group.data.date = p.tanggal_po;
+              }
             }
           }
         });
       });
 
-      // Tentukan status akhir & rapikan
+      // ==========================================
+      // PROSES 2: Cari PO yang TIDAK punya SPB
+      // ==========================================
+      const existingSpbIds = new Set(spbData.map((s: any) => String(s.id)));
+      
+      poData.forEach((p: any) => {
+        // Apakah PO ini menempel ke SPB?
+        const isLinkedToSpb = 
+          (p.id_spb && existingSpbIds.has(String(p.id_spb))) ||
+          (spbData.some((s: any) => s.id_po === p.id));
+          
+        if (!isLinkedToSpb) {
+          // Ini adalah PO tanpa SPB, buatkan Card tersendiri
+          const poNo = toStrOrNull(p.no_po);
+          const key = `PO_${p.id}`;
+          
+          if (!groups.has(key)) {
+            groups.set(key, {
+              data: {
+                id: key,
+                spbNo: null, // Karena tidak punya SPB
+                poNo: poNo,
+                date: p.tanggal_po || "-",
+                itemsCount: 1,
+                sortNumber: getSortNumber(poNo),
+                status: "Sudah PO"
+              },
+              hasAnyPO: true,
+              hasAnyArrival: !!p.material_datang_tgl,
+              latestTimestamp: 0,
+              poSet: new Set([poNo || ""])
+            });
+            
+            const group = groups.get(key)!;
+            
+            if (p.tanggal_po) {
+              const time = new Date(p.tanggal_po).getTime();
+              if (!isNaN(time) && time > group.latestTimestamp) {
+                group.latestTimestamp = time;
+                group.data.date = p.tanggal_po;
+              }
+            }
+            if (p.material_datang_tgl) {
+              const time = new Date(p.material_datang_tgl).getTime();
+              if (!isNaN(time) && time > group.latestTimestamp) {
+                group.latestTimestamp = time;
+                group.data.date = p.material_datang_tgl;
+              }
+            }
+          }
+        }
+      });
+
+      // Finalisasi status
       const result = Array.from(groups.values()).map((g) => {
         let status = "Belum PO";
         if (g.hasAnyArrival) status = "Datang";
         else if (g.hasAnyPO) status = "Sudah PO";
 
-        return { ...g.data, status };
+        const combinedPo = Array.from(g.poSet).join(", ");
+
+        return { 
+          ...g.data, 
+          poNo: combinedPo || null,
+          status,
+          sortNumber: getSortNumber(g.data.spbNo) + getSortNumber(combinedPo) * 0.01
+        };
       });
 
-      // Urutkan berdasarkan tanggal terbaru
       return result.sort((a, b) => {
         const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
         const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
