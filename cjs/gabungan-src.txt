@@ -70,13 +70,13 @@ import { supabaseClient } from "../shared/lib/supabaseClient";
 import { authProvider } from "./providers/authProvider";
 import { AdminLayout } from "../shared/layout/AdminLayout";
 
-// ✅ Jauh lebih bersih. Syaratnya: setiap file di bawah ini wajib punya "export default"
 const DashboardPage = lazy(() => import("../features/dashboard/pages/DashboardPage"));
 const EntryPage = lazy(() => import("../features/stock-out/pages/EntryPage"));
 const InventoryPage = lazy(() => import("../features/products/pages/InventoryPage"));
 const LoginPage = lazy(() => import("../features/auth/pages/LoginPage"));
 const MonitoringSPBPage = lazy(() => import("../features/spb/pages/MonitoringSPBPage"));
 const MonitoringSPBDetailPage = lazy(() => import("../features/spb/pages/MonitoringSPBDetailPage"));
+const MonitoringSPBItemDetailPage = lazy(() => import("../features/spb/pages/MonitoringSPBItemDetailPage")); // ✅ Rute Baru
 const ProductCreatePage = lazy(() => import("../features/products/pages/ProductCreatePage"));
 
 const PageLoader = () => (
@@ -114,6 +114,8 @@ function App() {
                   <Route path="/inventory" element={<InventoryPage />} />
                   <Route path="/monitoring-spb" element={<MonitoringSPBPage />} />
                   <Route path="/monitoring-spb/detail" element={<MonitoringSPBDetailPage />} />
+                  {/* ✅ Rute Rincian Barang */}
+                  <Route path="/monitoring-spb/item/:id" element={<MonitoringSPBItemDetailPage />} />
                 </Route>
 
                 {/* Rute Admin */}
@@ -1169,8 +1171,9 @@ FILE: ../src/features/products/components/InventoryTable.tsx
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/products/components/InventoryTable.tsx
 ================================================================================
 
-import { useState } from "react";
-import { Table, Typography, Tag, Space, Card, Input } from "antd";
+// src/features/products/components/InventoryTable.tsx
+import { useEffect, useState } from "react";
+import { Table, Typography, Tag, Space, Card, Input, Grid } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { formatNumber } from "../../../shared/lib/format";
 import { SendOutlined, UserOutlined, SearchOutlined } from "@ant-design/icons";
@@ -1178,9 +1181,14 @@ import type { Product, StockExit, StockExitItem } from "../../../shared/types";
 
 const { Text } = Typography;
 
-interface OutboundRow extends StockExitItem { transactionId: number; time: string; person: string; destination: string | null; }
+interface OutboundRow extends StockExitItem {
+  transactionId: number;
+  time: string;
+  person: string;
+  destination: string | null;
+}
 
-type InventoryTableProps = 
+type InventoryTableProps =
   | { type: "stock"; dataSource: Product[]; loading?: boolean }
   | { type: "outbound"; dataSource: StockExit[]; loading?: boolean };
 
@@ -1188,31 +1196,250 @@ export const InventoryTable = (props: InventoryTableProps) => {
   const { type, loading } = props;
   const [searchText, setSearchText] = useState("");
 
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
+
+  // Tinggi viewport dipantau manual supaya scroll.y responsif
+  const [vh, setVh] = useState<number>(
+    typeof window !== "undefined" ? window.innerHeight : 900,
+  );
+  useEffect(() => {
+    const onResize = () => setVh(window.innerHeight);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  // Mobile: kurangi 220 (header+tabs+search+pagination compact)
+  // PC    : kurangi 380
+  // Min 280 agar di layar pendek tabel tetap tampil
+  const scrollY = Math.max(280, vh - (isMobile ? 220 : 380));
+
   const stockColumns: ColumnsType<Product> = [
-    { dataIndex: "name", title: "Nama Item", render: (v: string) => <Text strong style={{ fontSize: 14 }}>{v}</Text> },
-    { dataIndex: "size", title: "Ukuran", width: 200, render: (v: string | null) => v ? <Text type="secondary">{v}</Text> : "-" },
-    { dataIndex: "stock", title: "Stok Tersedia", width: 160, align: "right", defaultSortOrder: "descend", sorter: (a, b) => a.stock - b.stock, render: (v, r) => <Tag color={v > 0 ? "blue" : "red"} style={{ fontSize: 13 }}>{formatNumber(v)} {r.unit}</Tag> },
+    {
+      dataIndex: "name",
+      title: "Nama Item",
+      ellipsis: true,
+      render: (v: string) => (
+        <Text strong style={{ fontSize: isMobile ? 13 : 14 }}>
+          {v}
+        </Text>
+      ),
+    },
+    {
+      dataIndex: "size",
+      title: "Ukuran",
+      width: isMobile ? 110 : 200,
+      ellipsis: true,
+      render: (v: string | null) =>
+        v ? <Text type="secondary">{v}</Text> : "-",
+    },
+    {
+      dataIndex: "stock",
+      title: "Stok",
+      width: isMobile ? 96 : 160,
+      align: "right",
+      defaultSortOrder: "descend",
+      sorter: (a, b) => a.stock - b.stock,
+      render: (v, r) => (
+        <Tag
+          color={v > 0 ? "blue" : "red"}
+          style={{ fontSize: isMobile ? 11 : 13, margin: 0 }}
+        >
+          {formatNumber(v)} {r.unit}
+        </Tag>
+      ),
+    },
   ];
 
   const outboundColumns: ColumnsType<OutboundRow> = [
-    { title: "Waktu", dataIndex: "time", width: 100, render: (v: string) => <Text strong style={{ color: "#1677ff" }}>{v}</Text> },
-    { title: "Nama Item", dataIndex: "itemName", render: (v: string, r) => <Space direction="vertical" size={0}><Text strong>{v}</Text>{r.size && <Text type="secondary" style={{ fontSize: 12 }}>{r.size}</Text>}</Space> },
-    { title: "Jumlah", dataIndex: "quantity", width: 140, align: "right", render: (v, r) => <Text strong style={{ color: "#ff4d4f", fontSize: 14 }}>{formatNumber(v)} <Text type="secondary" style={{ fontSize: 12 }}>{r.unit}</Text></Text> },
-    { title: "Lokasi", dataIndex: "destination", width: 200, render: (v) => v ? <Tag icon={<SendOutlined />} color="cyan">{v}</Tag> : <Text type="secondary">-</Text> },
-    { title: "PIC", dataIndex: "person", width: 180, render: (v: string) => <Text style={{ fontSize: 13, color: "#595959" }}><UserOutlined /> {v}</Text> },
+    {
+      title: "Waktu",
+      dataIndex: "time",
+      width: isMobile ? 70 : 100,
+      render: (v: string) => (
+        <Text strong style={{ color: "#1677ff", fontSize: isMobile ? 12 : 14 }}>
+          {v}
+        </Text>
+      ),
+    },
+    {
+      title: "Nama Item",
+      dataIndex: "itemName",
+      ellipsis: true,
+      render: (v: string, r) => (
+        <Space direction="vertical" size={0}>
+          <Text strong style={{ fontSize: isMobile ? 13 : 14 }}>
+            {v}
+          </Text>
+          {r.size && (
+            <Text type="secondary" style={{ fontSize: 11 }}>
+              {r.size}
+            </Text>
+          )}
+        </Space>
+      ),
+    },
+    {
+      title: "Jumlah",
+      dataIndex: "quantity",
+      width: isMobile ? 84 : 140,
+      align: "right",
+      render: (v, r) => (
+        <Text
+          strong
+          style={{ color: "#ff4d4f", fontSize: isMobile ? 13 : 14 }}
+        >
+          {formatNumber(v)}{" "}
+          <Text type="secondary" style={{ fontSize: 11 }}>
+            {r.unit}
+          </Text>
+        </Text>
+      ),
+    },
+    {
+      title: "Lokasi",
+      dataIndex: "destination",
+      width: isMobile ? 120 : 200,
+      ellipsis: true,
+      render: (v) =>
+        v ? (
+          <Tag
+            icon={<SendOutlined />}
+            color="cyan"
+            style={{ fontSize: isMobile ? 11 : 12, margin: 0 }}
+          >
+            {v}
+          </Tag>
+        ) : (
+          <Text type="secondary">-</Text>
+        ),
+    },
+    {
+      title: "PIC",
+      dataIndex: "person",
+      width: isMobile ? 110 : 180,
+      ellipsis: true,
+      render: (v: string) => (
+        <Text style={{ fontSize: isMobile ? 12 : 13, color: "#595959" }}>
+          <UserOutlined /> {v}
+        </Text>
+      ),
+    },
   ];
 
   const lowerSearch = searchText.trim().toLowerCase();
 
-  const stockData = type === "stock" ? props.dataSource.filter((item) => !lowerSearch || item.name.toLowerCase().includes(lowerSearch) || (item.size && item.size.toLowerCase().includes(lowerSearch))) : [];
-  const outboundData = type === "outbound" ? props.dataSource.flatMap((exit) => exit.items.map((item) => ({ ...item, transactionId: exit.id, time: exit.time, person: exit.person, destination: exit.destination }))).filter((item) => !lowerSearch || item.itemName.toLowerCase().includes(lowerSearch) || item.person.toLowerCase().includes(lowerSearch)) : [];
+  const stockData =
+    type === "stock"
+      ? props.dataSource.filter(
+          (item) =>
+            !lowerSearch ||
+            item.name.toLowerCase().includes(lowerSearch) ||
+            (item.size && item.size.toLowerCase().includes(lowerSearch)),
+        )
+      : [];
+
+  const outboundData =
+    type === "outbound"
+      ? props.dataSource
+          .flatMap((exit) =>
+            exit.items.map((item) => ({
+              ...item,
+              transactionId: exit.id,
+              time: exit.time,
+              person: exit.person,
+              destination: exit.destination,
+            })),
+          )
+          .filter(
+            (item) =>
+              !lowerSearch ||
+              item.itemName.toLowerCase().includes(lowerSearch) ||
+              item.person.toLowerCase().includes(lowerSearch),
+          )
+      : [];
+
+  // ✅ Mobile: x = max-content (kolom bisa menyempit & muat layar).
+  // PC    : x = 750 (kolom lega).
+  const scrollConfig = isMobile
+    ? { x: "max-content" as const, y: scrollY }
+    : { x: 750, y: scrollY };
+
+  const paginationConfig = {
+    pageSize: 20,
+    size: "small" as const,
+    showSizeChanger: !isMobile,
+    showTotal: (total: number) => `Total ${total} item`,
+    simple: isMobile,
+  };
+
+  // ✅ Card style: full-bleed 100vw di mobile (edge-to-edge), border-radius 0
+  const cardStyle = isMobile
+    ? {
+        width: "100vw",
+        position: "relative" as const,
+        left: "50%",
+        transform: "translateX(-50%)",
+        borderRadius: 0,
+        border: "none",
+      }
+    : {
+        borderRadius: 12,
+        border: "1px solid #f0f0f0",
+      };
 
   return (
-    <Card variant="borderless" style={{ borderRadius: 12, border: "1px solid #f0f0f0", overflow: "hidden" }} styles={{ body: { padding: 0 } }}>
-      <div style={{ padding: "16px 20px", borderBottom: "1px solid #f0f0f0" }}>
-        <Input placeholder="Cari..." prefix={<SearchOutlined />} allowClear size="large" value={searchText} onChange={(e) => setSearchText(e.target.value)} style={{ maxWidth: 400 }} />
+    <Card
+      variant="borderless"
+      style={cardStyle}
+      styles={{ body: { padding: 0 } }}
+    >
+      <div
+        style={{
+          padding: isMobile ? "10px 12px" : "16px 20px",
+          borderBottom: "1px solid #f0f0f0",
+        }}
+      >
+        <Input
+          placeholder="Cari..."
+          prefix={<SearchOutlined />}
+          allowClear
+          size={isMobile ? "middle" : "large"}
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          style={{ maxWidth: isMobile ? "100%" : 400 }}
+        />
       </div>
-      {type === "stock" ? <Table<Product> dataSource={stockData} rowKey="id" loading={loading} pagination={{ pageSize: 20, size: "small" }} scroll={{ x: 750 }} columns={stockColumns} rowClassName={(_, i) => (i % 2 === 0 ? "table-row-light" : "table-row-dark")} /> : <Table<OutboundRow> dataSource={outboundData} rowKey={(r) => `${r.transactionId}-${r.itemId}`} loading={loading} pagination={{ pageSize: 20, size: "small" }} scroll={{ x: 750 }} columns={outboundColumns} rowClassName={(_, i) => (i % 2 === 0 ? "table-row-light" : "table-row-dark")} />}
+
+      {type === "stock" ? (
+        <Table<Product>
+          dataSource={stockData}
+          rowKey="id"
+          loading={loading}
+          size={isMobile ? "small" : "middle"}
+          pagination={paginationConfig}
+          scroll={scrollConfig}
+          sticky
+          columns={stockColumns}
+          rowClassName={(_, i) =>
+            i % 2 === 0 ? "table-row-light" : "table-row-dark"
+          }
+        />
+      ) : (
+        <Table<OutboundRow>
+          dataSource={outboundData}
+          rowKey={(r) => `${r.transactionId}-${r.itemId}`}
+          loading={loading}
+          size={isMobile ? "small" : "middle"}
+          pagination={paginationConfig}
+          scroll={scrollConfig}
+          sticky
+          columns={outboundColumns}
+          rowClassName={(_, i) =>
+            i % 2 === 0 ? "table-row-light" : "table-row-dark"
+          }
+        />
+      )}
     </Card>
   );
 };
@@ -1550,13 +1777,14 @@ FILE: ../src/features/spb/pages/MonitoringSPBDetailPage.tsx
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/pages/MonitoringSPBDetailPage.tsx
 ================================================================================
 
+// src/features/spb/pages/MonitoringSPBDetailPage.tsx
 import { useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Typography, Card, Row, Col, Table, Button,
-  Spin, Empty, Space, Result,
+  Spin, Empty, Space, Result, Tag, Grid
 } from "antd";
-import { ArrowLeftOutlined } from "@ant-design/icons";
+import { ArrowLeftOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import { useMonitoringSPBDetail } from "../useMonitoringSPBDetail";
 import type { SPBItemDetail } from "../../../shared/types";
 import { formatDate } from "../../../shared/lib/format";
@@ -1569,18 +1797,15 @@ export const MonitoringSPBDetailPage = () => {
   const spbNo = searchParams.get("spb");
   const poNo = searchParams.get("po");
 
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
+
   const { items, isLoading, error } = useMonitoringSPBDetail(spbNo, poNo);
 
   const statuses = useMemo(() => {
-    if (items.length === 0) {
-      return { belumDiPo: false, sudahDiPo: false };
-    }
-    const somePo = items.some((it) => it.no_po && it.tanggal_po);
-
-    return {
-      belumDiPo: !somePo,
-      sudahDiPo: somePo,
-    };
+    if (items.length === 0) return { belumDiPo: false, sudahDiPo: false };
+    const somePo = items.some((it) => it.no_po && it.no_po !== "-");
+    return { belumDiPo: !somePo, sudahDiPo: somePo };
   }, [items]);
 
   const StatusCard = ({ title, active }: { title: string; active: boolean }) => (
@@ -1603,48 +1828,80 @@ export const MonitoringSPBDetailPage = () => {
     </Card>
   );
 
-  const columns = [
-    { title: "Nama Barang", dataIndex: "nama_barang", key: "nama_barang" },
+  const mobileColumns = [
+    { title: "No", key: "no", width: 40, align: "center" as const, render: (_: any, __: SPBItemDetail, i: number) => i + 1 },
+    { title: "Nama Barang", dataIndex: "nama_barang", key: "nama_barang", ellipsis: true, render: (v: string) => <Text strong>{v}</Text> },
     {
-      title: "Qty",
-      dataIndex: "jumlah_permintaan",
-      key: "jumlah_permintaan",
-      align: "right" as const,
-    },
-    { title: "Satuan", dataIndex: "satuan", key: "satuan" },
-    { title: "No PO", dataIndex: "no_po", key: "no_po" },
-    {
-      title: "Tgl PO",
-      dataIndex: "tanggal_po",
-      key: "tanggal_po",
-      render: (v: string | null) => (v ? formatDate(v) : "-"),
+      title: "Jumlah", key: "jumlah", width: 80, align: "right" as const,
+      render: (_: any, r: SPBItemDetail) => <Text>{r.jumlah_permintaan ?? 0} <Text type="secondary" style={{ fontSize: 12 }}>{r.satuan ?? ""}</Text></Text>,
     },
     {
-      title: "Tgl Datang",
-      dataIndex: "tanggal_datang",
-      key: "tanggal_datang",
-      render: (v: string | null) => (v ? formatDate(v) : "-"),
+      title: "Status", key: "status", width: 74, align: "center" as const,
+      render: (_: any, r: SPBItemDetail) => {
+        const sudahPo = r.no_po && r.no_po !== "-";
+        return <Tag color={sudahPo ? "green" : "orange"} style={{ margin: 0, padding: "0 4px", fontSize: 11 }}>{sudahPo ? "Sudah PO" : "Belum PO"}</Tag>;
+      },
+    },
+    {
+      title: "Aksi", key: "detail", width: 85, align: "center" as const,
+      render: (_: any, r: SPBItemDetail) => (
+        <Button
+          type="primary"
+          size="small"
+          icon={<InfoCircleOutlined />}
+          style={{ fontSize: 12, padding: "0 8px" }}
+          // ✅ Navigasi ke halaman baru
+          onClick={() => navigate(`/monitoring-spb/item/${r.id}`)}
+        >
+          Detail
+        </Button>
+      ),
     },
   ];
+
+  const desktopColumns = [
+    { title: "No", key: "no", width: 56, align: "center" as const, render: (_: any, __: SPBItemDetail, i: number) => i + 1 },
+    { title: "Nama Barang", dataIndex: "nama_barang", key: "nama_barang", render: (v: string) => <Text strong>{v}</Text> },
+    { title: "No SPB", dataIndex: "no_spb", key: "no_spb", width: 130, render: (v: string | null) => v || "-" },
+    { title: "No PO", dataIndex: "no_po", key: "no_po", width: 130, render: (v: string | null) => v || "-" },
+    { title: "Tanggal PO", dataIndex: "tanggal_po", key: "tanggal_po", width: 130, render: (v: string | null) => (v ? formatDate(v) : "-") },
+    { title: "Tanggal Datang", dataIndex: "tanggal_datang", key: "tanggal_datang", width: 140, render: (v: string | null) => (v ? formatDate(v) : "-") },
+    {
+      title: "Jumlah Datang", dataIndex: "jumlah_permintaan", key: "jumlah_datang", width: 140, align: "right" as const,
+      render: (v: number | null, r: SPBItemDetail) => `${v ?? 0} ${r.satuan ?? ""}`.trim(),
+    },
+    {
+      title: "Status", key: "status", width: 110,
+      render: (_: any, r: SPBItemDetail) => {
+        const sudahPo = r.no_po && r.no_po !== "-";
+        return <Tag color={sudahPo ? "green" : "orange"}>{sudahPo ? "Sudah PO" : "Belum PO"}</Tag>;
+      },
+    },
+    {
+      title: "Detail", key: "detail", width: 100, align: "center" as const,
+      render: (_: any, r: SPBItemDetail) => (
+        <Button
+          type="primary"
+          size="small"
+          icon={<InfoCircleOutlined />}
+          // ✅ Navigasi ke halaman baru
+          onClick={() => navigate(`/monitoring-spb/item/${r.id}`)}
+        >
+          Detail
+        </Button>
+      ),
+    },
+  ];
+
+  const columns = isMobile ? mobileColumns : desktopColumns;
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", paddingBottom: 32 }}>
       <Space align="center" style={{ marginBottom: 16 }}>
-        <Button
-          type="text"
-          size="large"
-          icon={<ArrowLeftOutlined />}
-          onClick={() => navigate("/monitoring-spb")}
-        />
+        <Button type="text" size="large" icon={<ArrowLeftOutlined />} onClick={() => navigate("/monitoring-spb")} />
         <div>
-          <Title level={3} style={{ margin: 0 }}>
-            Detail SPB / PO
-          </Title>
-          <Text type="secondary">
-            {spbNo ? `SPB: ${spbNo}` : ""}
-            {spbNo && poNo ? " · " : ""}
-            {poNo ? `PO: ${poNo}` : ""}
-          </Text>
+          <Title level={3} style={{ margin: 0 }}>Detail SPB / PO</Title>
+          <Text type="secondary">{spbNo ? `SPB: ${spbNo}` : ""}{spbNo && poNo ? " · " : ""}{poNo ? `PO: ${poNo}` : ""}</Text>
         </div>
       </Space>
 
@@ -1662,15 +1919,19 @@ export const MonitoringSPBDetailPage = () => {
           <Card
             title={`Daftar Barang (${items.length})`}
             variant="borderless"
-            style={{ borderRadius: 12 }}
+            style={{
+              borderRadius: isMobile ? 0 : 12,
+              ...(isMobile && { width: "100vw", position: "relative", left: "50%", transform: "translateX(-50%)" }),
+            }}
             styles={{ body: { padding: 0 } }}
           >
             <Table<SPBItemDetail>
               dataSource={items}
               columns={columns}
               rowKey="id"
-              pagination={{ pageSize: 20 }}
-              scroll={{ x: "max-content" }}
+              size="small"
+              pagination={{ pageSize: 20, size: "small" }}
+              scroll={isMobile ? undefined : { x: "max-content" }}
             />
           </Card>
         </>
@@ -1682,15 +1943,168 @@ export const MonitoringSPBDetailPage = () => {
 export default MonitoringSPBDetailPage;
 
 ================================================================================
+FILE: ../src/features/spb/pages/MonitoringSPBItemDetailPage.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/pages/MonitoringSPBItemDetailPage.tsx
+================================================================================
+
+import { useNavigate, useParams } from "react-router-dom";
+import { Typography, Card, Table, Button, Spin, Space, Grid } from "antd";
+import { ArrowLeftOutlined } from "@ant-design/icons";
+import { useQuery } from "@tanstack/react-query";
+import { supabaseClient } from "../../../shared/lib/supabaseClient";
+import { TABLES } from "../../../shared/lib/constants";
+import type { SPBItemDetail } from "../../../shared/types";
+import { formatDate } from "../../../shared/lib/format";
+import type { ReactNode } from "react";
+
+const { Title, Text } = Typography;
+
+interface DetailRow {
+  key: string;
+  field: string;
+  value: ReactNode;
+}
+
+// Hook internal untuk fetch 1 item
+const useSPBItem = (id: string | undefined) => {
+  return useQuery<SPBItemDetail | null, Error>({
+    queryKey: ["spb-item", id],
+    queryFn: async () => {
+      if (!id) return null;
+      
+      const { data, error } = await supabaseClient
+        .from(TABLES.spb)
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) throw error;
+      
+      // ✅ Mapping dari kolom database ke frontend
+      return {
+        ...data,
+        no_spb: data.no_spb || "-",
+        tanggal_spb: data.tgl_spb || null,
+        nama_barang: data.nama_barang_spb || "-",
+        
+        // ✅ Tiga field krusial sudah di-mapping di sini
+        tanggal_datang: data.material_datang_tgl || null,
+        qty_datang: data.material_datang_qty ?? null,
+        satuan_datang: data.material_datang_satuan || "-",
+      } as SPBItemDetail;
+    },
+    enabled: !!id,
+    retry: false,
+  });
+};
+
+export const MonitoringSPBItemDetailPage = () => {
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
+
+  const { data: item, isLoading } = useSPBItem(id);
+
+  // ✅ 20 Baris Data (Baris 14, 15, 16 sudah diisi dari database)
+  const rows: DetailRow[] = [
+    { key: "1", field: "No SPB", value: item?.no_spb || "-" },
+    { key: "2", field: "Tanggal SPB", value: item?.tanggal_spb ? formatDate(item.tanggal_spb) : "-" },
+    { key: "3", field: "Nama Barang", value: <Text strong>{item?.nama_barang || "-"}</Text> },
+    { key: "4", field: "Ukuran", value: "-" }, // Menunggu instruksi
+    { key: "5", field: "Jumlah Permintaan", value: "-" }, // Menunggu instruksi
+    { key: "6", field: "Satuan", value: "-" }, // Menunggu instruksi
+    { key: "7", field: "No PO", value: "-" }, // Menunggu instruksi
+    { key: "8", field: "Tanggal PO", value: "-" }, // Menunggu instruksi
+    { key: "9", field: "Supplier", value: "-" }, // Menunggu instruksi
+    { key: "10", field: "Merk", value: "-" }, // Menunggu instruksi
+    { key: "11", field: "Spesifikasi Teknis", value: "-" }, // Menunggu instruksi
+    { key: "12", field: "Lokasi Pemasangan", value: "-" }, // Menunggu instruksi
+    { key: "13", field: "Rencana Pemasangan", value: "-" }, // Menunggu instruksi
+    
+    // ✅ Tiga baris di bawah ini sudah berfungsi
+    { key: "14", field: "Tanggal Datang", value: item?.tanggal_datang ? formatDate(item.tanggal_datang) : "-" },
+    { key: "15", field: "Qty Datang", value: item?.qty_datang ?? "-" },
+    { key: "16", field: "Satuan (Datang)", value: item?.satuan_datang || "-" },
+    
+    { key: "17", field: "Lama Proses", value: "-" }, // Menunggu instruksi
+    { key: "18", field: "Kurang/Lebih", value: "-" }, // Menunggu instruksi
+    { key: "19", field: "Keterangan", value: "-" }, // Menunggu instruksi
+    { key: "20", field: "Status", value: "-" }, // Menunggu instruksi
+  ];
+
+  const columns = [
+    { 
+      title: "Rincian Informasi", 
+      dataIndex: "field", 
+      key: "field", 
+      width: "40%", 
+      render: (v: string) => <Text type="secondary">{v}</Text> 
+    },
+    { 
+      title: "Detail", 
+      dataIndex: "value", 
+      key: "value", 
+      render: (v: ReactNode) => v 
+    },
+  ];
+
+  return (
+    <div style={{ maxWidth: 800, margin: "0 auto", paddingBottom: 32 }}>
+      <Space align="center" style={{ marginBottom: 16 }}>
+        <Button type="text" size="large" icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)} />
+        <div>
+          <Title level={3} style={{ margin: 0 }}>Rincian Barang</Title>
+          <Text type="secondary">Informasi detail untuk satu barang SPB</Text>
+        </div>
+      </Space>
+
+      {isLoading && <div style={{ textAlign: "center", padding: 50 }}><Spin size="large" /></div>}
+
+      {!isLoading && (
+        <Card
+          variant="borderless"
+          style={{
+            borderRadius: isMobile ? 0 : 12,
+            // ✅ Full-bleed 100vw di mobile
+            ...(isMobile && { width: "100vw", position: "relative", left: "50%", transform: "translateX(-50%)" }),
+          }}
+          styles={{ body: { padding: 0 } }}
+        >
+          <Table<DetailRow>
+            dataSource={rows}
+            columns={columns}
+            pagination={false}
+            size="middle"
+            rowClassName={(_, i) => (i % 2 === 0 ? "table-row-light" : "table-row-dark")}
+          />
+        </Card>
+      )}
+    </div>
+  );
+};
+
+export default MonitoringSPBItemDetailPage;
+
+================================================================================
 FILE: ../src/features/spb/pages/MonitoringSPBPage.tsx
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/pages/MonitoringSPBPage.tsx
 ================================================================================
 
+// src/features/spb/pages/MonitoringSPBPage.tsx
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Typography, Card, Space, Row, Col, Divider,
-  Spin, Segmented, Empty, Alert,
+  Typography,
+  Card,
+  Space,
+  Row,
+  Col,
+  Divider,
+  Spin,
+  Segmented,
+  Empty,
+  Alert,
 } from "antd";
 import { useMonitoringSPB } from "../useMonitoringSPB";
 import type { SPBDocumentGroup } from "../../../shared/types";
@@ -1699,7 +2113,7 @@ import { FileTextOutlined, ArrowRightOutlined } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
 
-// ✅ BARU: Filter hanya terkait PO
+// Filter murni hanya berdasarkan ketersediaan PO
 type FilterType = "Semua" | "Sudah di PO" | "Belum di PO";
 
 export default function MonitoringSPBPage() {
@@ -1707,6 +2121,7 @@ export default function MonitoringSPBPage() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<FilterType>("Semua");
 
+  // Mengambil 4 dokumen terbaru untuk ditampilkan di atas
   const recentItems = useMemo(() => {
     return data.slice(0, 4);
   }, [data]);
@@ -1715,26 +2130,47 @@ export default function MonitoringSPBPage() {
     return data.filter((item) => {
       switch (filter) {
         case "Sudah di PO":
-          return item.poNo !== null;
+          return (
+            item.poNo !== null &&
+            item.poNo !== "NO_PO" &&
+            item.poNo !== "-"
+          );
         case "Belum di PO":
-          return item.poNo === null;
+          return (
+            item.poNo === null ||
+            item.poNo === "NO_PO" ||
+            item.poNo === "-"
+          );
         default:
           return true;
       }
     });
-    // Urutan default dari hook (berdasarkan tanggal terbaru) sudah cukup karena tidak ada sorting status lagi
   }, [data, filter]);
 
   const handleCardClick = (item: SPBDocumentGroup) => {
     const params = new URLSearchParams();
-    if (item.spbNo) params.set("spb", item.spbNo);
-    if (item.poNo) params.set("po", item.poNo);
+
+    if (item.spbNo) {
+      // Jika ini kartu SPB, HANYA kirim nomor SPB-nya agar aplikasi menarik SEMUA isi SPB tersebut
+      params.set("spb", String(item.spbNo));
+    } else if (
+      item.poNo &&
+      item.poNo !== "NO_PO" &&
+      item.poNo !== "-"
+    ) {
+      // ✅ Jaga-jaga kalau poNo masih berupa number dari view
+      params.set("po", String(item.poNo).split(",")[0].trim());
+    }
+
     navigate(`/monitoring-spb/detail?${params.toString()}`);
   };
 
   const renderCardContent = (item: SPBDocumentGroup) => {
-    const hasSPB = item.spbNo !== null;
-    const hasPO = item.poNo !== null;
+    const hasSPB = item.spbNo !== null && item.spbNo !== "NO_SPB";
+    const hasPO =
+      item.poNo !== null &&
+      item.poNo !== "NO_PO" &&
+      item.poNo !== "-";
 
     return (
       <Card
@@ -1753,8 +2189,12 @@ export default function MonitoringSPBPage() {
         <Space direction="vertical" style={{ width: "100%" }} size={2}>
           {hasSPB && (
             <div>
-              <Text type="secondary" style={{ fontSize: 11 }}>No. SPB</Text>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>{item.spbNo}</div>
+              <Text type="secondary" style={{ fontSize: 11 }}>
+                No. SPB
+              </Text>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>
+                {item.spbNo}
+              </div>
             </div>
           )}
 
@@ -1762,8 +2202,12 @@ export default function MonitoringSPBPage() {
 
           {hasPO && (
             <div>
-              <Text type="secondary" style={{ fontSize: 11 }}>No. PO</Text>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>{item.poNo}</div>
+              <Text type="secondary" style={{ fontSize: 11 }}>
+                No. PO
+              </Text>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>
+                {item.poNo}
+              </div>
             </div>
           )}
 
@@ -1793,7 +2237,11 @@ export default function MonitoringSPBPage() {
   };
 
   if (isLoading) {
-    return <div style={{ textAlign: "center", padding: 50 }}><Spin size="large" /></div>;
+    return (
+      <div style={{ textAlign: "center", padding: 50 }}>
+        <Spin size="large" />
+      </div>
+    );
   }
 
   if (error) {
@@ -1802,27 +2250,37 @@ export default function MonitoringSPBPage() {
         type="error"
         showIcon
         message="Gagal memuat data SPB"
-        description={(error as Error)?.message ?? "Coba muat ulang halaman"}
+        description={
+          (error as Error)?.message ?? "Coba muat ulang halaman"
+        }
       />
     );
   }
 
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", paddingBottom: 32 }}>
+      {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <Space align="center">
           <div
             style={{
-              width: 42, height: 42, borderRadius: 10,
-              background: "#1677ff15", color: "#1677ff",
-              display: "flex", alignItems: "center",
-              justifyContent: "center", fontSize: 20,
+              width: 42,
+              height: 42,
+              borderRadius: 10,
+              background: "#1677ff15",
+              color: "#1677ff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 20,
             }}
           >
             <FileTextOutlined />
           </div>
           <div>
-            <Title level={3} style={{ margin: 0 }}>Monitoring SPB</Title>
+            <Title level={3} style={{ margin: 0 }}>
+              Monitoring SPB
+            </Title>
             <Text type="secondary">
               {data.length} Dokumen Terdaftar · Diperbarui{" "}
               {formatFullDate(new Date())}
@@ -1831,39 +2289,63 @@ export default function MonitoringSPBPage() {
         </Space>
       </div>
 
+      {/* Section Baru Ditambahkan */}
       {recentItems.length > 0 && (
         <div style={{ marginBottom: 32 }}>
-          <Text strong style={{ fontSize: 16, display: "block", marginBottom: 12 }}>
+          <Text
+            strong
+            style={{ fontSize: 16, display: "block", marginBottom: 12 }}
+          >
             Baru ditambahkan
           </Text>
-          <div style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 8 }}>
-            {recentItems.map((item) => (
-              <div key={item.id} style={{ minWidth: 200, flexShrink: 0 }}>
-                <Card
-                  size="small"
-                  hoverable
-                  onClick={() => handleCardClick(item)}
-                  style={{ borderRadius: 10, background: "#fafafa", cursor: "pointer" }}
-                >
-                  <Space direction="vertical" size={0}>
-                    <Text strong>
-                      {item.spbNo && item.poNo
-                        ? `SPB: ${item.spbNo} · PO: ${item.poNo}`
-                        : item.spbNo
-                        ? `SPB: ${item.spbNo}`
-                        : `PO: ${item.poNo}`}
-                    </Text>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                      {item.date !== "-" ? formatDate(item.date) : "-"}
-                    </Text>
-                  </Space>
-                </Card>
-              </div>
-            ))}
+          <div
+            style={{
+              display: "flex",
+              gap: 16,
+              overflowX: "auto",
+              paddingBottom: 8,
+            }}
+          >
+            {recentItems.map((item) => {
+              const hasSPB = item.spbNo && item.spbNo !== "NO_SPB";
+              const hasPO =
+                item.poNo &&
+                item.poNo !== "NO_PO" &&
+                item.poNo !== "-";
+
+              return (
+                <div key={item.id} style={{ minWidth: 200, flexShrink: 0 }}>
+                  <Card
+                    size="small"
+                    hoverable
+                    onClick={() => handleCardClick(item)}
+                    style={{
+                      borderRadius: 10,
+                      background: "#fafafa",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Space direction="vertical" size={0}>
+                      <Text strong>
+                        {hasSPB && hasPO
+                          ? `SPB: ${item.spbNo} · PO: ${item.poNo}`
+                          : hasSPB
+                            ? `SPB: ${item.spbNo}`
+                            : `PO: ${item.poNo}`}
+                      </Text>
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        {item.date !== "-" ? formatDate(item.date) : "-"}
+                      </Text>
+                    </Space>
+                  </Card>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
 
+      {/* Filter Segmented */}
       <div style={{ marginBottom: 20 }}>
         <Segmented<FilterType>
           size="large"
@@ -1874,6 +2356,7 @@ export default function MonitoringSPBPage() {
         />
       </div>
 
+      {/* Grid Kartu Utama */}
       <Row gutter={[16, 16]}>
         {filteredAndSortedData.map((item) => (
           <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
@@ -1882,6 +2365,7 @@ export default function MonitoringSPBPage() {
         ))}
       </Row>
 
+      {/* State Kosong */}
       {filteredAndSortedData.length === 0 && (
         <div style={{ textAlign: "center", padding: 40, width: "100%" }}>
           <Empty description="Tidak ada data SPB/PO untuk kategori ini." />
@@ -1901,10 +2385,18 @@ import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { USE_MOCK } from "../../shared/lib/config";
 import type { SPBDocumentGroup } from "../../shared/types";
 
-const getSortNumber = (str: string | null) => {
-  if (!str) return 999999;
-  const match = str.match(/\d+/);
+// ✅ Terima string | number | null | undefined, aman untuk semua tipe
+const getSortNumber = (val: unknown): number => {
+  if (val === null || val === undefined || val === "") return 999999;
+  const s = String(val);
+  const match = s.match(/\d+/);
   return match ? parseInt(match[0], 10) : 999999;
+};
+
+// ✅ Helper: paksa jadi string | null
+const toStrOrNull = (val: unknown): string | null => {
+  if (val === null || val === undefined || val === "") return null;
+  return String(val);
 };
 
 export const useMonitoringSPB = () => {
@@ -1912,29 +2404,31 @@ export const useMonitoringSPB = () => {
     queryKey: ["monitoring-spb"],
     queryFn: async () => {
       if (USE_MOCK) return [];
-      
+
       const { data, error } = await supabaseClient
         .from("v_spb_grouped")
         .select("*");
 
       if (error) throw error;
 
-      const formattedData = (data ?? []).map((row: any) => ({
-        id: `${row.no_spb || "NO_SPB"}_${row.no_po || "NO_PO"}`,
-        spbNo: row.no_spb,
-        poNo: row.no_po,
-        date: row.tanggal || "-",
-        itemsCount: row.items_count,
-        sortNumber: getSortNumber(row.no_spb) + getSortNumber(row.no_po) * 0.01,
-      }));
+      const formattedData = (data ?? []).map((row: any) => {
+        const spbNo = toStrOrNull(row.no_spb);
+        const poNo = toStrOrNull(row.no_po);
+        return {
+          id: `${spbNo ?? "NO_SPB"}_${poNo ?? "NO_PO"}`,
+          spbNo,
+          poNo,
+          date: row.tanggal || "-",
+          itemsCount: row.items_count,
+          sortNumber:
+            getSortNumber(spbNo) + getSortNumber(poNo) * 0.01,
+        };
+      });
 
-      // Sortir berdasarkan tanggal terbaru (descending)
       return formattedData.sort((a, b) => {
         const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
         const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
-        if (dateA === dateB) {
-            return a.sortNumber - b.sortNumber;
-        }
+        if (dateA === dateB) return a.sortNumber - b.sortNumber;
         return dateB - dateA;
       });
     },
@@ -1960,47 +2454,44 @@ export const useMonitoringSPBDetail = (
   const { data, isLoading, error, refetch } = useQuery<SPBItemDetail[]>({
     queryKey: ["monitoring-spb-detail", spbNo, poNo],
     queryFn: async () => {
-      let query = supabaseClient.from(TABLES.spb).select("*");
+      
+      // 💥 MANTAP! Kita lakukan JOIN ke tabel 'po' untuk menarik 'no_po' asli dan 'tanggal_po'
+      let query = supabaseClient.from(TABLES.spb).select(`
+        *,
+        po (
+          no_po,
+          tanggal_po
+        )
+      `);
 
-      // Ambil SEMUA barang di dalam SPB ini
       if (spbNo) {
-        query = query.eq("no_spb", spbNo);
+        const safeSpbNo = spbNo.replace(/#/g, "_");
+        query = query.ilike("no_spb", `%${safeSpbNo}%`);
       } else if (poNo) {
-        query = query.is("no_spb", null);
+        // poNo dari URL sekarang berisi Angka ID (misal: "12"), jadi kita gunakan .eq (Sama persis)
+        query = query.is("no_spb", null).eq("id_po", poNo);
       }
 
       const { data, error } = await query;
       if (error) throw error;
 
-      let filtered = data ?? [];
+      return (data ?? []).map((row: any) => {
+        // Ekstrak data hasil JOIN dari tabel PO
+        const dataPo = Array.isArray(row.po) ? row.po[0] : row.po;
 
-      // 🧹 Bersihkan nilai poNo dari URL
-      const cleanPo = poNo?.trim();
-      const isPoEmpty = !cleanPo || cleanPo === "NO_PO" || cleanPo === "null" || cleanPo === "undefined" || cleanPo === "-";
+        return {
+          ...row,
+          // Tampilkan teks no_po yang ditarik dari tabel relasi!
+          no_po: dataPo?.no_po || "-",
+          tanggal_po: dataPo?.tanggal_po || null,
 
-      if (!isPoEmpty) {
-        // Jika user mengklik SPB yang PUNYA PO spesifik
-        filtered = filtered.filter((row: any) => row.id_po === cleanPo);
-      } else {
-        // Jika user mengklik SPB yang TIDAK ADA PO-nya
-        // Tangkap semua anomali nilai kosong di database
-        filtered = filtered.filter((row: any) => {
-          const val = row.id_po?.trim();
-          return !val || val === "NO_PO" || val === "null" || val === "-";
-        });
-      }
-
-      // Map id_po -> no_po agar Table bisa membacanya tanpa error
-      return filtered.map((row: any) => ({
-        ...row,
-        no_po: row.id_po && row.id_po.trim() !== "" ? row.id_po : "-",
-        // Mencegah error jika kolom belum diisi/kosong di DB
-        nama_barang: row.nama_barang || "Nama tidak diketahui",
-        jumlah_permintaan: row.jumlah_permintaan || 0,
-        satuan: row.satuan || "-",
-        tanggal_po: row.tanggal_po || null,
-        tanggal_datang: row.tanggal_datang || null,
-      })) as SPBItemDetail[];
+          // Data SPB Anda
+          nama_barang: row.nama_barang_spb || "Nama Kosong",
+          jumlah_permintaan: row.qty_permintaan || 0,
+          satuan: row.satuan || "-",
+          tanggal_datang: row.material_datang_tgl || null,
+        };
+      }) as SPBItemDetail[];
     },
     enabled: !!(spbNo || poNo),
   });
@@ -2010,6 +2501,76 @@ export const useMonitoringSPBDetail = (
     isLoading,
     error: error as Error | null,
     refetch,
+  };
+};
+
+================================================================================
+FILE: ../src/features/spb/useSPBItemDetail.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/useSPBItemDetail.ts
+================================================================================
+
+import { useQuery } from "@tanstack/react-query";
+import { supabaseClient } from "../../shared/lib/supabaseClient";
+import { TABLES } from "../../shared/lib/constants";
+import type { SPBItemDetail } from "../../shared/types";
+
+export const useSPBItemDetail = (itemId: string | null) => {
+  const { data, isLoading, error } = useQuery<SPBItemDetail | null>({
+    queryKey: ["spb-item-detail", itemId],
+    queryFn: async () => {
+      if (!itemId) return null;
+
+      const { data, error } = await supabaseClient
+        .from(TABLES.spb)
+        .select(`
+          *,
+          po (
+            no_po,
+            tanggal_po,
+            supplier
+          )
+        `)
+        .eq("id", itemId)
+        .single();
+
+      if (error) throw error;
+      if (!data) return null;
+
+      const dataPo = Array.isArray(data.po) ? data.po[0] : data.po;
+
+      // Mapping field dari database ke tipe frontend
+      return {
+        ...data,
+        no_po: dataPo?.no_po || "-",
+        tanggal_po: dataPo?.tanggal_po || null,
+        supplier: dataPo?.supplier || "-",
+        nama_barang: data.nama_barang_spb || "-",
+        tanggal_spb: data.tanggal_pembuatan_spb || null,
+        jumlah_permintaan: data.qty_permintaan || 0,
+        satuan: data.satuan || "-",
+        tanggal_datang: data.material_datang_tgl || null,
+        
+        // Field tambahan (sesuaikan nama kolom dengan database Anda jika berbeda)
+        ukuran: data.ukuran || "-",
+        merk: data.merk || "-",
+        spesifikasi_teknis: data.spesifikasi_teknis || "-",
+        lokasi_pemasangan: data.lokasi_pemasangan || "-",
+        rencana_pemasangan: data.rencana_pemasangan || "-",
+        qty_datang: data.qty_datang || null,
+        satuan_datang: data.satuan_datang || "-",
+        lama_proses: data.lama_proses || "-",
+        kurang_lebih: data.kurang_lebih || "-",
+        keterangan: data.keterangan || "-",
+        status: data.status || "-",
+      } as SPBItemDetail;
+    },
+    enabled: !!itemId,
+  });
+
+  return {
+    item: data,
+    isLoading,
+    error: error as Error | null,
   };
 };
 
@@ -3087,7 +3648,7 @@ FILE: ../src/shared/components/ErrorBoundary.tsx
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/components/ErrorBoundary.tsx
 ================================================================================
 
-import React, { Component, ErrorInfo, ReactNode } from "react";
+import { Component, ErrorInfo, ReactNode } from "react";
 import { Result, Button, Typography } from "antd";
 
 const { Paragraph, Text } = Typography;
@@ -3588,7 +4149,7 @@ FILE: ../src/shared/lib/mappers.ts
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/lib/mappers.ts
 ================================================================================
 
-import type { Product, StockExit, StockExitItem } from "../types";
+import type { Product, StockExit } from "../types";
 
 interface DBProductRow {
   id: number; kode: string; nama: string; ukuran: string | null; spesifikasi: string | null;
@@ -3703,15 +4264,33 @@ export interface PendingLine { itemId: number; itemName: string; size: string | 
 export interface DashboardStats { totalProducts: number; totalStock: number; todayInbound: number; todayOutbound: number; }
 export interface StockInChartItem { date: string; total: number; }
 
-// ✅ BARU: Tidak ada lagi properti status
 export interface SPBDocumentGroup {
   id: string; spbNo: string | null; poNo: string | null; date: string; itemsCount: number; sortNumber: number;
 }
 
 export interface SPBItemDetail {
-  id: number; no_spb: string | null; no_po: string | null; nama_barang: string;
-  jumlah_permintaan: number | null; satuan: string | null;
-  tanggal_po: string | null; tanggal_datang: string | null; tanggal_pembuatan_spb?: string | null;
+  id: number; 
+  no_spb: string | null; 
+  tanggal_spb?: string | null;
+  nama_barang: string;
+  ukuran?: string | null;
+  jumlah_permintaan: number | null; 
+  satuan: string | null;
+  no_po: string | null; 
+  tanggal_po: string | null; 
+  supplier?: string | null;
+  merk?: string | null;
+  spesifikasi_teknis?: string | null;
+  lokasi_pemasangan?: string | null;
+  rencana_pemasangan?: string | null;
+  tanggal_datang: string | null; 
+  qty_datang?: number | null;
+  satuan_datang?: string | null;
+  lama_proses?: string | number | null;
+  kurang_lebih?: string | null;
+  keterangan?: string | null;
+  status?: string | null;
+  tanggal_pembuatan_spb?: string | null;
 }
 
 ================================================================================

@@ -11,13 +11,13 @@ import { supabaseClient } from "../shared/lib/supabaseClient";
 import { authProvider } from "./providers/authProvider";
 import { AdminLayout } from "../shared/layout/AdminLayout";
 
-// ✅ Jauh lebih bersih. Syaratnya: setiap file di bawah ini wajib punya "export default"
 const DashboardPage = lazy(() => import("../features/dashboard/pages/DashboardPage"));
 const EntryPage = lazy(() => import("../features/stock-out/pages/EntryPage"));
 const InventoryPage = lazy(() => import("../features/products/pages/InventoryPage"));
 const LoginPage = lazy(() => import("../features/auth/pages/LoginPage"));
 const MonitoringSPBPage = lazy(() => import("../features/spb/pages/MonitoringSPBPage"));
 const MonitoringSPBDetailPage = lazy(() => import("../features/spb/pages/MonitoringSPBDetailPage"));
+const MonitoringSPBItemDetailPage = lazy(() => import("../features/spb/pages/MonitoringSPBItemDetailPage")); // ✅ Rute Baru
 const ProductCreatePage = lazy(() => import("../features/products/pages/ProductCreatePage"));
 
 const PageLoader = () => (
@@ -55,6 +55,8 @@ function App() {
                   <Route path="/inventory" element={<InventoryPage />} />
                   <Route path="/monitoring-spb" element={<MonitoringSPBPage />} />
                   <Route path="/monitoring-spb/detail" element={<MonitoringSPBDetailPage />} />
+                  {/* ✅ Rute Rincian Barang */}
+                  <Route path="/monitoring-spb/item/:id" element={<MonitoringSPBItemDetailPage />} />
                 </Route>
 
                 {/* Rute Admin */}

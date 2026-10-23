@@ -31,13 +31,37 @@ export interface PendingLine { itemId: number; itemName: string; size: string | 
 export interface DashboardStats { totalProducts: number; totalStock: number; todayInbound: number; todayOutbound: number; }
 export interface StockInChartItem { date: string; total: number; }
 
-// ✅ BARU: Tidak ada lagi properti status
 export interface SPBDocumentGroup {
-  id: string; spbNo: string | null; poNo: string | null; date: string; itemsCount: number; sortNumber: number;
+  id: string; 
+  spbNo: string | null; 
+  poNo: string | null; 
+  date: string; 
+  itemsCount: number; 
+  sortNumber: number;
+  status?: string; // ✅ Status agregat untuk Card (Belum PO, Sudah PO, Datang)
 }
 
 export interface SPBItemDetail {
-  id: number; no_spb: string | null; no_po: string | null; nama_barang: string;
-  jumlah_permintaan: number | null; satuan: string | null;
-  tanggal_po: string | null; tanggal_datang: string | null; tanggal_pembuatan_spb?: string | null;
+  id: number; 
+  no_spb: string | null; 
+  tanggal_spb?: string | null;
+  nama_barang: string;
+  ukuran?: string | null;
+  jumlah_permintaan: number | null; 
+  satuan: string | null;
+  no_po: string | null; 
+  tanggal_po: string | null; 
+  supplier?: string | null;
+  merk?: string | null;
+  spesifikasi_teknis?: string | null;
+  lokasi_pemasangan?: string | null;
+  rencana_pemasangan?: string | null;
+  tanggal_datang: string | null; 
+  qty_datang?: number | null;
+  satuan_datang?: string | null;
+  lama_proses?: string | number | null;
+  kurang_lebih?: string | null;
+  keterangan?: string | null;
+  status?: string | null; // ✅ Status spesifik untuk detail barang (Datang Sesuai, Datang Lebih, dll)
+  tanggal_pembuatan_spb?: string | null;
 }
