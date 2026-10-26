@@ -48,46 +48,49 @@ export default function MonitoringSPBPage() {
     return sortedByLatestDate.slice(0, 10);
   }, [data]);
 
-  // ✅ 2. Card Besar Utama
+  // ✅ 2. Card Besar Utama (Filter & Sorting)
   const filteredAndSortedData = useMemo(() => {
-    // Filter dulu
+    // Filter dulu berdasarkan tab yang dipilih
     const filtered = data.filter((item) => {
       switch (filter) {
         case "Sudah di PO":
           return (
-            item.poNo !== null &&
-            item.poNo !== "NO_PO" &&
-            item.poNo !== "-"
+            item.poNo !== null && item.poNo !== "NO_PO" && item.poNo !== "-"
           );
         case "Belum di PO":
           return (
-            item.poNo === null ||
-            item.poNo === "NO_PO" ||
-            item.poNo === "-"
+            item.poNo === null || item.poNo === "NO_PO" || item.poNo === "-"
           );
         default:
           return true;
       }
     });
 
-    // Lalu urutkan
-    return filtered.sort((a, b) => {
-      // A. Prioritas 1: Status "Datang" selalu di bawah
-      const isADatang = a.status === "Datang";
-      const isBDatang = b.status === "Datang";
-      
-      if (isADatang && !isBDatang) return 1;
-      if (!isADatang && isBDatang) return -1;
+    // ✅ PERBAIKAN: Logika Sorting (Sudah PO -> Datang -> Selesai -> Belum PO)
+    const getStatusWeight = (status?: string) => {
+      if (status === "Sudah PO") return 1;
+      if (status === "Belum PO") return 1; // ✅ Sejajar
+      if (status === "Datang") return 2;
+      if (status === "Selesai") return 3;
+      return 4;
+    };
 
-      // B. Prioritas 2: Urutkan berdasarkan No SPB (fallback ke No PO) terkecil ke terbesar
+    return filtered.sort((a, b) => {
+      const weightA = getStatusWeight(a.status);
+      const weightB = getStatusWeight(b.status);
+
+      if (weightA !== weightB) {
+        return weightA - weightB;
+      }
+
+      // Jika status sama/sejajar, urutkan berdasarkan No SPB/PO
       const numA = getNumberFromStr(a.spbNo, a.poNo);
       const numB = getNumberFromStr(b.spbNo, b.poNo);
-      
+
       if (numA !== numB) {
         return numA - numB;
       }
-      
-      // Fallback jika sama atau kosong
+
       return (a.spbNo || a.poNo || "").localeCompare(b.spbNo || b.poNo || "");
     });
   }, [data, filter]);
@@ -97,12 +100,7 @@ export default function MonitoringSPBPage() {
 
     if (item.spbNo) {
       params.set("spb", String(item.spbNo));
-    } else if (
-      item.poNo &&
-      item.poNo !== "NO_PO" &&
-      item.poNo !== "-"
-    ) {
-      // ✅ Kirim semua teks PO (jangan di-split)
+    } else if (item.poNo && item.poNo !== "NO_PO" && item.poNo !== "-") {
       params.set("po", String(item.poNo));
     }
 
@@ -113,15 +111,14 @@ export default function MonitoringSPBPage() {
     if (status === "Belum PO") return "orange";
     if (status === "Sudah PO") return "blue";
     if (status === "Datang") return "green";
+    if (status === "Selesai") return "cyan"; // ✅ Tambahan warna untuk Selesai
     return "default";
   };
 
   const renderCardContent = (item: SPBDocumentGroup) => {
     const hasSPB = item.spbNo !== null && item.spbNo !== "NO_SPB";
     const hasPO =
-      item.poNo !== null &&
-      item.poNo !== "NO_PO" &&
-      item.poNo !== "-";
+      item.poNo !== null && item.poNo !== "NO_PO" && item.poNo !== "-";
 
     return (
       <Card
@@ -143,9 +140,7 @@ export default function MonitoringSPBPage() {
               <Text type="secondary" style={{ fontSize: 11 }}>
                 No. SPB
               </Text>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>
-                {item.spbNo}
-              </div>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>{item.spbNo}</div>
             </div>
           )}
 
@@ -156,21 +151,39 @@ export default function MonitoringSPBPage() {
               <Text type="secondary" style={{ fontSize: 11 }}>
                 No. PO
               </Text>
-              <div style={{ fontWeight: 600, fontSize: 16, wordBreak: "break-word" }}>
+              <div
+                style={{
+                  fontWeight: 600,
+                  fontSize: 16,
+                  wordBreak: "break-word",
+                }}
+              >
                 {item.poNo}
               </div>
             </div>
           )}
 
-          <div style={{ marginTop: 12, fontSize: 12, color: "#8c8c8c", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div
+            style={{
+              marginTop: 12,
+              fontSize: 12,
+              color: "#8c8c8c",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <div>
               <div>Total: {item.itemsCount} Barang</div>
               <div style={{ marginTop: 4 }}>
                 Tanggal: {item.date !== "-" ? formatDate(item.date) : "-"}
               </div>
             </div>
-            
-            <Tag color={getStatusColor(item.status)} style={{ margin: 0, fontWeight: 600 }}>
+
+            <Tag
+              color={getStatusColor(item.status)}
+              style={{ margin: 0, fontWeight: 600 }}
+            >
               {item.status || "Belum PO"}
             </Tag>
           </div>
@@ -210,9 +223,7 @@ export default function MonitoringSPBPage() {
         type="error"
         showIcon
         message="Gagal memuat data SPB"
-        description={
-          (error as Error)?.message ?? "Coba muat ulang halaman"
-        }
+        description={(error as Error)?.message ?? "Coba muat ulang halaman"}
       />
     );
   }
@@ -258,17 +269,19 @@ export default function MonitoringSPBPage() {
           >
             Baru ditambahkan
           </Text>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: screens.md ? "repeat(5, 1fr)" : "repeat(2, 1fr)",
-            gap: 12,
-          }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: screens.md
+                ? "repeat(5, 1fr)"
+                : "repeat(2, 1fr)",
+              gap: 12,
+            }}
+          >
             {recentItems.map((item) => {
               const hasSPB = item.spbNo && item.spbNo !== "NO_SPB";
               const hasPO =
-                item.poNo &&
-                item.poNo !== "NO_PO" &&
-                item.poNo !== "-";
+                item.poNo && item.poNo !== "NO_PO" && item.poNo !== "-";
 
               return (
                 <Card
@@ -284,7 +297,11 @@ export default function MonitoringSPBPage() {
                   styles={{ body: { padding: 12 } }}
                 >
                   <Space direction="vertical" size={0}>
-                    <Text strong style={{ fontSize: 13, display: "block" }} ellipsis>
+                    <Text
+                      strong
+                      style={{ fontSize: 13, display: "block" }}
+                      ellipsis
+                    >
                       {hasSPB && hasPO
                         ? `SPB: ${item.spbNo} · PO: ${item.poNo}`
                         : hasSPB

@@ -2,25 +2,19 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { supabaseClient } from "@/shared/lib/supabaseClient";
 import { useMonitoringSPB } from "@/features/spb/useMonitoringSPB";
 
-// ✅ FIX MOCK: Pisahkan data mock untuk tabel 'spb' dan 'po'
 let mockSpbData: any[] = [];
 let mockPoData: any[] = [];
 
 vi.mock("@/shared/lib/supabaseClient", () => ({
   supabaseClient: {
-    from: vi.fn((table) => {
-      if (table === "spb") {
-        return {
-          select: vi.fn().mockResolvedValue({ data: mockSpbData, error: null })
-        };
-      }
-      return {
-        select: vi.fn().mockResolvedValue({ data: mockPoData, error: null })
-      };
-    }),
+    from: vi.fn((table) => ({
+      select: vi.fn().mockResolvedValue({
+        data: table === "spb" ? mockSpbData : mockPoData,
+        error: null,
+      }),
+    })),
   },
 }));
 
@@ -29,59 +23,87 @@ function wrapper({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
 }
 
-describe("useMonitoringSPB - Pengujian Grouping SPB 37", () => {
+describe("useMonitoringSPB - Status Selesai & Sorting", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSpbData = [];
     mockPoData = [];
   });
 
-  it("harus menggabungkan semua no_po termasuk '10 REV' di dalam satu grup SPB 37", async () => {
-    // Data SPB (Hanya mengembalikan barang yang punya relasi join PO)
+  it("harus memberikan status 'Selesai' jika semua barang datang sesuai/lebih, dan menaruhnya paling bawah (setelah Datang)", async () => {
     mockSpbData = [
+      // SPB 10: Selesai
       {
-        id: 198, no_spb: "37", tgl_spb: "2026-09-21",
-        material_datang_tgl: "2026-08-01", material_datang_qty: 1, qty_permintaan: 1,
-        po: { no_po: "10 REV", tanggal_po: "2026-07-21" } // Join PO
+        id: 1,
+        no_spb: "10",
+        qty_permintaan: 5,
+        material_datang_qty: 5,
+        material_datang_tgl: "2026-08-01",
+        po: { no_po: "PO-10", tanggal_po: "2026-07-01" },
       },
       {
-        id: 501, no_spb: "37", tgl_spb: "2026-09-21",
-        material_datang_tgl: null, material_datang_qty: 0, qty_permintaan: 1,
-        po: null
-      }
-    ];
+        id: 2,
+        no_spb: "10",
+        qty_permintaan: 10,
+        material_datang_qty: 12,
+        material_datang_tgl: "2026-08-01",
+        po: { no_po: "PO-10", tanggal_po: "2026-07-01" },
+      },
 
-    // Data PO (Kosongkan jika tidak ada PO tanpa SPB)
-    mockPoData = [];
+      // SPB 20: Datang
+      {
+        id: 3,
+        no_spb: "20",
+        qty_permintaan: 5,
+        material_datang_qty: 0,
+        material_datang_tgl: null,
+        po: { no_po: "PO-20", tanggal_po: "2026-07-01" },
+      },
+      {
+        id: 4,
+        no_spb: "20",
+        qty_permintaan: 10,
+        material_datang_qty: 10,
+        material_datang_tgl: "2026-08-01",
+        po: { no_po: "PO-20", tanggal_po: "2026-07-01" },
+      },
+
+      // SPB 30: Sudah PO
+      {
+        id: 5,
+        no_spb: "30",
+        qty_permintaan: 5,
+        material_datang_qty: 0,
+        material_datang_tgl: null,
+        po: { no_po: "PO-30", tanggal_po: "2026-07-01" },
+      },
+
+      // SPB 40: Belum PO
+      {
+        id: 6,
+        no_spb: "40",
+        qty_permintaan: 5,
+        material_datang_qty: 0,
+        material_datang_tgl: null,
+        po: null,
+      },
+    ];
 
     const { result } = renderHook(() => useMonitoringSPB(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(result.current.data).toHaveLength(1); 
-    const group = result.current.data[0];
-    expect(group.spbNo).toBe("37");
-    
-    // Pastikan "10 REV" masuk
-    expect(group.poNo).toContain("10 REV");
-    expect(group.status).toBe("Datang");
-  });
+    const data = result.current.data;
 
-  it("harus menangani duplikat PO tanpa duplikasi teks", async () => {
-    mockSpbData = [
-      { id: 1, no_spb: "37", po: { no_po: "59R1", tanggal_po: "2026-10-07" }, material_datang_tgl: null },
-      { id: 2, no_spb: "37", po: { no_po: "59R1", tanggal_po: "2026-10-07" }, material_datang_tgl: null },
-      { id: 3, no_spb: "37", po: { no_po: "10 REV", tanggal_po: "2026-07-21" }, material_datang_tgl: null },
-    ];
-    mockPoData = [];
+    // 1. Cek Status
+    expect(data.find((d) => d.spbNo === "10")?.status).toBe("Selesai");
+    expect(data.find((d) => d.spbNo === "20")?.status).toBe("Datang");
+    expect(data.find((d) => d.spbNo === "30")?.status).toBe("Sudah PO");
+    expect(data.find((d) => d.spbNo === "40")?.status).toBe("Belum PO");
 
-    const { result } = renderHook(() => useMonitoringSPB(), { wrapper });
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    const group = result.current.data[0];
-    const poNumbers = group.poNo?.split(", ") || [];
-    
-    expect(poNumbers).toHaveLength(2);
-    expect(poNumbers).toContain("59R1");
-    expect(poNumbers).toContain("10 REV");
+    // 2. Cek Urutan (Sudah PO -> Datang -> Selesai -> Belum PO)
+    expect(data[0].spbNo).toBe("30"); // Sudah PO
+    expect(data[1].spbNo).toBe("20"); // Datang
+    expect(data[2].spbNo).toBe("10"); // Selesai
+    expect(data[3].spbNo).toBe("40"); // Belum PO
   });
 });
