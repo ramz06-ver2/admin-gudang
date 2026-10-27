@@ -6,15 +6,20 @@ import { useMonitoringSPB } from "@/features/spb/useMonitoringSPB";
 
 let mockSpbData: any[] = [];
 let mockPoData: any[] = [];
+let mockSjData: any[] = [];
 
 vi.mock("@/shared/lib/supabaseClient", () => ({
   supabaseClient: {
-    from: vi.fn((table) => ({
-      select: vi.fn().mockResolvedValue({
-        data: table === "spb" ? mockSpbData : mockPoData,
-        error: null,
-      }),
-    })),
+    from: vi.fn((table) => {
+      let data: any[] = [];
+      if (table === "spb") data = mockSpbData;
+      else if (table === "po") data = mockPoData;
+      else if (table === "surat_jalan") data = mockSjData;
+
+      return {
+        select: vi.fn().mockResolvedValue({ data, error: null }),
+      };
+    }),
   },
 }));
 
@@ -28,11 +33,11 @@ describe("useMonitoringSPB - Status Selesai & Sorting", () => {
     vi.clearAllMocks();
     mockSpbData = [];
     mockPoData = [];
+    mockSjData = [];
   });
 
   it("harus memberikan status 'Selesai' jika semua barang datang sesuai/lebih, dan menaruhnya paling bawah (setelah Datang)", async () => {
     mockSpbData = [
-      // SPB 10: Selesai
       {
         id: 1,
         no_spb: "10",
@@ -49,8 +54,6 @@ describe("useMonitoringSPB - Status Selesai & Sorting", () => {
         material_datang_tgl: "2026-08-01",
         po: { no_po: "PO-10", tanggal_po: "2026-07-01" },
       },
-
-      // SPB 20: Datang
       {
         id: 3,
         no_spb: "20",
@@ -67,8 +70,6 @@ describe("useMonitoringSPB - Status Selesai & Sorting", () => {
         material_datang_tgl: "2026-08-01",
         po: { no_po: "PO-20", tanggal_po: "2026-07-01" },
       },
-
-      // SPB 30: Sudah PO
       {
         id: 5,
         no_spb: "30",
@@ -77,8 +78,6 @@ describe("useMonitoringSPB - Status Selesai & Sorting", () => {
         material_datang_tgl: null,
         po: { no_po: "PO-30", tanggal_po: "2026-07-01" },
       },
-
-      // SPB 40: Belum PO
       {
         id: 6,
         no_spb: "40",
@@ -100,10 +99,11 @@ describe("useMonitoringSPB - Status Selesai & Sorting", () => {
     expect(data.find((d) => d.spbNo === "30")?.status).toBe("Sudah PO");
     expect(data.find((d) => d.spbNo === "40")?.status).toBe("Belum PO");
 
-    // 2. Cek Urutan (Sudah PO -> Datang -> Selesai -> Belum PO)
-    expect(data[0].spbNo).toBe("30"); // Sudah PO
-    expect(data[1].spbNo).toBe("20"); // Datang
-    expect(data[2].spbNo).toBe("10"); // Selesai
-    expect(data[3].spbNo).toBe("40"); // Belum PO
+    // 2. Cek Urutan (Sudah PO & Belum PO (bobot 1) -> Datang (2) -> Selesai (3))
+    // Urutan di antara bobot 1 diurutkan berdasarkan No SPB terkecil (30 lalu 40)
+    expect(data[0].spbNo).toBe("30");
+    expect(data[1].spbNo).toBe("40");
+    expect(data[2].spbNo).toBe("20");
+    expect(data[3].spbNo).toBe("10");
   });
 });

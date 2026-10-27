@@ -1,6 +1,6 @@
 ================================================================================
 FILE: test/diagnostics/01-imports.test.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/01-imports.test.ts
+PATH: /workspaces/admin-gudang/tests/diagnostics/01-imports.test.ts
 ================================================================================
 
 import { describe, it, expect, vi } from "vitest";
@@ -228,7 +228,7 @@ describe("DIAGNOSTIC 01 — Module Imports", () => {
 
 ================================================================================
 FILE: test/diagnostics/02-exports.test.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/02-exports.test.ts
+PATH: /workspaces/admin-gudang/tests/diagnostics/02-exports.test.ts
 ================================================================================
 
 import { describe, it, expect } from "vitest";
@@ -459,7 +459,7 @@ describe("DIAGNOSTIC 02 — Named Exports", () => {
 
 ================================================================================
 FILE: test/diagnostics/03-components.test.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/03-components.test.tsx
+PATH: /workspaces/admin-gudang/tests/diagnostics/03-components.test.tsx
 ================================================================================
 
 import { describe, it, expect, vi } from "vitest";
@@ -645,7 +645,7 @@ describe("DIAGNOSTIC 03 — Component Renders", () => {
 
 ================================================================================
 FILE: test/diagnostics/04-app-render.test.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/04-app-render.test.ts
+PATH: /workspaces/admin-gudang/tests/diagnostics/04-app-render.test.ts
 ================================================================================
 
 import { describe, it, expect, vi } from "vitest";
@@ -726,7 +726,7 @@ describe("DIAGNOSTIC 04 — Full App Render", () => {
 
 ================================================================================
 FILE: test/diagnostics/05-supabase-config.test.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/05-supabase-config.test.ts
+PATH: /workspaces/admin-gudang/tests/diagnostics/05-supabase-config.test.ts
 ================================================================================
 
 import { describe, it, expect } from "vitest";
@@ -780,7 +780,7 @@ describe("FOCUS: Supabase Config", () => {
 
 ================================================================================
 FILE: test/diagnostics/06-supabase-connection.test.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/06-supabase-connection.test.ts
+PATH: /workspaces/admin-gudang/tests/diagnostics/06-supabase-connection.test.ts
 ================================================================================
 
 import { describe, it, expect } from "vitest";
@@ -843,7 +843,7 @@ describe("FOCUS: Supabase Connection", () => {
 
 ================================================================================
 FILE: test/diagnostics/07-mappers.test.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/07-mappers.test.ts
+PATH: /workspaces/admin-gudang/tests/diagnostics/07-mappers.test.ts
 ================================================================================
 
 import { describe, it, expect } from "vitest";
@@ -924,7 +924,7 @@ describe("FOCUS: Product Mapper", () => {
 
 ================================================================================
 FILE: test/diagnostics/08-hooks-supabase.test.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/08-hooks-supabase.test.tsx
+PATH: /workspaces/admin-gudang/tests/diagnostics/08-hooks-supabase.test.tsx
 ================================================================================
 
 import { describe, it, expect } from "vitest";
@@ -1006,7 +1006,7 @@ describe("FOCUS: Hooks dengan Supabase", () => {
 
 ================================================================================
 FILE: test/integration/01-master-data.test.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/tests/integration/01-master-data.test.ts
+PATH: /workspaces/admin-gudang/tests/integration/01-master-data.test.ts
 ================================================================================
 
 import { describe, it, expect } from "vitest";
@@ -1033,7 +1033,7 @@ describe.skip("Integration: Master Data (Tabel Barang)", () => {
 
 ================================================================================
 FILE: test/integration/02-movemnet.test.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/tests/integration/02-movemnet.test.ts
+PATH: /workspaces/admin-gudang/tests/integration/02-movemnet.test.ts
 ================================================================================
 
 import { describe, it, expect } from "vitest";
@@ -1063,7 +1063,7 @@ describe.skip("Integration: Transaksi Barang Masuk & Keluar", () => {
 
 ================================================================================
 FILE: test/integration/03-spb-po-relation.test.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/tests/integration/03-spb-po-relation.test.ts
+PATH: /workspaces/admin-gudang/tests/integration/03-spb-po-relation.test.ts
 ================================================================================
 
 import { describe, it, expect, vi } from "vitest";
@@ -1121,7 +1121,7 @@ describe("Smoke: App module", () => {
 
 ================================================================================
 FILE: test/integration/04-spb-monitoring.test.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/tests/integration/04-spb-monitoring.test.ts
+PATH: /workspaces/admin-gudang/tests/integration/04-spb-monitoring.test.ts
 ================================================================================
 
 import { describe, it, expect } from "vitest";
@@ -1315,7 +1315,7 @@ describe.skip("Integration: SPB Monitoring — data & grouping", () => {
 
 ================================================================================
 FILE: test/setup.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/tests/setup.ts
+PATH: /workspaces/admin-gudang/tests/setup.ts
 ================================================================================
 
 import "@testing-library/jest-dom/vitest";
@@ -1362,7 +1362,7 @@ afterEach(() => {
 
 ================================================================================
 FILE: test/smoke/app.test.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/tests/smoke/app.test.tsx
+PATH: /workspaces/admin-gudang/tests/smoke/app.test.tsx
 ================================================================================
 
 import { describe, it, expect, vi } from "vitest";
@@ -1421,7 +1421,7 @@ describe("Smoke: App module", () => {
 
 ================================================================================
 FILE: test/unit/hooks/useKeyboardShortcut.test.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/hooks/useKeyboardShortcut.test.ts
+PATH: /workspaces/admin-gudang/tests/unit/hooks/useKeyboardShortcut.test.ts
 ================================================================================
 
 import { describe, it, expect, vi } from "vitest";
@@ -1488,7 +1488,7 @@ describe("useKeyboardShortcut", () => {
 
 ================================================================================
 FILE: test/unit/hooks/useMonitoringSPB-grouping.test.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/hooks/useMonitoringSPB-grouping.test.tsx
+PATH: /workspaces/admin-gudang/tests/unit/hooks/useMonitoringSPB-grouping.test.tsx
 ================================================================================
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -1553,7 +1553,7 @@ describe("useMonitoringSPB - Grouping PO Tanpa SPB", () => {
 
 ================================================================================
 FILE: test/unit/hooks/useMonitoringSPB.test.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/hooks/useMonitoringSPB.test.tsx
+PATH: /workspaces/admin-gudang/tests/unit/hooks/useMonitoringSPB.test.tsx
 ================================================================================
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -1669,7 +1669,7 @@ describe("useMonitoringSPB - Status Selesai & Sorting", () => {
 
 ================================================================================
 FILE: test/unit/pages/monitoring-spb-item-detail.test.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/pages/monitoring-spb-item-detail.test.tsx
+PATH: /workspaces/admin-gudang/tests/unit/pages/monitoring-spb-item-detail.test.tsx
 ================================================================================
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -1784,7 +1784,7 @@ describe("MonitoringSPBItemDetailPage - Render Rincian", () => {
 
 ================================================================================
 FILE: test/unit/pages/monitoring-spb.test.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/pages/monitoring-spb.test.tsx
+PATH: /workspaces/admin-gudang/tests/unit/pages/monitoring-spb.test.tsx
 ================================================================================
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -1854,7 +1854,7 @@ describe("useMonitoringSPBDetail - Logika Filtering Kebal Peluru", () => {
 
 ================================================================================
 FILE: test/utils/mocks.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/tests/utils/mocks.ts
+PATH: /workspaces/admin-gudang/tests/utils/mocks.ts
 ================================================================================
 
 import { vi } from "vitest";
@@ -1896,7 +1896,7 @@ export const mockNavigate = vi.fn();
 
 ================================================================================
 FILE: test/utils/render.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/tests/utils/render.tsx
+PATH: /workspaces/admin-gudang/tests/utils/render.tsx
 ================================================================================
 
 import type { ReactNode } from "react";

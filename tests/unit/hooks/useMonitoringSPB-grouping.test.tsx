@@ -6,15 +6,20 @@ import { useMonitoringSPB } from "@/features/spb/useMonitoringSPB";
 
 let mockSpbData: any[] = [];
 let mockPoData: any[] = [];
+let mockSjData: any[] = []; // ✅ Tambahkan mock untuk surat_jalan
 
 vi.mock("@/shared/lib/supabaseClient", () => ({
   supabaseClient: {
-    from: vi.fn((table) => ({
-      select: vi.fn().mockResolvedValue({
-        data: table === "spb" ? mockSpbData : mockPoData,
-        error: null,
-      }),
-    })),
+    from: vi.fn((table) => {
+      let data: any[] = [];
+      if (table === "spb") data = mockSpbData;
+      else if (table === "po") data = mockPoData;
+      else if (table === "surat_jalan") data = mockSjData;
+
+      return {
+        select: vi.fn().mockResolvedValue({ data, error: null }),
+      };
+    }),
   },
 }));
 
@@ -28,15 +33,15 @@ describe("useMonitoringSPB - Grouping PO Tanpa SPB", () => {
     vi.clearAllMocks();
     mockSpbData = [];
     mockPoData = [];
+    mockSjData = [];
   });
 
   it("harus menggabungkan 42 barang dengan No PO 34 menjadi 1 card", async () => {
-    // Simulasi data PO 34 dengan 42 baris barang
     mockPoData = Array.from({ length: 42 }, (_, i) => ({
-      id: 100 + i, // ID unik per baris
-      no_po: "34", // No PO sama
+      id: 100 + i,
+      no_po: "34",
       tanggal_po: "2026-08-21",
-      id_spb: null, // Tidak terikat SPB
+      id_spb: null,
       material_datang_tgl: null,
       material_datang_qty: 0,
     }));
@@ -45,13 +50,11 @@ describe("useMonitoringSPB - Grouping PO Tanpa SPB", () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     const data = result.current.data;
-
-    // Harusnya cuma ada 1 card (bukan 42)
     expect(data).toHaveLength(1);
 
     const group = data[0];
     expect(group.poNo).toBe("34");
-    expect(group.itemsCount).toBe(42); // Total barang harus 42
+    expect(group.itemsCount).toBe(42);
     expect(group.status).toBe("Sudah PO");
     expect(group.spbNo).toBeNull();
   });

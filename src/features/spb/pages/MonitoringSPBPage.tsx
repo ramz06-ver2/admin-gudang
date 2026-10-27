@@ -31,11 +31,13 @@ type FilterType =
   "Semua" | "Belum di PO" | "Sudah di PO" | "Datang" | "Selesai";
 
 type SearchMode = "no" | "barang";
+type SortBy = "status" | "number" | "oldest" | "newest";
 
 const getNumberFromStr = (spb: string | null, po: string | null) => {
   const str = spb || po;
   if (!str) return 999999;
-  const match = str.match(/\d+/);
+  // ✅ Gunakan String() untuk mencegah error jika data berupa number
+  const match = String(str).match(/\d+/);
   return match ? parseInt(match[0], 10) : 999999;
 };
 
@@ -46,7 +48,9 @@ export default function MonitoringSPBPage() {
   const [filter, setFilter] = useState<FilterType>("Semua");
   const [searchTerm, setSearchTerm] = useState("");
   const [searchMode, setSearchMode] = useState<SearchMode>("no");
+  const [sortBy, setSortBy] = useState<SortBy>("status");
 
+  // ✅ 1. Ambil 10 Data Terbaru (Campuran SPB, PO, dan Surat Jalan)
   const recentItems = useMemo(() => {
     return [...data]
       .sort((a, b) => {
@@ -57,31 +61,39 @@ export default function MonitoringSPBPage() {
       .slice(0, 10);
   }, [data]);
 
+  // ✅ 2. Filter, Pencarian, dan Sorting
   const filteredAndSortedData = useMemo(() => {
     const filtered = data.filter((item) => {
       const searchLower = searchTerm.toLowerCase();
       let matchesSearch = false;
 
       if (searchMode === "no") {
-        // ✅ Cari berdasarkan No SPB, Judul SPB, No PO (Surat Jalan dihilangkan)
-        const matchSpb = item.spbNo?.toLowerCase().includes(searchLower);
-        const matchTitle = item.spbTitle?.toLowerCase().includes(searchLower);
-        const matchPo = item.poNo?.toLowerCase().includes(searchLower);
+        // ✅ Gunakan String() agar aman dari tipe data Number
+        const matchSpb = String(item.spbNo || "")
+          .toLowerCase()
+          .includes(searchLower);
+        const matchTitle = String(item.spbTitle || "")
+          .toLowerCase()
+          .includes(searchLower);
+        const matchPo = String(item.poNo || "")
+          .toLowerCase()
+          .includes(searchLower);
+        const matchSj = String(item.suratJalanNo || "")
+          .toLowerCase()
+          .includes(searchLower);
 
         matchesSearch =
-          !searchTerm || !!matchSpb || !!matchTitle || !!matchPo;
+          !searchTerm || matchSpb || matchTitle || matchPo || matchSj;
       } else {
-        // ✅ Cari berdasarkan Nama Barang
         matchesSearch =
           !searchTerm ||
           !!item.itemNames?.some((name) =>
-            name.toLowerCase().includes(searchLower)
+            String(name).toLowerCase().includes(searchLower),
           );
       }
 
       if (!matchesSearch) return false;
 
-      // Cek Status
       switch (filter) {
         case "Belum di PO":
           return !item.poNo || item.poNo === "-";
@@ -101,7 +113,7 @@ export default function MonitoringSPBPage() {
       }
     });
 
-    // Sorting
+    // ✅ 3. Logika Sorting
     const getStatusWeight = (status?: string) => {
       if (status === "Sudah PO" || status === "Belum PO") return 1;
       if (status === "Datang") return 2;
@@ -110,17 +122,33 @@ export default function MonitoringSPBPage() {
     };
 
     return filtered.sort((a, b) => {
-      const weightA = getStatusWeight(a.status);
-      const weightB = getStatusWeight(b.status);
-      if (weightA !== weightB) return weightA - weightB;
+      if (sortBy === "status") {
+        const wA = getStatusWeight(a.status);
+        const wB = getStatusWeight(b.status);
+        if (wA !== wB) return wA - wB;
+        return (
+          getNumberFromStr(a.spbNo, a.poNo) - getNumberFromStr(b.spbNo, b.poNo)
+        );
+      }
 
-      const numA = getNumberFromStr(a.spbNo, a.poNo);
-      const numB = getNumberFromStr(b.spbNo, b.poNo);
-      if (numA !== numB) return numA - numB;
+      if (sortBy === "number") {
+        const numA = getNumberFromStr(a.spbNo, a.poNo);
+        const numB = getNumberFromStr(b.spbNo, b.poNo);
+        if (numA !== numB) return numA - numB;
+        return getStatusWeight(a.status) - getStatusWeight(b.status);
+      }
 
-      return (a.spbNo || a.poNo || "").localeCompare(b.spbNo || b.poNo || "");
+      if (sortBy === "oldest") {
+        const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
+        const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
+        return dateA - dateB;
+      }
+
+      const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
+      const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
+      return dateB - dateA;
     });
-  }, [data, filter, searchTerm, searchMode]);
+  }, [data, filter, searchTerm, searchMode, sortBy]);
 
   const handleCardClick = (item: SPBDocumentGroup) => {
     const params = new URLSearchParams();
@@ -128,6 +156,8 @@ export default function MonitoringSPBPage() {
       params.set("spb", String(item.spbNo));
     } else if (item.poNo && item.poNo !== "NO_PO" && item.poNo !== "-") {
       params.set("po", String(item.poNo));
+    } else if (item.suratJalanNo) {
+      params.set("sj", String(item.suratJalanNo));
     }
     navigate(`/monitoring-spb/detail?${params.toString()}`);
   };
@@ -144,6 +174,7 @@ export default function MonitoringSPBPage() {
     const hasSPB = item.spbNo !== null && item.spbNo !== "NO_SPB";
     const hasPO =
       item.poNo !== null && item.poNo !== "NO_PO" && item.poNo !== "-";
+    const hasSJ = !hasSPB && !hasPO && item.suratJalanNo;
 
     return (
       <Card
@@ -165,10 +196,23 @@ export default function MonitoringSPBPage() {
               <Text type="secondary" style={{ fontSize: 11 }}>
                 No. SPB
               </Text>
-              <div style={{ fontWeight: 600, fontSize: 16, wordBreak: "break-word" }}>
+              <div
+                style={{
+                  fontWeight: 600,
+                  fontSize: 16,
+                  wordBreak: "break-word",
+                }}
+              >
                 {item.spbNo}
                 {item.spbTitle && (
-                  <span style={{ fontSize: 14, fontWeight: 500, color: "#595959", marginLeft: 6 }}>
+                  <span
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: "#595959",
+                      marginLeft: 6,
+                    }}
+                  >
                     - {item.spbTitle}
                   </span>
                 )}
@@ -195,6 +239,23 @@ export default function MonitoringSPBPage() {
             </div>
           )}
 
+          {hasSJ && (
+            <div>
+              <Text type="secondary" style={{ fontSize: 11 }}>
+                No. Surat Jalan
+              </Text>
+              <div
+                style={{
+                  fontWeight: 600,
+                  fontSize: 16,
+                  wordBreak: "break-word",
+                }}
+              >
+                {item.suratJalanNo}
+              </div>
+            </div>
+          )}
+
           <div
             style={{
               marginTop: 12,
@@ -211,7 +272,6 @@ export default function MonitoringSPBPage() {
                 Tanggal: {item.date !== "-" ? formatDate(item.date) : "-"}
               </div>
             </div>
-
             <Tag
               color={getStatusColor(item.status)}
               style={{ margin: 0, fontWeight: 600 }}
@@ -244,6 +304,7 @@ export default function MonitoringSPBPage() {
   const renderSmallCard = (item: SPBDocumentGroup) => {
     const hasSPB = item.spbNo && item.spbNo !== "NO_SPB";
     const hasPO = item.poNo && item.poNo !== "NO_PO" && item.poNo !== "-";
+    const hasSJ = !hasSPB && !hasPO && item.suratJalanNo;
 
     return (
       <Card
@@ -260,7 +321,9 @@ export default function MonitoringSPBPage() {
               ? `SPB: ${item.spbNo} · PO: ${item.poNo}`
               : hasSPB
                 ? `SPB: ${item.spbNo}`
-                : `PO: ${item.poNo}`}
+                : hasPO
+                  ? `PO: ${item.poNo}`
+                  : `SJ: ${item.suratJalanNo}`}
           </Text>
           <Text type="secondary" style={{ fontSize: 11 }}>
             {item.date !== "-" ? formatDate(item.date) : "-"}
@@ -329,7 +392,7 @@ export default function MonitoringSPBPage() {
           </Space>
         </div>
 
-        {/* Section Baru Ditambahkan (10 Data Terbaru Campur) */}
+        {/* Section Baru Ditambahkan (10 Data Terbaru) */}
         {recentItems.length > 0 && (
           <div style={{ marginBottom: 32 }}>
             <Text
@@ -352,7 +415,7 @@ export default function MonitoringSPBPage() {
           </div>
         )}
 
-        {/* ✅ Toolbar: Search & Filter */}
+        {/* Toolbar: Search, Filter, & Sort */}
         <div
           style={{
             display: "flex",
@@ -367,6 +430,7 @@ export default function MonitoringSPBPage() {
               value={searchMode}
               onChange={setSearchMode}
               style={{ width: 130 }}
+              aria-label="Mode Pencarian"
             >
               <Select.Option value="no">No / Judul</Select.Option>
               <Select.Option value="barang">Nama Barang</Select.Option>
@@ -374,7 +438,7 @@ export default function MonitoringSPBPage() {
             <Input
               placeholder={
                 searchMode === "no"
-                  ? "Cari No SPB/PO..."
+                  ? "Cari No SPB/PO/SJ..."
                   : "Cari Nama Barang..."
               }
               prefix={<SearchOutlined />}
@@ -397,6 +461,19 @@ export default function MonitoringSPBPage() {
             onChange={setFilter}
             style={{ padding: 4, fontWeight: 500, overflowX: "auto" }}
           />
+
+          <Select<SortBy>
+            value={sortBy}
+            onChange={setSortBy}
+            style={{ width: 150 }}
+            aria-label="Urutan Data"
+            options={[
+              { value: "status", label: "Urut: Status" },
+              { value: "number", label: "Urut: Nomor" },
+              { value: "oldest", label: "Urut: Paling Lama" },
+              { value: "newest", label: "Urut: Paling Baru" },
+            ]}
+          />
         </div>
 
         {/* Grid Kartu Utama */}
@@ -411,7 +488,7 @@ export default function MonitoringSPBPage() {
         {/* State Kosong */}
         {filteredAndSortedData.length === 0 && (
           <div style={{ textAlign: "center", padding: 40, width: "100%" }}>
-            <Empty description="Tidak ada data SPB/PO yang cocok dengan pencarian/filter." />
+            <Empty description="Tidak ada data yang cocok dengan pencarian/filter." />
           </div>
         )}
       </div>

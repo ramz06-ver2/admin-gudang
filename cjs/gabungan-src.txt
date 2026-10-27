@@ -1,6 +1,6 @@
 ================================================================================
 FILE: ../src/.devcontainer/devcontainer.json
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/.devcontainer/devcontainer.json
+PATH: /workspaces/admin-gudang/src/.devcontainer/devcontainer.json
 ================================================================================
 
 {
@@ -54,7 +54,7 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/.devcontainer/devcontainer.js
 
 ================================================================================
 FILE: ../src/app/App.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/app/App.tsx
+PATH: /workspaces/admin-gudang/src/app/App.tsx
 ================================================================================
 
 import { Suspense, lazy } from "react";
@@ -144,14 +144,14 @@ export default App;
 
 ================================================================================
 FILE: ../src/app/providers/accessControlProvider.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/app/providers/accessControlProvider.ts
+PATH: /workspaces/admin-gudang/src/app/providers/accessControlProvider.ts
 ================================================================================
 
 
 
 ================================================================================
 FILE: ../src/app/providers/authProvider.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/app/providers/authProvider.ts
+PATH: /workspaces/admin-gudang/src/app/providers/authProvider.ts
 ================================================================================
 
 import type { AuthProvider, AuthActionResponse, CheckResponse } from "@refinedev/core";
@@ -235,21 +235,21 @@ export const authProvider: AuthProvider = {
 
 ================================================================================
 FILE: ../src/app/providers/dataProvider.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/app/providers/dataProvider.ts
+PATH: /workspaces/admin-gudang/src/app/providers/dataProvider.ts
 ================================================================================
 
 
 
 ================================================================================
 FILE: ../src/app/router.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/app/router.tsx
+PATH: /workspaces/admin-gudang/src/app/router.tsx
 ================================================================================
 
 
 
 ================================================================================
 FILE: ../src/features/auth/pages/LoginPage.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/auth/pages/LoginPage.tsx
+PATH: /workspaces/admin-gudang/src/features/auth/pages/LoginPage.tsx
 ================================================================================
 
 import { useState } from "react";
@@ -420,14 +420,14 @@ export default LoginPage;
 
 ================================================================================
 FILE: ../src/features/dashboard/api.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/api.ts
+PATH: /workspaces/admin-gudang/src/features/dashboard/api.ts
 ================================================================================
 
 
 
 ================================================================================
 FILE: ../src/features/dashboard/components/LowStockTable.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/components/LowStockTable.tsx
+PATH: /workspaces/admin-gudang/src/features/dashboard/components/LowStockTable.tsx
 ================================================================================
 
 import { Card, Empty, Skeleton, Table } from "antd";
@@ -496,7 +496,7 @@ export const LowStockTable = () => {
 
 ================================================================================
 FILE: ../src/features/dashboard/components/QuickPanel.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/components/QuickPanel.tsx
+PATH: /workspaces/admin-gudang/src/features/dashboard/components/QuickPanel.tsx
 ================================================================================
 
 import { Card, Input, Space, Tag } from "antd";
@@ -542,7 +542,7 @@ export const QuickEntryPanel = ({ onTriggerStart }: Props) => {
 
 ================================================================================
 FILE: ../src/features/dashboard/components/StatCard.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/components/StatCard.tsx
+PATH: /workspaces/admin-gudang/src/features/dashboard/components/StatCard.tsx
 ================================================================================
 
 import { Card, Statistic, Typography } from "antd";
@@ -622,7 +622,7 @@ export const StatCard = ({
 
 ================================================================================
 FILE: ../src/features/dashboard/components/StockExitList.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/components/StockExitList.tsx
+PATH: /workspaces/admin-gudang/src/features/dashboard/components/StockExitList.tsx
 ================================================================================
 
 import { Card, Empty, Space, Tag, Typography, Skeleton } from "antd";
@@ -747,7 +747,7 @@ export const StockExitList = ({ exits, loading }: Props) => {
 
 ================================================================================
 FILE: ../src/features/dashboard/components/StockInChart.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/components/StockInChart.tsx
+PATH: /workspaces/admin-gudang/src/features/dashboard/components/StockInChart.tsx
 ================================================================================
 
 import { Card, Empty, Skeleton } from "antd";
@@ -815,7 +815,7 @@ export const StockInChart = () => {
 
 ================================================================================
 FILE: ../src/features/dashboard/components/StockTable.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/components/StockTable.tsx
+PATH: /workspaces/admin-gudang/src/features/dashboard/components/StockTable.tsx
 ================================================================================
 
 import { Card, Table, Typography, Tag } from "antd";
@@ -877,7 +877,7 @@ export const StockTable = ({ products, loading }: Props) => (
 
 ================================================================================
 FILE: ../src/features/dashboard/pages/DashboardPage.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/pages/DashboardPage.tsx
+PATH: /workspaces/admin-gudang/src/features/dashboard/pages/DashboardPage.tsx
 ================================================================================
 
 import { useEffect } from "react";
@@ -958,7 +958,7 @@ export default function DashboardPage() {
 
 ================================================================================
 FILE: ../src/features/dashboard/useDashboardStats.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/useDashboardStats.ts
+PATH: /workspaces/admin-gudang/src/features/dashboard/useDashboardStats.ts
 ================================================================================
 
 import { useQuery } from "@tanstack/react-query";
@@ -1047,7 +1047,7 @@ export const useDashboardStats = (): UseDashboardStatsResult => {
 
 ================================================================================
 FILE: ../src/features/dashboard/useLowStock.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/useLowStock.ts
+PATH: /workspaces/admin-gudang/src/features/dashboard/useLowStock.ts
 ================================================================================
 
 import { useQuery } from "@tanstack/react-query";
@@ -1099,7 +1099,7 @@ export const useLowStock = (limit = 5) => {
 
 ================================================================================
 FILE: ../src/features/dashboard/useStockInChart.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/dashboard/useStockInChart.ts
+PATH: /workspaces/admin-gudang/src/features/dashboard/useStockInChart.ts
 ================================================================================
 
 import { useQuery } from "@tanstack/react-query";
@@ -1161,14 +1161,14 @@ export const useStockInChart = (days = 30) => {
 
 ================================================================================
 FILE: ../src/features/products/api.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/products/api.ts
+PATH: /workspaces/admin-gudang/src/features/products/api.ts
 ================================================================================
 
 
 
 ================================================================================
 FILE: ../src/features/products/components/InventoryTable.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/products/components/InventoryTable.tsx
+PATH: /workspaces/admin-gudang/src/features/products/components/InventoryTable.tsx
 ================================================================================
 
 // src/features/products/components/InventoryTable.tsx
@@ -1446,7 +1446,7 @@ export const InventoryTable = (props: InventoryTableProps) => {
 
 ================================================================================
 FILE: ../src/features/products/pages/InventoryPage.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/products/pages/InventoryPage.tsx
+PATH: /workspaces/admin-gudang/src/features/products/pages/InventoryPage.tsx
 ================================================================================
 
 import { useState } from "react";
@@ -1553,7 +1553,7 @@ export default InventoryPage;
 
 ================================================================================
 FILE: ../src/features/products/pages/ProductCreatePage.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/products/pages/ProductCreatePage.tsx
+PATH: /workspaces/admin-gudang/src/features/products/pages/ProductCreatePage.tsx
 ================================================================================
 
 import { useState } from "react";
@@ -1661,14 +1661,14 @@ export default ProductCreatePage;
 
 ================================================================================
 FILE: ../src/features/products/types.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/products/types.ts
+PATH: /workspaces/admin-gudang/src/features/products/types.ts
 ================================================================================
 
 
 
 ================================================================================
 FILE: ../src/features/products/useProducts.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/products/useProducts.ts
+PATH: /workspaces/admin-gudang/src/features/products/useProducts.ts
 ================================================================================
 
 import { useQuery } from "@tanstack/react-query";
@@ -1717,7 +1717,7 @@ export const useProducts = (category?: string) => {
 
 ================================================================================
 FILE: ../src/features/products/useProductSearch.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/products/useProductSearch.ts
+PATH: /workspaces/admin-gudang/src/features/products/useProductSearch.ts
 ================================================================================
 
 import { useQuery } from "@tanstack/react-query";
@@ -1760,21 +1760,21 @@ export const useProductSearch = (keyword: string, limit = 30) => {
 
 ================================================================================
 FILE: ../src/features/reports/pages/ReportsPage.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/reports/pages/ReportsPage.tsx
+PATH: /workspaces/admin-gudang/src/features/reports/pages/ReportsPage.tsx
 ================================================================================
 
 
 
 ================================================================================
 FILE: ../src/features/spb/api.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/api.ts
+PATH: /workspaces/admin-gudang/src/features/spb/api.ts
 ================================================================================
 
 
 
 ================================================================================
 FILE: ../src/features/spb/pages/MonitoringSPBDetailPage.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/pages/MonitoringSPBDetailPage.tsx
+PATH: /workspaces/admin-gudang/src/features/spb/pages/MonitoringSPBDetailPage.tsx
 ================================================================================
 
 import { useMemo } from "react";
@@ -1810,6 +1810,9 @@ export const MonitoringSPBDetailPage = () => {
   const isMobile = !screens.md;
 
   const { items, isLoading, error } = useMonitoringSPBDetail(spbNo, poNo);
+
+  // ✅ Ambil Judul SPB dari baris data pertama
+  const spbTitle = items.length > 0 ? items[0].judul_spb : null;
 
   const statuses = useMemo(() => {
     if (items.length === 0) return { belumDiPo: false, sudahDiPo: false };
@@ -1853,6 +1856,22 @@ export const MonitoringSPBDetailPage = () => {
     return "default";
   };
 
+  // ✅ Helper untuk render Nama Barang, Ukuran, dan Spesifikasi
+  const renderNamaBarang = (r: SPBItemDetail) => {
+    const nameWithSize = r.ukuran ? `${r.nama_barang} - ${r.ukuran}` : r.nama_barang;
+    
+    return (
+      <Space direction="vertical" size={2}>
+        <Text strong>{nameWithSize}</Text>
+        {r.spesifikasi_teknis && r.spesifikasi_teknis !== "-" && (
+          <Text style={{ fontSize: 12, color: "#8c8c8c", lineHeight: 1.2 }}>
+            • {r.spesifikasi_teknis}
+          </Text>
+        )}
+      </Space>
+    );
+  };
+
   const mobileColumns = [
     {
       title: "No",
@@ -1863,10 +1882,9 @@ export const MonitoringSPBDetailPage = () => {
     },
     {
       title: "Nama Barang",
-      dataIndex: "nama_barang",
       key: "nama_barang",
       ellipsis: true,
-      render: (v: string) => <Text strong>{v}</Text>,
+      render: (_: any, r: SPBItemDetail) => renderNamaBarang(r),
     },
     {
       title: "Jumlah",
@@ -1937,18 +1955,23 @@ export const MonitoringSPBDetailPage = () => {
     },
     {
       title: "Nama Barang",
-      dataIndex: "nama_barang",
       key: "nama_barang",
-      render: (v: string) => <Text strong>{v}</Text>,
+      render: (_: any, r: SPBItemDetail) => renderNamaBarang(r),
     },
     {
-      title: "No SPB",
-      dataIndex: "no_spb",
-      key: "no_spb",
-      width: 130,
-      render: (v: string | null) => v || "-",
+      // ✅ Kolom Ukuran diganti menjadi Jumlah
+      title: "Jumlah",
+      key: "jumlah",
+      width: 100,
+      align: "right" as const,
+      render: (_: any, r: SPBItemDetail) => (
+        <Text>
+          {r.jumlah_permintaan ?? 0} <Text type="secondary" style={{ fontSize: 12 }}>{r.satuan ?? ""}</Text>
+        </Text>
+      ),
     },
     {
+      // ✅ No PO Tetap Ada
       title: "No PO",
       dataIndex: "no_po",
       key: "no_po",
@@ -1956,13 +1979,7 @@ export const MonitoringSPBDetailPage = () => {
       render: (v: string | null) => v || "-",
     },
     {
-      title: "Tanggal PO",
-      dataIndex: "tanggal_po",
-      key: "tanggal_po",
-      width: 130,
-      render: (v: string | null) => (v ? formatDate(v) : "-"),
-    },
-    {
+      // ❌ Tanggal PO Dihapus
       title: "Tanggal Datang",
       dataIndex: "tanggal_datang",
       key: "tanggal_datang",
@@ -2025,11 +2042,19 @@ export const MonitoringSPBDetailPage = () => {
           <Title level={3} style={{ margin: 0 }}>
             Detail SPB / PO
           </Title>
-          <Text type="secondary">
-            {spbNo ? `SPB: ${spbNo}` : ""}
-            {spbNo && poNo ? " · " : ""}
-            {poNo ? `PO: ${poNo}` : ""}
-          </Text>
+          {/* ✅ Tampilan Header dengan Judul & Ukuran Lebih Besar */}
+          <div style={{ marginTop: 4 }}>
+            {spbNo && (
+              <Text strong style={{ fontSize: 18 }}>
+                SPB: {spbNo} {spbTitle ? ` - ${spbTitle}` : ""}
+              </Text>
+            )}
+            {poNo && (
+              <Text strong style={{ fontSize: 18, display: "block", marginTop: 4 }}>
+                PO: {poNo}
+              </Text>
+            )}
+          </div>
         </div>
       </Space>
 
@@ -2091,10 +2116,9 @@ export const MonitoringSPBDetailPage = () => {
 
 export default MonitoringSPBDetailPage;
 
-
 ================================================================================
 FILE: ../src/features/spb/pages/MonitoringSPBItemDetailPage.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/pages/MonitoringSPBItemDetailPage.tsx
+PATH: /workspaces/admin-gudang/src/features/spb/pages/MonitoringSPBItemDetailPage.tsx
 ================================================================================
 
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -2430,7 +2454,7 @@ export default MonitoringSPBItemDetailPage;
 
 ================================================================================
 FILE: ../src/features/spb/pages/MonitoringSPBPage.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/pages/MonitoringSPBPage.tsx
+PATH: /workspaces/admin-gudang/src/features/spb/pages/MonitoringSPBPage.tsx
 ================================================================================
 
 import { useState, useMemo } from "react";
@@ -2449,6 +2473,7 @@ import {
   Tag,
   Grid,
   Input,
+  Select,
 } from "antd";
 import { useMonitoringSPB } from "../useMonitoringSPB";
 import type { SPBDocumentGroup } from "../../../shared/types";
@@ -2461,9 +2486,10 @@ import {
 
 const { Title, Text } = Typography;
 
-// ✅ Tambahan Filter Baru
 type FilterType =
   "Semua" | "Belum di PO" | "Sudah di PO" | "Datang" | "Selesai";
+
+type SearchMode = "no" | "barang";
 
 const getNumberFromStr = (spb: string | null, po: string | null) => {
   const str = spb || po;
@@ -2478,35 +2504,39 @@ export default function MonitoringSPBPage() {
   const screens = Grid.useBreakpoint();
   const [filter, setFilter] = useState<FilterType>("Semua");
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchMode, setSearchMode] = useState<SearchMode>("no");
 
-  // ✅ 1. Pisahkan Data Terbaru (SPB di atas, PO di bawah)
-  const { recentSPB, recentPO } = useMemo(() => {
-    const sortedByLatestDate = [...data].sort((a, b) => {
-      const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
-      const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
-      return dateB - dateA;
-    });
-
-    // Ambil maksimal 5 untuk masing-masing agar rapi
-    const spbItems = sortedByLatestDate
-      .filter((item) => item.spbNo !== null)
-      .slice(0, 5);
-    const poItems = sortedByLatestDate
-      .filter((item) => item.spbNo === null)
-      .slice(0, 5);
-
-    return { recentSPB: spbItems, recentPO: poItems };
+  const recentItems = useMemo(() => {
+    return [...data]
+      .sort((a, b) => {
+        const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
+        const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
+        return dateB - dateA;
+      })
+      .slice(0, 10);
   }, [data]);
 
-  // ✅ 2. Filter & Pencarian
   const filteredAndSortedData = useMemo(() => {
     const filtered = data.filter((item) => {
-      // Cek Pencarian (No SPB atau No PO)
       const searchLower = searchTerm.toLowerCase();
-      const matchesSearch =
-        !searchTerm ||
-        (item.spbNo && item.spbNo.toLowerCase().includes(searchLower)) ||
-        (item.poNo && item.poNo.toLowerCase().includes(searchLower));
+      let matchesSearch = false;
+
+      if (searchMode === "no") {
+        // ✅ Cari berdasarkan No SPB, Judul SPB, No PO (Surat Jalan dihilangkan)
+        const matchSpb = item.spbNo?.toLowerCase().includes(searchLower);
+        const matchTitle = item.spbTitle?.toLowerCase().includes(searchLower);
+        const matchPo = item.poNo?.toLowerCase().includes(searchLower);
+
+        matchesSearch =
+          !searchTerm || !!matchSpb || !!matchTitle || !!matchPo;
+      } else {
+        // ✅ Cari berdasarkan Nama Barang
+        matchesSearch =
+          !searchTerm ||
+          !!item.itemNames?.some((name) =>
+            name.toLowerCase().includes(searchLower)
+          );
+      }
 
       if (!matchesSearch) return false;
 
@@ -2522,7 +2552,6 @@ export default function MonitoringSPBPage() {
             item.status !== "Selesai"
           );
         case "Datang":
-          // Datang mencakup yang statusnya Datang atau Selesai
           return item.status === "Datang" || item.status === "Selesai";
         case "Selesai":
           return item.status === "Selesai";
@@ -2550,7 +2579,7 @@ export default function MonitoringSPBPage() {
 
       return (a.spbNo || a.poNo || "").localeCompare(b.spbNo || b.poNo || "");
     });
-  }, [data, filter, searchTerm]);
+  }, [data, filter, searchTerm, searchMode]);
 
   const handleCardClick = (item: SPBDocumentGroup) => {
     const params = new URLSearchParams();
@@ -2595,7 +2624,14 @@ export default function MonitoringSPBPage() {
               <Text type="secondary" style={{ fontSize: 11 }}>
                 No. SPB
               </Text>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>{item.spbNo}</div>
+              <div style={{ fontWeight: 600, fontSize: 16, wordBreak: "break-word" }}>
+                {item.spbNo}
+                {item.spbTitle && (
+                  <span style={{ fontSize: 14, fontWeight: 500, color: "#595959", marginLeft: 6 }}>
+                    - {item.spbTitle}
+                  </span>
+                )}
+              </div>
             </div>
           )}
 
@@ -2713,7 +2749,6 @@ export default function MonitoringSPBPage() {
   }
 
   return (
-    // ✅ PERBAIKAN: overflowX hidden untuk mencegah scroll horizontal bocor di mobile
     <div
       style={{
         width: "100%",
@@ -2753,37 +2788,14 @@ export default function MonitoringSPBPage() {
           </Space>
         </div>
 
-        {/* Section SPB Terbaru */}
-        {recentSPB.length > 0 && (
-          <div style={{ marginBottom: 16 }}>
-            <Text
-              strong
-              style={{ fontSize: 16, display: "block", marginBottom: 12 }}
-            >
-              Baru ditambahkan (SPB)
-            </Text>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: screens.md
-                  ? "repeat(5, 1fr)"
-                  : "repeat(2, 1fr)",
-                gap: 12,
-              }}
-            >
-              {recentSPB.map(renderSmallCard)}
-            </div>
-          </div>
-        )}
-
-        {/* Section PO Terbaru */}
-        {recentPO.length > 0 && (
+        {/* Section Baru Ditambahkan (10 Data Terbaru Campur) */}
+        {recentItems.length > 0 && (
           <div style={{ marginBottom: 32 }}>
             <Text
               strong
               style={{ fontSize: 16, display: "block", marginBottom: 12 }}
             >
-              Baru ditambahkan (PO)
+              Baru ditambahkan
             </Text>
             <div
               style={{
@@ -2794,7 +2806,7 @@ export default function MonitoringSPBPage() {
                 gap: 12,
               }}
             >
-              {recentPO.map(renderSmallCard)}
+              {recentItems.map(renderSmallCard)}
             </div>
           </div>
         )}
@@ -2809,14 +2821,28 @@ export default function MonitoringSPBPage() {
             alignItems: "center",
           }}
         >
-          <Input
-            placeholder="Cari No. SPB atau No. PO..."
-            prefix={<SearchOutlined />}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            allowClear
-            style={{ maxWidth: 300, width: "100%" }}
-          />
+          <Space.Compact style={{ width: "100%", maxWidth: 400 }}>
+            <Select<SearchMode>
+              value={searchMode}
+              onChange={setSearchMode}
+              style={{ width: 130 }}
+            >
+              <Select.Option value="no">No / Judul</Select.Option>
+              <Select.Option value="barang">Nama Barang</Select.Option>
+            </Select>
+            <Input
+              placeholder={
+                searchMode === "no"
+                  ? "Cari No SPB/PO..."
+                  : "Cari Nama Barang..."
+              }
+              prefix={<SearchOutlined />}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              allowClear
+            />
+          </Space.Compact>
+
           <Segmented<FilterType>
             size="middle"
             options={[
@@ -2852,10 +2878,9 @@ export default function MonitoringSPBPage() {
   );
 }
 
-
 ================================================================================
 FILE: ../src/features/spb/useMonitoringSPB.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/useMonitoringSPB.ts
+PATH: /workspaces/admin-gudang/src/features/spb/useMonitoringSPB.ts
 ================================================================================
 
 import { useQuery } from "@tanstack/react-query";
@@ -2882,13 +2907,15 @@ export const useMonitoringSPB = () => {
       if (USE_MOCK) return [];
 
       const [spbRes, poRes] = await Promise.all([
+        // ✅ Menghapus id_surat_jalan
         supabaseClient.from("spb").select(`
-          id, no_spb, tgl_spb, material_datang_tgl, id_po,
-          qty_permintaan, material_datang_qty,
+          id, no_spb, judul_spb, tgl_spb, material_datang_tgl, id_po,
+          qty_permintaan, material_datang_qty, nama_barang_spb,
           po:po!id_po (no_po, tanggal_po)
         `),
+        // ✅ Menghapus id_surat_jalan
         supabaseClient.from("po").select(`
-          id, no_po, tanggal_po, id_spb, material_datang_tgl, material_datang_qty
+          id, no_po, tanggal_po, id_spb, material_datang_tgl, material_datang_qty, nama_barang_po
         `),
       ]);
 
@@ -2916,6 +2943,7 @@ export const useMonitoringSPB = () => {
           latestTimestamp: number;
           poSet: Set<string>;
           completedItems: number;
+          itemNames: Set<string>;
         }
       >();
 
@@ -2938,6 +2966,7 @@ export const useMonitoringSPB = () => {
             data: {
               id: key,
               spbNo,
+              spbTitle: row.judul_spb || null,
               poNo: null,
               date: "-",
               itemsCount: 0,
@@ -2949,11 +2978,16 @@ export const useMonitoringSPB = () => {
             latestTimestamp: 0,
             poSet: new Set<string>(),
             completedItems: 0,
+            itemNames: new Set<string>(),
           });
         }
 
         const group = groups.get(key)!;
         group.data.itemsCount += 1;
+
+        // Kumpulkan nama barang
+        const itemName = toStrOrNull(row.nama_barang_spb);
+        if (itemName) group.itemNames.add(itemName);
 
         updateLatestDate(group, row.tgl_spb);
 
@@ -2994,7 +3028,6 @@ export const useMonitoringSPB = () => {
 
         if (!isLinked) {
           const poNo = toStrOrNull(p.no_po);
-          // ✅ PERBAIKAN BUG: Gunakan no_po sebagai key, bukan p.id
           const key = poNo ? `PO_${poNo}` : `PO_ID_${p.id}`;
 
           if (!groups.has(key)) {
@@ -3002,30 +3035,36 @@ export const useMonitoringSPB = () => {
               data: {
                 id: key,
                 spbNo: null,
+                spbTitle: null,
                 poNo: poNo,
                 date: p.tanggal_po || "-",
-                itemsCount: 0, // Mulai dari 0
+                itemsCount: 0,
                 sortNumber: getSortNumber(poNo),
                 status: "Sudah PO",
               },
               hasAnyPO: true,
-              hasAnyArrival: false, // Mulai dari false
+              hasAnyArrival: false,
               latestTimestamp: 0,
               poSet: new Set([poNo || ""]),
-              completedItems: 0, // Mulai dari 0
+              completedItems: 0,
+              itemNames: new Set<string>(),
             });
           }
 
           const group = groups.get(key)!;
-          group.data.itemsCount += 1; // Tambah jumlah barang setiap baris
+          group.data.itemsCount += 1;
+
+          // Kumpulkan nama barang dari PO
+          const itemName = toStrOrNull(p.nama_barang_po);
+          if (itemName) group.itemNames.add(itemName);
 
           updateLatestDate(group, p.tanggal_po);
 
           if (p.material_datang_tgl) {
-            group.hasAnyArrival = true; // Tandai jika ada yang datang
+            group.hasAnyArrival = true;
             updateLatestDate(group, p.material_datang_tgl);
             if ((p.material_datang_qty || 0) > 0) {
-              group.completedItems += 1; // Tambah item selesai
+              group.completedItems += 1;
             }
           }
         }
@@ -3046,13 +3085,13 @@ export const useMonitoringSPB = () => {
           status,
           sortNumber:
             getSortNumber(g.data.spbNo) + getSortNumber(combinedPo) * 0.01,
+          itemNames: Array.from(g.itemNames),
         };
       });
 
-      // ✅ URUTAN BARU: Sudah PO & Belum PO (1) -> Datang (2) -> Selesai (3)
       const getStatusWeight = (status: string) => {
         if (status === "Sudah PO") return 1;
-        if (status === "Belum PO") return 1; // ✅ Sejajar dengan Sudah PO
+        if (status === "Belum PO") return 1;
         if (status === "Datang") return 2;
         if (status === "Selesai") return 3;
         return 4;
@@ -3074,10 +3113,9 @@ export const useMonitoringSPB = () => {
   return { data: data ?? [], isLoading, error: error as Error | null, refetch };
 };
 
-
 ================================================================================
 FILE: ../src/features/spb/useMonitoringSPBDetail.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/useMonitoringSPBDetail.ts
+PATH: /workspaces/admin-gudang/src/features/spb/useMonitoringSPBDetail.ts
 ================================================================================
 
 import { useQuery } from "@tanstack/react-query";
@@ -3199,7 +3237,7 @@ export const useMonitoringSPBDetail = (
 
 ================================================================================
 FILE: ../src/features/spb/useSPBItemDetail.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/useSPBItemDetail.ts
+PATH: /workspaces/admin-gudang/src/features/spb/useSPBItemDetail.ts
 ================================================================================
 
 import { useQuery } from "@tanstack/react-query";
@@ -3269,21 +3307,21 @@ export const useSPBItemDetail = (itemId: string | null) => {
 
 ================================================================================
 FILE: ../src/features/stock-in/api.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-in/api.ts
+PATH: /workspaces/admin-gudang/src/features/stock-in/api.ts
 ================================================================================
 
 
 
 ================================================================================
 FILE: ../src/features/stock-in/pages/StockInListPage.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-in/pages/StockInListPage.tsx
+PATH: /workspaces/admin-gudang/src/features/stock-in/pages/StockInListPage.tsx
 ================================================================================
 
 
 
 ================================================================================
 FILE: ../src/features/stock-in/useStockEntryMutations.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-in/useStockEntryMutations.ts
+PATH: /workspaces/admin-gudang/src/features/stock-in/useStockEntryMutations.ts
 ================================================================================
 
 import { useMutation } from "@tanstack/react-query";
@@ -3342,28 +3380,28 @@ export const useCreateStockEntry = () => {
 
 ================================================================================
 FILE: ../src/features/stock-opname/api.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-opname/api.ts
+PATH: /workspaces/admin-gudang/src/features/stock-opname/api.ts
 ================================================================================
 
 
 
 ================================================================================
 FILE: ../src/features/stock-opname/pages/StockOpnamePage.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-opname/pages/StockOpnamePage.tsx
+PATH: /workspaces/admin-gudang/src/features/stock-opname/pages/StockOpnamePage.tsx
 ================================================================================
 
 
 
 ================================================================================
 FILE: ../src/features/stock-out/api.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-out/api.ts
+PATH: /workspaces/admin-gudang/src/features/stock-out/api.ts
 ================================================================================
 
 
 
 ================================================================================
 FILE: ../src/features/stock-out/components/SetupWizard.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-out/components/SetupWizard.tsx
+PATH: /workspaces/admin-gudang/src/features/stock-out/components/SetupWizard.tsx
 ================================================================================
 
 import { useEffect, useRef, useState } from "react";
@@ -3536,7 +3574,7 @@ export const SetupWizard = ({
 
 ================================================================================
 FILE: ../src/features/stock-out/hooks/useEntryFlow.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-out/hooks/useEntryFlow.ts
+PATH: /workspaces/admin-gudang/src/features/stock-out/hooks/useEntryFlow.ts
 ================================================================================
 
 import { useCallback, useState } from "react";
@@ -3700,7 +3738,7 @@ export const useEntryFlow = () => {
 
 ================================================================================
 FILE: ../src/features/stock-out/pages/EntryPage.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-out/pages/EntryPage.tsx
+PATH: /workspaces/admin-gudang/src/features/stock-out/pages/EntryPage.tsx
 ================================================================================
 
 import { useEffect, useRef, useState } from "react";
@@ -3903,7 +3941,7 @@ export default EntryPage;
 
 ================================================================================
 FILE: ../src/features/stock-out/usePersons.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-out/usePersons.ts
+PATH: /workspaces/admin-gudang/src/features/stock-out/usePersons.ts
 ================================================================================
 
 import { useQuery } from "@tanstack/react-query";
@@ -3943,7 +3981,7 @@ export const usePersons = () => {
 
 ================================================================================
 FILE: ../src/features/stock-out/useStockExits.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-out/useStockExits.ts
+PATH: /workspaces/admin-gudang/src/features/stock-out/useStockExits.ts
 ================================================================================
 
 import { useQuery } from "@tanstack/react-query";
@@ -3985,7 +4023,7 @@ export const useStockExits = ({ onlyToday = false, breakdown, limit = 50 }: Opti
 
 ================================================================================
 FILE: ../src/index.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/index.tsx
+PATH: /workspaces/admin-gudang/src/index.tsx
 ================================================================================
 
 import React from "react";
@@ -4011,7 +4049,7 @@ root.render(
 
 ================================================================================
 FILE: ../src/mocks/dashboard.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/mocks/dashboard.ts
+PATH: /workspaces/admin-gudang/src/mocks/dashboard.ts
 ================================================================================
 
 import type { DashboardStats } from "../shared/types";
@@ -4036,7 +4074,7 @@ export const getMockDashboardStats = (): DashboardStats => {
 
 ================================================================================
 FILE: ../src/mocks/entry.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/mocks/entry.ts
+PATH: /workspaces/admin-gudang/src/mocks/entry.ts
 ================================================================================
 
 import type { Workplace } from "../shared/types";
@@ -4050,7 +4088,7 @@ export const mockWorkplaces: Workplace[] = [
 
 ================================================================================
 FILE: ../src/mocks/products.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/mocks/products.ts
+PATH: /workspaces/admin-gudang/src/mocks/products.ts
 ================================================================================
 
 import type { Product } from "../shared/types";
@@ -4192,7 +4230,7 @@ export const mockLowStockProducts = mockProducts.filter(
 
 ================================================================================
 FILE: ../src/mocks/stockEntries.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/mocks/stockEntries.ts
+PATH: /workspaces/admin-gudang/src/mocks/stockEntries.ts
 ================================================================================
 
 import dayjs from "dayjs";
@@ -4285,7 +4323,7 @@ export const getMockTodayInbound = (): number => {
 
 ================================================================================
 FILE: ../src/mocks/stockExitList.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/mocks/stockExitList.ts
+PATH: /workspaces/admin-gudang/src/mocks/stockExitList.ts
 ================================================================================
 
 import dayjs from "dayjs";
@@ -4338,7 +4376,7 @@ export const mockStockExits: StockExit[] = [
 
 ================================================================================
 FILE: ../src/shared/components/ErrorBoundary.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/components/ErrorBoundary.tsx
+PATH: /workspaces/admin-gudang/src/shared/components/ErrorBoundary.tsx
 ================================================================================
 
 import { Component, ErrorInfo, ReactNode } from "react";
@@ -4396,7 +4434,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
 ================================================================================
 FILE: ../src/shared/components/GlobalSearch.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/components/GlobalSearch.tsx
+PATH: /workspaces/admin-gudang/src/shared/components/GlobalSearch.tsx
 ================================================================================
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -4562,7 +4600,7 @@ export const GlobalSearch = () => {
 
 ================================================================================
 FILE: ../src/shared/components/Rupiah.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/components/Rupiah.tsx
+PATH: /workspaces/admin-gudang/src/shared/components/Rupiah.tsx
 ================================================================================
 
 import { formatRupiah } from "../lib/format";
@@ -4578,7 +4616,7 @@ export const RupiahText = ({ value, bold }: Props) => (
 
 ================================================================================
 FILE: ../src/shared/components/StatusBadge.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/components/StatusBadge.tsx
+PATH: /workspaces/admin-gudang/src/shared/components/StatusBadge.tsx
 ================================================================================
 
 import { Tag } from "antd";
@@ -4601,7 +4639,7 @@ export const StatusBadge = ({ status }: Props) => {
 
 ================================================================================
 FILE: ../src/shared/hooks/useDebounce.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/hooks/useDebounce.ts
+PATH: /workspaces/admin-gudang/src/shared/hooks/useDebounce.ts
 ================================================================================
 
 import { useState, useEffect } from "react";
@@ -4624,7 +4662,7 @@ export function useDebounce<T>(value: T, delay: number): T {
 
 ================================================================================
 FILE: ../src/shared/hooks/useKeyboardShortcut.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/hooks/useKeyboardShortcut.ts
+PATH: /workspaces/admin-gudang/src/shared/hooks/useKeyboardShortcut.ts
 ================================================================================
 
 import { useEffect } from "react";
@@ -4698,7 +4736,7 @@ export const useKeyboardShortcut = ({
 
 ================================================================================
 FILE: ../src/shared/layout/AdminLayout.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/layout/AdminLayout.tsx
+PATH: /workspaces/admin-gudang/src/shared/layout/AdminLayout.tsx
 ================================================================================
 
 import { useState, type PropsWithChildren } from "react";
@@ -4760,7 +4798,7 @@ export const AdminLayout = ({ children }: PropsWithChildren) => (
 
 ================================================================================
 FILE: ../src/shared/lib/config.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/lib/config.ts
+PATH: /workspaces/admin-gudang/src/shared/lib/config.ts
 ================================================================================
 
 // Set true untuk pakai mock, false untuk pakai Supabase
@@ -4769,7 +4807,7 @@ export const USE_MOCK = false;
 
 ================================================================================
 FILE: ../src/shared/lib/constants.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/lib/constants.ts
+PATH: /workspaces/admin-gudang/src/shared/lib/constants.ts
 ================================================================================
 
 export const COLORS = {
@@ -4810,7 +4848,7 @@ export const STOCK_STATUS_LABELS = {
 
 ================================================================================
 FILE: ../src/shared/lib/format.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/lib/format.ts
+PATH: /workspaces/admin-gudang/src/shared/lib/format.ts
 ================================================================================
 
 import dayjs from "dayjs";
@@ -4839,7 +4877,7 @@ export const formatShortDate = (date: string | Date): string =>
 
 ================================================================================
 FILE: ../src/shared/lib/mappers.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/lib/mappers.ts
+PATH: /workspaces/admin-gudang/src/shared/lib/mappers.ts
 ================================================================================
 
 import type { Product, StockExit } from "../types";
@@ -4889,7 +4927,7 @@ export const mapStockExits = (rows: any[]): StockExit[] => {
 
 ================================================================================
 FILE: ../src/shared/lib/supabaseClient.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/lib/supabaseClient.ts
+PATH: /workspaces/admin-gudang/src/shared/lib/supabaseClient.ts
 ================================================================================
 
 // File: src/shared/lib/supabaseClient.ts
@@ -4921,7 +4959,7 @@ export const supabaseClient = createClient(
 
 ================================================================================
 FILE: ../src/shared/types.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/types.ts
+PATH: /workspaces/admin-gudang/src/shared/types.ts
 ================================================================================
 
 export interface Category { id: number; name: string; createdAt: string; }
@@ -4959,17 +4997,21 @@ export interface StockInChartItem { date: string; total: number; }
 
 export interface SPBDocumentGroup {
   id: string; 
-  spbNo: string | null; 
+  spbNo: string | null;
+  spbTitle?: string | null;  
   poNo: string | null; 
   date: string; 
   itemsCount: number; 
   sortNumber: number;
-  status?: string; // ✅ Status agregat untuk Card (Belum PO, Sudah PO, Datang)
+  status?: string; 
+  itemNames?: string[];    // ✅ Untuk pencarian nama barang
+  // suratJalan?: string[]; 
 }
 
 export interface SPBItemDetail {
   id: number; 
   no_spb: string | null; 
+  judul_spb?: string | null;
   tanggal_spb?: string | null;
   nama_barang: string;
   ukuran?: string | null;
@@ -4994,7 +5036,7 @@ export interface SPBItemDetail {
 
 ================================================================================
 FILE: ../src/vite-env.d.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/vite-env.d.ts
+PATH: /workspaces/admin-gudang/src/vite-env.d.ts
 ================================================================================
 
 /// <reference types="vite/client" />

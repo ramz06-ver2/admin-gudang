@@ -21,24 +21,31 @@ export const useMonitoringSPB = () => {
     queryFn: async () => {
       if (USE_MOCK) return [];
 
-      const [spbRes, poRes] = await Promise.all([
-        // ✅ Menghapus id_surat_jalan
+      const [spbRes, poRes, sjRes] = await Promise.all([
         supabaseClient.from("spb").select(`
           id, no_spb, judul_spb, tgl_spb, material_datang_tgl, id_po,
           qty_permintaan, material_datang_qty, nama_barang_spb,
           po:po!id_po (no_po, tanggal_po)
         `),
-        // ✅ Menghapus id_surat_jalan
         supabaseClient.from("po").select(`
           id, no_po, tanggal_po, id_spb, material_datang_tgl, material_datang_qty, nama_barang_po
+        `),
+        // ✅ Tarik data dari surat_jalan beserta relasinya
+        supabaseClient.from("surat_jalan").select(`
+          id, no_surat_jalan, id_spb, id_po, nama_barang, 
+          material_datang_tgl, material_datang_qty,
+          spb:spb!id_spb (no_spb, judul_spb),
+          po:po!id_po (no_po)
         `),
       ]);
 
       if (spbRes.error) throw spbRes.error;
       if (poRes.error) throw poRes.error;
+      if (sjRes.error) throw sjRes.error;
 
       const spbData = spbRes.data || [];
       const poData = poRes.data || [];
+      const sjData = sjRes.data || [];
 
       const poBySpbId = new Map<string, any[]>();
       poData.forEach((p: any) => {
@@ -100,7 +107,6 @@ export const useMonitoringSPB = () => {
         const group = groups.get(key)!;
         group.data.itemsCount += 1;
 
-        // Kumpulkan nama barang
         const itemName = toStrOrNull(row.nama_barang_spb);
         if (itemName) group.itemNames.add(itemName);
 
@@ -169,7 +175,6 @@ export const useMonitoringSPB = () => {
           const group = groups.get(key)!;
           group.data.itemsCount += 1;
 
-          // Kumpulkan nama barang dari PO
           const itemName = toStrOrNull(p.nama_barang_po);
           if (itemName) group.itemNames.add(itemName);
 
@@ -185,6 +190,76 @@ export const useMonitoringSPB = () => {
         }
       });
 
+      // PROSES 3: Kelompokkan data dari Surat Jalan
+      sjData.forEach((sj: any) => {
+        let targetKey: string | null = null;
+
+        if (sj.id_spb) {
+          // Punya id_spb -> Masukkan ke grup SPB
+          const spb = spbData.find(
+            (s: any) => String(s.id) === String(sj.id_spb),
+          );
+          if (spb) targetKey = toStrOrNull(spb.no_spb) || `SPB_${spb.id}`;
+        } else if (sj.id_po) {
+          // Punya id_po tapi tidak punya id_spb
+          const po = poData.find((p: any) => String(p.id) === String(sj.id_po));
+          if (po) {
+            if (po.id_spb) {
+              // Jika PO-nya ternyata terikat ke SPB, masukkan ke SPB
+              const spb = spbData.find(
+                (s: any) => String(s.id) === String(po.id_spb),
+              );
+              if (spb) targetKey = toStrOrNull(spb.no_spb) || `SPB_${spb.id}`;
+            } else {
+              // Jika PO murni, masukkan ke PO
+              targetKey = `PO_${toStrOrNull(po.no_po) || po.id}`;
+            }
+          }
+        } else {
+          // Tidak punya keduanya -> Masukkan ke Surat Jalan
+          targetKey = `SJ_${sj.no_surat_jalan}`;
+        }
+
+        if (!targetKey) return;
+
+        // Jika grup belum ada (misal kasus Surat Jalan murni), buat baru
+        if (!groups.has(targetKey)) {
+          groups.set(targetKey, {
+            data: {
+              id: targetKey,
+              spbNo: null,
+              spbTitle: null,
+              poNo: null,
+              suratJalanNo: sj.no_surat_jalan,
+              date: "-",
+              itemsCount: 0,
+              sortNumber: getSortNumber(sj.no_surat_jalan),
+              status: "Sudah PO", // Default
+            },
+            hasAnyPO: true,
+            hasAnyArrival: false,
+            latestTimestamp: 0,
+            poSet: new Set<string>(),
+            completedItems: 0,
+            itemNames: new Set<string>(),
+          });
+        }
+
+        const group = groups.get(targetKey)!;
+        group.data.itemsCount += 1;
+
+        if (sj.nama_barang) group.itemNames.add(sj.nama_barang);
+
+        if (sj.material_datang_tgl) {
+          group.hasAnyArrival = true;
+          updateLatestDate(group, sj.material_datang_tgl);
+          if ((sj.material_datang_qty || 0) > 0) {
+            group.completedItems += 1;
+          }
+        }
+      });
+
+      // Finalisasi Status & Sorting
       const result = Array.from(groups.values()).map((g) => {
         const isSelesai =
           g.data.itemsCount > 0 && g.completedItems >= g.data.itemsCount;
@@ -204,24 +279,7 @@ export const useMonitoringSPB = () => {
         };
       });
 
-      const getStatusWeight = (status: string) => {
-        if (status === "Sudah PO") return 1;
-        if (status === "Belum PO") return 1;
-        if (status === "Datang") return 2;
-        if (status === "Selesai") return 3;
-        return 4;
-      };
-
-      return result.sort((a, b) => {
-        const weightA = getStatusWeight(a.status || "");
-        const weightB = getStatusWeight(b.status || "");
-        if (weightA !== weightB) return weightA - weightB;
-
-        const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
-        const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
-        if (dateA === dateB) return a.sortNumber - b.sortNumber;
-        return dateB - dateA;
-      });
+      return result; // Sorting utama akan dilakukan di komponen Page
     },
   });
 
