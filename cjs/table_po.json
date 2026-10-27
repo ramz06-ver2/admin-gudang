@@ -2114,20 +2114,6 @@
     "created_at": "2026-10-22T00:58:53.211467+00:00"
   },
   {
-    "id": 152,
-    "no_po": "10 REV",
-    "tanggal_po": "2026-07-21",
-    "nama_barang_po": "Stang las karbit",
-    "nama_supplier": "PT MANUNGGAL TEKNIK ABADI",
-    "id_spb": "198",
-    "material_datang_tgl": "2026-08-01",
-    "material_datang_qty": 1,
-    "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
-    "keterangan": "ADA DI SURAT JALAN, DI SPB DAN PO TIDAK ADA",
-    "created_at": "2026-10-22T00:58:53.211467+00:00"
-  },
-  {
     "id": 153,
     "no_po": "dibawa PBudi",
     "tanggal_po": null,
@@ -6312,5 +6298,19 @@
     "id_surat_jalan": null,
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00"
+  },
+  {
+    "id": 152,
+    "no_po": "10 REV",
+    "tanggal_po": "2026-07-21",
+    "nama_barang_po": "Stang las karbit",
+    "nama_supplier": "PT MANUNGGAL TEKNIK ABADI",
+    "id_spb": null,
+    "material_datang_tgl": "2026-08-01",
+    "material_datang_qty": 1,
+    "material_datang_satuan": "bh",
+    "id_surat_jalan": null,
+    "keterangan": "ADA DI SURAT JALAN, DI SPB DAN PO TIDAK ADA",
+    "created_at": "2026-10-22T00:58:53.211467+00:00"
   }
 ]
