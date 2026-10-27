@@ -33,17 +33,21 @@ export interface StockInChartItem { date: string; total: number; }
 
 export interface SPBDocumentGroup {
   id: string; 
-  spbNo: string | null; 
+  spbNo: string | null;
+  spbTitle?: string | null;  
   poNo: string | null; 
   date: string; 
   itemsCount: number; 
   sortNumber: number;
-  status?: string; // ✅ Status agregat untuk Card (Belum PO, Sudah PO, Datang)
+  status?: string; 
+  itemNames?: string[];    // ✅ Untuk pencarian nama barang
+  // suratJalan?: string[]; 
 }
 
 export interface SPBItemDetail {
   id: number; 
   no_spb: string | null; 
+  judul_spb?: string | null;
   tanggal_spb?: string | null;
   nama_barang: string;
   ukuran?: string | null;

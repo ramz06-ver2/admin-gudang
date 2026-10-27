@@ -32,6 +32,9 @@ export const MonitoringSPBDetailPage = () => {
 
   const { items, isLoading, error } = useMonitoringSPBDetail(spbNo, poNo);
 
+  // ✅ Ambil Judul SPB dari baris data pertama
+  const spbTitle = items.length > 0 ? items[0].judul_spb : null;
+
   const statuses = useMemo(() => {
     if (items.length === 0) return { belumDiPo: false, sudahDiPo: false };
     const somePo = items.some((it) => it.no_po && it.no_po !== "-");
@@ -74,6 +77,22 @@ export const MonitoringSPBDetailPage = () => {
     return "default";
   };
 
+  // ✅ Helper untuk render Nama Barang, Ukuran, dan Spesifikasi
+  const renderNamaBarang = (r: SPBItemDetail) => {
+    const nameWithSize = r.ukuran ? `${r.nama_barang} - ${r.ukuran}` : r.nama_barang;
+    
+    return (
+      <Space direction="vertical" size={2}>
+        <Text strong>{nameWithSize}</Text>
+        {r.spesifikasi_teknis && r.spesifikasi_teknis !== "-" && (
+          <Text style={{ fontSize: 12, color: "#8c8c8c", lineHeight: 1.2 }}>
+            • {r.spesifikasi_teknis}
+          </Text>
+        )}
+      </Space>
+    );
+  };
+
   const mobileColumns = [
     {
       title: "No",
@@ -84,10 +103,9 @@ export const MonitoringSPBDetailPage = () => {
     },
     {
       title: "Nama Barang",
-      dataIndex: "nama_barang",
       key: "nama_barang",
       ellipsis: true,
-      render: (v: string) => <Text strong>{v}</Text>,
+      render: (_: any, r: SPBItemDetail) => renderNamaBarang(r),
     },
     {
       title: "Jumlah",
@@ -158,18 +176,23 @@ export const MonitoringSPBDetailPage = () => {
     },
     {
       title: "Nama Barang",
-      dataIndex: "nama_barang",
       key: "nama_barang",
-      render: (v: string) => <Text strong>{v}</Text>,
+      render: (_: any, r: SPBItemDetail) => renderNamaBarang(r),
     },
     {
-      title: "No SPB",
-      dataIndex: "no_spb",
-      key: "no_spb",
-      width: 130,
-      render: (v: string | null) => v || "-",
+      // ✅ Kolom Ukuran diganti menjadi Jumlah
+      title: "Jumlah",
+      key: "jumlah",
+      width: 100,
+      align: "right" as const,
+      render: (_: any, r: SPBItemDetail) => (
+        <Text>
+          {r.jumlah_permintaan ?? 0} <Text type="secondary" style={{ fontSize: 12 }}>{r.satuan ?? ""}</Text>
+        </Text>
+      ),
     },
     {
+      // ✅ No PO Tetap Ada
       title: "No PO",
       dataIndex: "no_po",
       key: "no_po",
@@ -177,13 +200,7 @@ export const MonitoringSPBDetailPage = () => {
       render: (v: string | null) => v || "-",
     },
     {
-      title: "Tanggal PO",
-      dataIndex: "tanggal_po",
-      key: "tanggal_po",
-      width: 130,
-      render: (v: string | null) => (v ? formatDate(v) : "-"),
-    },
-    {
+      // ❌ Tanggal PO Dihapus
       title: "Tanggal Datang",
       dataIndex: "tanggal_datang",
       key: "tanggal_datang",
@@ -246,11 +263,19 @@ export const MonitoringSPBDetailPage = () => {
           <Title level={3} style={{ margin: 0 }}>
             Detail SPB / PO
           </Title>
-          <Text type="secondary">
-            {spbNo ? `SPB: ${spbNo}` : ""}
-            {spbNo && poNo ? " · " : ""}
-            {poNo ? `PO: ${poNo}` : ""}
-          </Text>
+          {/* ✅ Tampilan Header dengan Judul & Ukuran Lebih Besar */}
+          <div style={{ marginTop: 4 }}>
+            {spbNo && (
+              <Text strong style={{ fontSize: 18 }}>
+                SPB: {spbNo} {spbTitle ? ` - ${spbTitle}` : ""}
+              </Text>
+            )}
+            {poNo && (
+              <Text strong style={{ fontSize: 18, display: "block", marginTop: 4 }}>
+                PO: {poNo}
+              </Text>
+            )}
+          </div>
         </div>
       </Space>
 

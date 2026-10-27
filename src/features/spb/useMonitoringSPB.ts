@@ -22,13 +22,15 @@ export const useMonitoringSPB = () => {
       if (USE_MOCK) return [];
 
       const [spbRes, poRes] = await Promise.all([
+        // ✅ Menghapus id_surat_jalan
         supabaseClient.from("spb").select(`
-          id, no_spb, tgl_spb, material_datang_tgl, id_po,
-          qty_permintaan, material_datang_qty,
+          id, no_spb, judul_spb, tgl_spb, material_datang_tgl, id_po,
+          qty_permintaan, material_datang_qty, nama_barang_spb,
           po:po!id_po (no_po, tanggal_po)
         `),
+        // ✅ Menghapus id_surat_jalan
         supabaseClient.from("po").select(`
-          id, no_po, tanggal_po, id_spb, material_datang_tgl, material_datang_qty
+          id, no_po, tanggal_po, id_spb, material_datang_tgl, material_datang_qty, nama_barang_po
         `),
       ]);
 
@@ -56,6 +58,7 @@ export const useMonitoringSPB = () => {
           latestTimestamp: number;
           poSet: Set<string>;
           completedItems: number;
+          itemNames: Set<string>;
         }
       >();
 
@@ -78,6 +81,7 @@ export const useMonitoringSPB = () => {
             data: {
               id: key,
               spbNo,
+              spbTitle: row.judul_spb || null,
               poNo: null,
               date: "-",
               itemsCount: 0,
@@ -89,11 +93,16 @@ export const useMonitoringSPB = () => {
             latestTimestamp: 0,
             poSet: new Set<string>(),
             completedItems: 0,
+            itemNames: new Set<string>(),
           });
         }
 
         const group = groups.get(key)!;
         group.data.itemsCount += 1;
+
+        // Kumpulkan nama barang
+        const itemName = toStrOrNull(row.nama_barang_spb);
+        if (itemName) group.itemNames.add(itemName);
 
         updateLatestDate(group, row.tgl_spb);
 
@@ -134,7 +143,6 @@ export const useMonitoringSPB = () => {
 
         if (!isLinked) {
           const poNo = toStrOrNull(p.no_po);
-          // ✅ PERBAIKAN BUG: Gunakan no_po sebagai key, bukan p.id
           const key = poNo ? `PO_${poNo}` : `PO_ID_${p.id}`;
 
           if (!groups.has(key)) {
@@ -142,30 +150,36 @@ export const useMonitoringSPB = () => {
               data: {
                 id: key,
                 spbNo: null,
+                spbTitle: null,
                 poNo: poNo,
                 date: p.tanggal_po || "-",
-                itemsCount: 0, // Mulai dari 0
+                itemsCount: 0,
                 sortNumber: getSortNumber(poNo),
                 status: "Sudah PO",
               },
               hasAnyPO: true,
-              hasAnyArrival: false, // Mulai dari false
+              hasAnyArrival: false,
               latestTimestamp: 0,
               poSet: new Set([poNo || ""]),
-              completedItems: 0, // Mulai dari 0
+              completedItems: 0,
+              itemNames: new Set<string>(),
             });
           }
 
           const group = groups.get(key)!;
-          group.data.itemsCount += 1; // Tambah jumlah barang setiap baris
+          group.data.itemsCount += 1;
+
+          // Kumpulkan nama barang dari PO
+          const itemName = toStrOrNull(p.nama_barang_po);
+          if (itemName) group.itemNames.add(itemName);
 
           updateLatestDate(group, p.tanggal_po);
 
           if (p.material_datang_tgl) {
-            group.hasAnyArrival = true; // Tandai jika ada yang datang
+            group.hasAnyArrival = true;
             updateLatestDate(group, p.material_datang_tgl);
             if ((p.material_datang_qty || 0) > 0) {
-              group.completedItems += 1; // Tambah item selesai
+              group.completedItems += 1;
             }
           }
         }
@@ -186,13 +200,13 @@ export const useMonitoringSPB = () => {
           status,
           sortNumber:
             getSortNumber(g.data.spbNo) + getSortNumber(combinedPo) * 0.01,
+          itemNames: Array.from(g.itemNames),
         };
       });
 
-      // ✅ URUTAN BARU: Sudah PO & Belum PO (1) -> Datang (2) -> Selesai (3)
       const getStatusWeight = (status: string) => {
         if (status === "Sudah PO") return 1;
-        if (status === "Belum PO") return 1; // ✅ Sejajar dengan Sudah PO
+        if (status === "Belum PO") return 1;
         if (status === "Datang") return 2;
         if (status === "Selesai") return 3;
         return 4;

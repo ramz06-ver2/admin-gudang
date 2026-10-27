@@ -14,6 +14,7 @@ import {
   Tag,
   Grid,
   Input,
+  Select,
 } from "antd";
 import { useMonitoringSPB } from "../useMonitoringSPB";
 import type { SPBDocumentGroup } from "../../../shared/types";
@@ -26,9 +27,10 @@ import {
 
 const { Title, Text } = Typography;
 
-// ✅ Tambahan Filter Baru
 type FilterType =
   "Semua" | "Belum di PO" | "Sudah di PO" | "Datang" | "Selesai";
+
+type SearchMode = "no" | "barang";
 
 const getNumberFromStr = (spb: string | null, po: string | null) => {
   const str = spb || po;
@@ -43,35 +45,39 @@ export default function MonitoringSPBPage() {
   const screens = Grid.useBreakpoint();
   const [filter, setFilter] = useState<FilterType>("Semua");
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchMode, setSearchMode] = useState<SearchMode>("no");
 
-  // ✅ 1. Pisahkan Data Terbaru (SPB di atas, PO di bawah)
-  const { recentSPB, recentPO } = useMemo(() => {
-    const sortedByLatestDate = [...data].sort((a, b) => {
-      const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
-      const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
-      return dateB - dateA;
-    });
-
-    // Ambil maksimal 5 untuk masing-masing agar rapi
-    const spbItems = sortedByLatestDate
-      .filter((item) => item.spbNo !== null)
-      .slice(0, 5);
-    const poItems = sortedByLatestDate
-      .filter((item) => item.spbNo === null)
-      .slice(0, 5);
-
-    return { recentSPB: spbItems, recentPO: poItems };
+  const recentItems = useMemo(() => {
+    return [...data]
+      .sort((a, b) => {
+        const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
+        const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
+        return dateB - dateA;
+      })
+      .slice(0, 10);
   }, [data]);
 
-  // ✅ 2. Filter & Pencarian
   const filteredAndSortedData = useMemo(() => {
     const filtered = data.filter((item) => {
-      // Cek Pencarian (No SPB atau No PO)
       const searchLower = searchTerm.toLowerCase();
-      const matchesSearch =
-        !searchTerm ||
-        (item.spbNo && item.spbNo.toLowerCase().includes(searchLower)) ||
-        (item.poNo && item.poNo.toLowerCase().includes(searchLower));
+      let matchesSearch = false;
+
+      if (searchMode === "no") {
+        // ✅ Cari berdasarkan No SPB, Judul SPB, No PO (Surat Jalan dihilangkan)
+        const matchSpb = item.spbNo?.toLowerCase().includes(searchLower);
+        const matchTitle = item.spbTitle?.toLowerCase().includes(searchLower);
+        const matchPo = item.poNo?.toLowerCase().includes(searchLower);
+
+        matchesSearch =
+          !searchTerm || !!matchSpb || !!matchTitle || !!matchPo;
+      } else {
+        // ✅ Cari berdasarkan Nama Barang
+        matchesSearch =
+          !searchTerm ||
+          !!item.itemNames?.some((name) =>
+            name.toLowerCase().includes(searchLower)
+          );
+      }
 
       if (!matchesSearch) return false;
 
@@ -87,7 +93,6 @@ export default function MonitoringSPBPage() {
             item.status !== "Selesai"
           );
         case "Datang":
-          // Datang mencakup yang statusnya Datang atau Selesai
           return item.status === "Datang" || item.status === "Selesai";
         case "Selesai":
           return item.status === "Selesai";
@@ -115,7 +120,7 @@ export default function MonitoringSPBPage() {
 
       return (a.spbNo || a.poNo || "").localeCompare(b.spbNo || b.poNo || "");
     });
-  }, [data, filter, searchTerm]);
+  }, [data, filter, searchTerm, searchMode]);
 
   const handleCardClick = (item: SPBDocumentGroup) => {
     const params = new URLSearchParams();
@@ -160,7 +165,14 @@ export default function MonitoringSPBPage() {
               <Text type="secondary" style={{ fontSize: 11 }}>
                 No. SPB
               </Text>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>{item.spbNo}</div>
+              <div style={{ fontWeight: 600, fontSize: 16, wordBreak: "break-word" }}>
+                {item.spbNo}
+                {item.spbTitle && (
+                  <span style={{ fontSize: 14, fontWeight: 500, color: "#595959", marginLeft: 6 }}>
+                    - {item.spbTitle}
+                  </span>
+                )}
+              </div>
             </div>
           )}
 
@@ -278,7 +290,6 @@ export default function MonitoringSPBPage() {
   }
 
   return (
-    // ✅ PERBAIKAN: overflowX hidden untuk mencegah scroll horizontal bocor di mobile
     <div
       style={{
         width: "100%",
@@ -318,37 +329,14 @@ export default function MonitoringSPBPage() {
           </Space>
         </div>
 
-        {/* Section SPB Terbaru */}
-        {recentSPB.length > 0 && (
-          <div style={{ marginBottom: 16 }}>
-            <Text
-              strong
-              style={{ fontSize: 16, display: "block", marginBottom: 12 }}
-            >
-              Baru ditambahkan (SPB)
-            </Text>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: screens.md
-                  ? "repeat(5, 1fr)"
-                  : "repeat(2, 1fr)",
-                gap: 12,
-              }}
-            >
-              {recentSPB.map(renderSmallCard)}
-            </div>
-          </div>
-        )}
-
-        {/* Section PO Terbaru */}
-        {recentPO.length > 0 && (
+        {/* Section Baru Ditambahkan (10 Data Terbaru Campur) */}
+        {recentItems.length > 0 && (
           <div style={{ marginBottom: 32 }}>
             <Text
               strong
               style={{ fontSize: 16, display: "block", marginBottom: 12 }}
             >
-              Baru ditambahkan (PO)
+              Baru ditambahkan
             </Text>
             <div
               style={{
@@ -359,7 +347,7 @@ export default function MonitoringSPBPage() {
                 gap: 12,
               }}
             >
-              {recentPO.map(renderSmallCard)}
+              {recentItems.map(renderSmallCard)}
             </div>
           </div>
         )}
@@ -374,14 +362,28 @@ export default function MonitoringSPBPage() {
             alignItems: "center",
           }}
         >
-          <Input
-            placeholder="Cari No. SPB atau No. PO..."
-            prefix={<SearchOutlined />}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            allowClear
-            style={{ maxWidth: 300, width: "100%" }}
-          />
+          <Space.Compact style={{ width: "100%", maxWidth: 400 }}>
+            <Select<SearchMode>
+              value={searchMode}
+              onChange={setSearchMode}
+              style={{ width: 130 }}
+            >
+              <Select.Option value="no">No / Judul</Select.Option>
+              <Select.Option value="barang">Nama Barang</Select.Option>
+            </Select>
+            <Input
+              placeholder={
+                searchMode === "no"
+                  ? "Cari No SPB/PO..."
+                  : "Cari Nama Barang..."
+              }
+              prefix={<SearchOutlined />}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              allowClear
+            />
+          </Space.Compact>
+
           <Segmented<FilterType>
             size="middle"
             options={[
