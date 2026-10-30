@@ -19,7 +19,10 @@ export const TABLES = {
   vProductsFull: "v_barang_lengkap",
   vLowStock: "v_stok_menipis",
   workers: "pekerja",
-  spb: "spb", // ✅ Daftarkan tabel spb
+  spb: "spb",
+  po: "po",
+  suratJalan: "surat_jalan",
+  accountRequests: "account_requests",
 } as const;
 
 export const SHORTCUTS = {

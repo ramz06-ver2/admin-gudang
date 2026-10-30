@@ -64,19 +64,28 @@ import { BrowserRouter, Routes, Route, Outlet, Navigate } from "react-router-dom
 import { ErrorComponent } from "@refinedev/antd";
 import { dataProvider } from "@refinedev/supabase";
 import { App as AntdApp, ConfigProvider, Spin } from "antd";
-import { DashboardOutlined, AppstoreOutlined, FileTextOutlined, PlusCircleOutlined, SendOutlined } from "@ant-design/icons";
+import {
+  DashboardOutlined,
+  AppstoreOutlined,
+  FileTextOutlined,
+  PlusCircleOutlined,
+  SendOutlined,
+  BellOutlined,
+} from "@ant-design/icons";
 
 import { supabaseClient } from "../shared/lib/supabaseClient";
 import { authProvider } from "./providers/authProvider";
+import { accessControlProvider } from "./providers/accessControlProvider";
 import { AdminLayout } from "../shared/layout/AdminLayout";
 
 const DashboardPage = lazy(() => import("../features/dashboard/pages/DashboardPage"));
 const EntryPage = lazy(() => import("../features/stock-out/pages/EntryPage"));
 const InventoryPage = lazy(() => import("../features/products/pages/InventoryPage"));
 const LoginPage = lazy(() => import("../features/auth/pages/LoginPage"));
+const NotificationsPage = lazy(() => import("../features/auth/pages/NotificationsPage"));
 const MonitoringSPBPage = lazy(() => import("../features/spb/pages/MonitoringSPBPage"));
 const MonitoringSPBDetailPage = lazy(() => import("../features/spb/pages/MonitoringSPBDetailPage"));
-const MonitoringSPBItemDetailPage = lazy(() => import("../features/spb/pages/MonitoringSPBItemDetailPage")); // ✅ Rute Baru
+const MonitoringSPBItemDetailPage = lazy(() => import("../features/spb/pages/MonitoringSPBItemDetailPage"));
 const ProductCreatePage = lazy(() => import("../features/products/pages/ProductCreatePage"));
 
 const PageLoader = () => (
@@ -93,6 +102,7 @@ function App() {
           <Refine
             dataProvider={dataProvider(supabaseClient)}
             authProvider={authProvider}
+            accessControlProvider={accessControlProvider}
             routerProvider={routerBindings}
             resources={[
               { name: "dashboard", list: "/dashboard", meta: { label: "Dashboard", icon: <DashboardOutlined /> } },
@@ -100,6 +110,7 @@ function App() {
               { name: "spb", list: "/monitoring-spb", meta: { label: "Monitoring SPB", icon: <FileTextOutlined /> } },
               { name: "barang_masuk", list: "/products/create", meta: { label: "Tambah Barang Masuk", icon: <PlusCircleOutlined /> } },
               { name: "pengeluaran", list: "/entry", meta: { label: "Pengeluaran Barang", icon: <SendOutlined /> } },
+              { name: "notifications", list: "/notifications", meta: { label: "Notifikasi", icon: <BellOutlined /> } },
             ]}
             options={{ syncWithLocation: true, warnWhenUnsavedChanges: true }}
           >
@@ -114,11 +125,10 @@ function App() {
                   <Route path="/inventory" element={<InventoryPage />} />
                   <Route path="/monitoring-spb" element={<MonitoringSPBPage />} />
                   <Route path="/monitoring-spb/detail" element={<MonitoringSPBDetailPage />} />
-                  {/* ✅ Rute Rincian Barang */}
                   <Route path="/monitoring-spb/item/:id" element={<MonitoringSPBItemDetailPage />} />
                 </Route>
 
-                {/* Rute Admin */}
+                {/* Rute Admin & Super User */}
                 <Route element={
                   <Authenticated key="admin-routes" fallback={<Navigate to="/login" replace />}>
                     <AdminLayout><Outlet /></AdminLayout>
@@ -126,6 +136,7 @@ function App() {
                 }>
                   <Route path="/products/create" element={<ProductCreatePage />} />
                   <Route path="/entry" element={<EntryPage />} />
+                  <Route path="/notifications" element={<NotificationsPage />} />
                 </Route>
 
                 <Route path="*" element={<ErrorComponent />} />
@@ -142,11 +153,54 @@ function App() {
 
 export default App;
 
+
 ================================================================================
 FILE: ../src/app/providers/accessControlProvider.ts
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/app/providers/accessControlProvider.ts
 ================================================================================
 
+import type { AccessControlProvider } from "@refinedev/core";
+import type { UserRole } from "../../shared/types";
+import { getStoredUser } from "./authProvider";
+
+export const canManageBarang = (role?: UserRole | string | null): boolean =>
+  role === "admin" || role === "superuser";
+
+export const canAccessNotifications = (role?: UserRole | string | null): boolean =>
+  role === "superuser";
+
+export const accessControlProvider: AccessControlProvider = {
+  can: async ({ resource, action }) => {
+    const user = getStoredUser();
+    const role: UserRole = user?.role ?? "user";
+
+    if (resource === "notifications" || resource === "notifikasi") {
+      return {
+        can: canAccessNotifications(role),
+        reason: "Hanya Super User yang memiliki akses ke halaman Notifikasi",
+      };
+    }
+
+    if (
+      resource === "barang" &&
+      (action === "create" || action === "edit" || action === "delete")
+    ) {
+      return {
+        can: canManageBarang(role),
+        reason: "Hanya Admin dan Super User yang dapat mengelola data barang",
+      };
+    }
+
+    if (resource === "barang_masuk" || resource === "pengeluaran") {
+      return {
+        can: canManageBarang(role),
+        reason: "Silakan masuk sebagai Admin atau Super User",
+      };
+    }
+
+    return { can: true };
+  },
+};
 
 
 ================================================================================
@@ -155,14 +209,24 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/app/providers/authProvider.ts
 ================================================================================
 
 import type { AuthProvider, AuthActionResponse, CheckResponse } from "@refinedev/core";
-
-// ✅ Path import disesuaikan dengan arsitektur baru (naik 2 tingkat ke shared/lib)
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { USE_MOCK } from "../../shared/lib/config";
+import type { UserRole } from "../../shared/types";
+import {
+  findAccountRequestByEmail,
+  registerAccountRequest,
+} from "../../features/auth/accountRequests";
 
-const STORAGE_KEY = "mock-auth-user";
+export const STORAGE_KEY = "mock-auth-user";
 
-const getMockUser = () => {
+export interface StoredAuthUser {
+  id?: string;
+  email: string;
+  name: string;
+  role: UserRole;
+}
+
+export const getStoredUser = (): StoredAuthUser | null => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
@@ -171,67 +235,215 @@ const getMockUser = () => {
   }
 };
 
+export const setStoredUser = (user: StoredAuthUser | null) => {
+  try {
+    if (!user) {
+      localStorage.removeItem(STORAGE_KEY);
+    } else {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+    }
+  } catch {
+    // ignore
+  }
+};
+
 export const authProvider: AuthProvider = {
   login: async ({ email, password }): Promise<AuthActionResponse> => {
-    if (USE_MOCK) {
-      await new Promise((r) => setTimeout(r, 400));
-      if (email === "admin@admin.com" && password === "admin123") {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ email, name: "Administrator", role: "admin" }));
-        return { success: true, redirectTo: "/dashboard" };
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+
+    // 1. Cek apakah akun berasal dari alur pendaftaran user -> notifikasi super user
+    const accountReq = findAccountRequestByEmail(normalizedEmail);
+    if (accountReq) {
+      if (accountReq.status === "pending") {
+        return {
+          success: false,
+          error: {
+            name: "LoginError",
+            message: "Akun Anda masih menunggu persetujuan Super User",
+          },
+        };
       }
-      return { success: false, error: { name: "LoginError", message: "Email/password salah" } };
+      if (accountReq.status === "rejected") {
+        return {
+          success: false,
+          error: {
+            name: "LoginError",
+            message: "Pendaftaran akun Anda tidak diizinkan oleh Super User",
+          },
+        };
+      }
+      if (accountReq.status === "approved") {
+        if (!accountReq.password || accountReq.password === password) {
+          setStoredUser({
+            id: accountReq.id,
+            email: accountReq.email,
+            name: accountReq.name,
+            role: "admin",
+          });
+          return { success: true, redirectTo: "/dashboard" };
+        }
+        return {
+          success: false,
+          error: { name: "LoginError", message: "Email/password salah" },
+        };
+      }
     }
 
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error || !data?.user) {
-      return { success: false, error: { name: "LoginError", message: error?.message || "User tidak ditemukan" } };
+    // 2. Akun bawaan Super User & Admin
+    if (normalizedEmail === "superuser@admin.com" && password === "super123") {
+      setStoredUser({
+        id: "superuser-1",
+        email: normalizedEmail,
+        name: "Super User",
+        role: "superuser",
+      });
+      return { success: true, redirectTo: "/dashboard" };
     }
+
+    if (normalizedEmail === "admin@admin.com" && password === "admin123") {
+      setStoredUser({
+        id: "admin-1",
+        email: normalizedEmail,
+        name: "Administrator",
+        role: "admin",
+      });
+      return { success: true, redirectTo: "/dashboard" };
+    }
+
+    if (USE_MOCK) {
+      return {
+        success: false,
+        error: { name: "LoginError", message: "Email/password salah" },
+      };
+    }
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error || !data?.user) {
+      return {
+        success: false,
+        error: {
+          name: "LoginError",
+          message: error?.message || "User tidak ditemukan",
+        },
+      };
+    }
+
+    const metaRole = (data.user as any)?.user_metadata?.role as UserRole | undefined;
+    const resolvedRole: UserRole =
+      metaRole === "superuser" || normalizedEmail.startsWith("superuser@")
+        ? "superuser"
+        : "admin";
+
+    setStoredUser({
+      id: data.user.id,
+      email: data.user.email || normalizedEmail,
+      name: data.user.email?.split("@")[0] ?? "Admin",
+      role: resolvedRole,
+    });
+
     return { success: true, redirectTo: "/dashboard" };
+  },
+
+  register: async ({ name, email, password }): Promise<AuthActionResponse> => {
+    try {
+      await registerAccountRequest({
+        name: name || String(email || "").split("@")[0] || "Calon Admin",
+        email,
+        password,
+      });
+      return {
+        success: true,
+        redirectTo: "/login",
+      };
+    } catch (err) {
+      return {
+        success: false,
+        error: {
+          name: "RegisterError",
+          message: (err as Error)?.message || "Gagal mendaftarkan akun",
+        },
+      };
+    }
   },
 
   logout: async (): Promise<AuthActionResponse> => {
-    if (USE_MOCK) {
-      localStorage.removeItem(STORAGE_KEY);
-      return { success: true, redirectTo: "/dashboard" };
+    setStoredUser(null);
+    if (!USE_MOCK) {
+      try {
+        await supabaseClient.auth.signOut();
+      } catch {
+        // ignore
+      }
     }
-    await supabaseClient.auth.signOut();
     return { success: true, redirectTo: "/dashboard" };
   },
 
-  // ✅ PERBAIKAN: Tidak lagi di-hardcode true. Wajib cek session untuk rute admin.
   check: async (): Promise<CheckResponse> => {
+    const stored = getStoredUser();
+    if (stored && (stored.role === "admin" || stored.role === "superuser")) {
+      return { authenticated: true };
+    }
     if (USE_MOCK) {
-      return { authenticated: !!getMockUser(), redirectTo: "/login" };
+      return { authenticated: false, redirectTo: "/login" };
     }
     const { data } = await supabaseClient.auth.getSession();
-    return { 
-      authenticated: !!data.session, 
-      redirectTo: "/login" 
+    return {
+      authenticated: !!data?.session,
+      redirectTo: "/login",
     };
   },
 
   getIdentity: async () => {
-    if (USE_MOCK) {
-      const user = getMockUser();
-      return user 
-        ? { id: "admin-1", name: user.name, email: user.email, role: "admin" }
-        : { id: "public-user", name: "User (Public)", email: "", role: "user" };
+    const stored = getStoredUser();
+    if (stored) {
+      return {
+        id: stored.id || (stored.role === "superuser" ? "superuser-1" : "admin-1"),
+        name: stored.name,
+        email: stored.email,
+        role: stored.role,
+      };
     }
-    const { data } = await supabaseClient.auth.getUser();
-    if (data?.user) {
-      return { id: data.user.id, name: data.user.email?.split("@")[0] ?? "Admin", email: data.user.email, role: "admin" };
+    if (!USE_MOCK) {
+      const { data } = await supabaseClient.auth.getUser();
+      if (data?.user) {
+        const email = data.user.email || "";
+        const metaRole = (data.user as any)?.user_metadata?.role as UserRole | undefined;
+        const role: UserRole =
+          metaRole === "superuser" || email.toLowerCase().startsWith("superuser@")
+            ? "superuser"
+            : "admin";
+        return {
+          id: data.user.id,
+          name: email.split("@")[0] || (role === "superuser" ? "Super User" : "Admin"),
+          email,
+          role,
+        };
+      }
     }
-    return { id: "public-user", name: "User (Public)", email: "", role: "user" };
+    return {
+      id: "public-user",
+      name: "User (Public)",
+      email: "",
+      role: "user" as UserRole,
+    };
   },
 
   getPermissions: async () => {
-    if (USE_MOCK) return getMockUser() ? ["admin"] : ["user"];
-    const { data } = await supabaseClient.auth.getSession();
-    return data.session ? ["admin"] : ["user"];
+    const stored = getStoredUser();
+    if (stored) return [stored.role];
+    if (!USE_MOCK) {
+      const { data } = await supabaseClient.auth.getSession();
+      if (data?.session) return ["admin"];
+    }
+    return ["user"];
   },
 
   onError: async (error) => ({ error }),
 };
+
 
 ================================================================================
 FILE: ../src/app/providers/dataProvider.ts
@@ -248,17 +460,255 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/app/router.tsx
 
 
 ================================================================================
+FILE: ../src/features/auth/accountRequest.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/auth/accountRequest.ts
+================================================================================
+
+import { supabaseClient } from "../../shared/lib/supabaseClient";
+import { TABLES } from "../../shared/lib/constants";
+import type { AccountRequest } from "../../shared/types";
+
+const REQUESTS_STORAGE_KEY = "account-registration-requests";
+
+export const readLocalRequests = (): AccountRequest[] => {
+  try {
+    const raw = localStorage.getItem(REQUESTS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const writeLocalRequests = (requests: AccountRequest[]) => {
+  try {
+    localStorage.setItem(REQUESTS_STORAGE_KEY, JSON.stringify(requests));
+  } catch {
+    // ignore storage error
+  }
+};
+
+export const resetAccountRequests = () => {
+  try {
+    localStorage.removeItem(REQUESTS_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+};
+
+export const getPendingRequestsCount = (): number => {
+  return readLocalRequests().filter((r) => r.status === "pending").length;
+};
+
+export const getAccountRequests = async (): Promise<AccountRequest[]> => {
+  const local = readLocalRequests();
+  try {
+    const res = await supabaseClient
+      .from(TABLES.accountRequests)
+      .select("*");
+    if (!res.error && Array.isArray(res.data) && res.data.length > 0) {
+      const mergedMap = new Map<string, AccountRequest>();
+      local.forEach((item) => mergedMap.set(item.email.toLowerCase(), item));
+      res.data.forEach((row: any) => {
+        const emailKey = String(row.email || "").toLowerCase();
+        if (!emailKey) return;
+        const existing = mergedMap.get(emailKey);
+        mergedMap.set(emailKey, {
+          id: String(row.id ?? existing?.id ?? Date.now()),
+          name: row.name || existing?.name || "Calon Admin",
+          email: row.email,
+          password: row.password ?? existing?.password,
+          role: "admin",
+          status: row.status || existing?.status || "pending",
+          createdAt: row.created_at || row.createdAt || existing?.createdAt || new Date().toISOString(),
+          decidedAt: row.decided_at || row.decidedAt || existing?.decidedAt || null,
+        });
+      });
+      const merged = Array.from(mergedMap.values());
+      writeLocalRequests(merged);
+      return merged;
+    }
+  } catch {
+    // fallback ke localStorage jika tabel belum tersedia
+  }
+  return local;
+};
+
+export const registerAccountRequest = async (input: {
+  name: string;
+  email: string;
+  password: string;
+}): Promise<AccountRequest> => {
+  const name = input.name.trim();
+  const email = input.email.trim().toLowerCase();
+  const password = input.password;
+
+  if (!name || !email || !password) {
+    throw new Error("Nama, email, dan password wajib diisi");
+  }
+
+  const existingList = readLocalRequests();
+  const duplicate = existingList.find(
+    (r) => r.email.toLowerCase() === email && r.status !== "rejected",
+  );
+  if (duplicate) {
+    throw new Error(
+      duplicate.status === "pending"
+        ? "Email ini sudah terdaftar dan masih menunggu persetujuan Super User"
+        : "Email ini sudah terdaftar sebagai Admin",
+    );
+  }
+
+  const newRequest: AccountRequest = {
+    id: `req-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    name,
+    email,
+    password,
+    role: "admin",
+    status: "pending",
+    createdAt: new Date().toISOString(),
+    decidedAt: null,
+  };
+
+  const updated = [
+    newRequest,
+    ...existingList.filter((r) => r.email.toLowerCase() !== email),
+  ];
+  writeLocalRequests(updated);
+
+  try {
+    await supabaseClient.from(TABLES.accountRequests).insert([
+      {
+        id: newRequest.id,
+        name: newRequest.name,
+        email: newRequest.email,
+        password: newRequest.password,
+        role: "admin",
+        status: "pending",
+        created_at: newRequest.createdAt,
+      },
+    ]);
+  } catch {
+    // fallback ke localStorage
+  }
+
+  return newRequest;
+};
+
+export const approveAccountRequest = async (
+  requestId: string,
+): Promise<AccountRequest> => {
+  const list = readLocalRequests();
+  const idx = list.findIndex((r) => String(r.id) === String(requestId));
+  const decidedAt = new Date().toISOString();
+
+  let updatedItem: AccountRequest;
+  if (idx >= 0) {
+    updatedItem = {
+      ...list[idx],
+      status: "approved",
+      role: "admin",
+      decidedAt,
+    };
+    list[idx] = updatedItem;
+    writeLocalRequests(list);
+  } else {
+    updatedItem = {
+      id: requestId,
+      name: "Admin Baru",
+      email: "",
+      role: "admin",
+      status: "approved",
+      createdAt: decidedAt,
+      decidedAt,
+    };
+  }
+
+  try {
+    await supabaseClient
+      .from(TABLES.accountRequests)
+      .update({ status: "approved", decided_at: decidedAt })
+      .eq("id", requestId);
+  } catch {
+    // fallback ke localStorage
+  }
+
+  return updatedItem;
+};
+
+export const rejectAccountRequest = async (
+  requestId: string,
+): Promise<AccountRequest> => {
+  const list = readLocalRequests();
+  const idx = list.findIndex((r) => String(r.id) === String(requestId));
+  const decidedAt = new Date().toISOString();
+
+  let updatedItem: AccountRequest;
+  if (idx >= 0) {
+    updatedItem = {
+      ...list[idx],
+      status: "rejected",
+      decidedAt,
+    };
+    list[idx] = updatedItem;
+    writeLocalRequests(list);
+  } else {
+    updatedItem = {
+      id: requestId,
+      name: "Calon Admin",
+      email: "",
+      role: "admin",
+      status: "rejected",
+      createdAt: decidedAt,
+      decidedAt,
+    };
+  }
+
+  try {
+    await supabaseClient
+      .from(TABLES.accountRequests)
+      .update({ status: "rejected", decided_at: decidedAt })
+      .eq("id", requestId);
+  } catch {
+    // fallback ke localStorage
+  }
+
+  return updatedItem;
+};
+
+export const findAccountRequestByEmail = (
+  email: string,
+): AccountRequest | undefined => {
+  const normalized = email.trim().toLowerCase();
+  return readLocalRequests().find((r) => r.email.toLowerCase() === normalized);
+};
+
+
+================================================================================
 FILE: ../src/features/auth/pages/LoginPage.tsx
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/auth/pages/LoginPage.tsx
 ================================================================================
 
 import { useState } from "react";
 import { useLogin } from "@refinedev/core";
-import { Button, Card, Form, Input, Typography, Alert, Space } from "antd";
-import { UserOutlined, LockOutlined } from "@ant-design/icons";
+import {
+  Button,
+  Card,
+  Form,
+  Input,
+  Typography,
+  Alert,
+  Space,
+  Segmented,
+} from "antd";
+import {
+  UserOutlined,
+  LockOutlined,
+  MailOutlined,
+  IdcardOutlined,
+} from "@ant-design/icons";
 
-// ✅ Path import disesuaikan dengan arsitektur baru (naik 3 tingkat ke shared/lib)
 import { USE_MOCK } from "../../../shared/lib/config";
+import { registerAccountRequest } from "../accountRequests";
 
 const { Title, Text } = Typography;
 
@@ -267,17 +717,45 @@ interface LoginForm {
   password: string;
 }
 
+interface RegisterForm {
+  name: string;
+  email: string;
+  password: string;
+}
+
 export const LoginPage = () => {
   const { mutate: login, isLoading } = useLogin<LoginForm>();
+  const [mode, setMode] = useState<"login" | "register">("login");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [registerForm] = Form.useForm<RegisterForm>();
 
-  const handleSubmit = (values: LoginForm) => {
+  const handleSubmitLogin = (values: LoginForm) => {
     setErrorMsg(null);
+    setSuccessMsg(null);
     login(values, {
       onError: (error) => {
         setErrorMsg(error?.message ?? "Login gagal, coba lagi");
       },
     });
+  };
+
+  const handleSubmitRegister = async (values: RegisterForm) => {
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setIsRegistering(true);
+    try {
+      await registerAccountRequest(values);
+      setSuccessMsg(
+        "Permintaan pembuatan akun berhasil dikirim! Akun Anda telah masuk ke halaman Notifikasi Super User dan menunggu persetujuan.",
+      );
+      registerForm.resetFields();
+    } catch (err) {
+      setErrorMsg((err as Error)?.message ?? "Gagal membuat permintaan akun");
+    } finally {
+      setIsRegistering(false);
+    }
   };
 
   return (
@@ -295,14 +773,14 @@ export const LoginPage = () => {
       <Card
         style={{
           width: "100%",
-          maxWidth: 420,
+          maxWidth: 440,
           borderRadius: 16,
           boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
         }}
         styles={{ body: { padding: 32 } }}
       >
         {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: 28 }}>
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
           <div
             style={{
               width: 64,
@@ -323,7 +801,28 @@ export const LoginPage = () => {
           <Title level={3} style={{ margin: 0 }}>
             Admin Stok
           </Title>
-          <Text type="secondary">Masuk untuk mengelola inventaris</Text>
+          <Text type="secondary">
+            {mode === "login"
+              ? "Masuk untuk mengelola inventaris"
+              : "Daftar akun Admin baru (perlu persetujuan Super User)"}
+          </Text>
+        </div>
+
+        {/* Toggle Masuk / Buat Akun */}
+        <div style={{ marginBottom: 20 }}>
+          <Segmented
+            block
+            value={mode}
+            onChange={(val) => {
+              setMode(val as "login" | "register");
+              setErrorMsg(null);
+              setSuccessMsg(null);
+            }}
+            options={[
+              { label: "Masuk", value: "login" },
+              { label: "Buat Akun", value: "register" },
+            ]}
+          />
         </div>
 
         {/* Error */}
@@ -338,61 +837,136 @@ export const LoginPage = () => {
           />
         )}
 
-        {/* Form */}
-        <Form<LoginForm>
-          layout="vertical"
-          onFinish={handleSubmit}
-          autoComplete="off"
-          requiredMark={false}
-          initialValues={
-            USE_MOCK
-              ? { email: "admin@admin.com", password: "admin123" }
-              : undefined
-          }
-        >
-          <Form.Item
-            name="email"
-            label="Email"
-            rules={[
-              { required: true, message: "Email wajib diisi" },
-              { type: "email", message: "Format email tidak valid" },
-            ]}
-          >
-            <Input
-              size="large"
-              prefix={<UserOutlined />}
-              placeholder="admin@admin.com"
-              autoFocus
-            />
-          </Form.Item>
+        {/* Success */}
+        {successMsg && (
+          <Alert
+            type="success"
+            message={successMsg}
+            showIcon
+            closable
+            onClose={() => setSuccessMsg(null)}
+            style={{ marginBottom: 16 }}
+          />
+        )}
 
-          <Form.Item
-            name="password"
-            label="Password"
-            rules={[{ required: true, message: "Password wajib diisi" }]}
+        {mode === "login" ? (
+          <Form<LoginForm>
+            layout="vertical"
+            onFinish={handleSubmitLogin}
+            autoComplete="off"
+            requiredMark={false}
+            initialValues={
+              USE_MOCK
+                ? { email: "admin@admin.com", password: "admin123" }
+                : undefined
+            }
           >
-            <Input.Password
-              size="large"
-              prefix={<LockOutlined />}
-              placeholder="••••••••"
-            />
-          </Form.Item>
-
-          <Form.Item style={{ marginBottom: 12 }}>
-            <Button
-              type="primary"
-              htmlType="submit"
-              size="large"
-              block
-              loading={isLoading}
+            <Form.Item
+              name="email"
+              label="Email"
+              rules={[
+                { required: true, message: "Email wajib diisi" },
+                { type: "email", message: "Format email tidak valid" },
+              ]}
             >
-              Masuk
-            </Button>
-          </Form.Item>
-        </Form>
+              <Input
+                size="large"
+                prefix={<UserOutlined />}
+                placeholder="admin@admin.com"
+                autoFocus
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="password"
+              label="Password"
+              rules={[{ required: true, message: "Password wajib diisi" }]}
+            >
+              <Input.Password
+                size="large"
+                prefix={<LockOutlined />}
+                placeholder="••••••••"
+              />
+            </Form.Item>
+
+            <Form.Item style={{ marginBottom: 12 }}>
+              <Button
+                type="primary"
+                htmlType="submit"
+                size="large"
+                block
+                loading={isLoading}
+              >
+                Masuk
+              </Button>
+            </Form.Item>
+          </Form>
+        ) : (
+          <Form<RegisterForm>
+            form={registerForm}
+            layout="vertical"
+            onFinish={handleSubmitRegister}
+            autoComplete="off"
+            requiredMark={false}
+          >
+            <Form.Item
+              name="name"
+              label="Nama Lengkap"
+              rules={[{ required: true, message: "Nama lengkap wajib diisi" }]}
+            >
+              <Input
+                size="large"
+                prefix={<IdcardOutlined />}
+                placeholder="Nama calon admin"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="email"
+              label="Email"
+              rules={[
+                { required: true, message: "Email wajib diisi" },
+                { type: "email", message: "Format email tidak valid" },
+              ]}
+            >
+              <Input
+                size="large"
+                prefix={<MailOutlined />}
+                placeholder="calonadmin@email.com"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="password"
+              label="Password"
+              rules={[
+                { required: true, message: "Password wajib diisi" },
+                { min: 6, message: "Password minimal 6 karakter" },
+              ]}
+            >
+              <Input.Password
+                size="large"
+                prefix={<LockOutlined />}
+                placeholder="Minimal 6 karakter"
+              />
+            </Form.Item>
+
+            <Form.Item style={{ marginBottom: 12 }}>
+              <Button
+                type="primary"
+                htmlType="submit"
+                size="large"
+                block
+                loading={isRegistering}
+              >
+                Daftar Akun
+              </Button>
+            </Form.Item>
+          </Form>
+        )}
 
         {/* Info mock */}
-        {USE_MOCK && (
+        {USE_MOCK && mode === "login" && (
           <Alert
             type="info"
             showIcon
@@ -401,10 +975,12 @@ export const LoginPage = () => {
             description={
               <Space direction="vertical" size={2}>
                 <Text style={{ fontSize: 12 }}>
-                  Email: <Text code>admin@admin.com</Text>
+                  Admin: <Text code>admin@admin.com</Text> /{" "}
+                  <Text code>admin123</Text>
                 </Text>
                 <Text style={{ fontSize: 12 }}>
-                  Password: <Text code>admin123</Text>
+                  Super User: <Text code>superuser@admin.com</Text> /{" "}
+                  <Text code>super123</Text>
                 </Text>
               </Space>
             }
@@ -415,8 +991,220 @@ export const LoginPage = () => {
   );
 };
 
-// ✅ Wajib ada agar React.lazy() di App.tsx tidak error
 export default LoginPage;
+
+
+================================================================================
+FILE: ../src/features/auth/pages/NotificationPage.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/auth/pages/NotificationPage.tsx
+================================================================================
+
+import { useEffect, useState } from "react";
+import { useGetIdentity } from "@refinedev/core";
+import {
+  Card,
+  Typography,
+  Table,
+  Button,
+  Tag,
+  Space,
+  Empty,
+  Result,
+  message,
+} from "antd";
+import type { ColumnsType } from "antd/es/table";
+import {
+  BellOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+} from "@ant-design/icons";
+import type { AccountRequest, UserRole } from "../../../shared/types";
+import {
+  getAccountRequests,
+  approveAccountRequest,
+  rejectAccountRequest,
+} from "../accountRequests";
+import { getStoredUser } from "../../../app/providers/authProvider";
+import { formatDate } from "../../../shared/lib/format";
+
+const { Title, Text } = Typography;
+
+interface IdentityUser {
+  id: string;
+  name: string;
+  email?: string;
+  role: UserRole;
+}
+
+export const NotificationsPage = () => {
+  const { data: identity } = useGetIdentity<IdentityUser>();
+  const storedUser = getStoredUser();
+  const effectiveRole: UserRole =
+    identity?.role ?? storedUser?.role ?? "user";
+
+  const [requests, setRequests] = useState<AccountRequest[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const loadRequests = async () => {
+    setLoading(true);
+    try {
+      const data = await getAccountRequests();
+      setRequests(data);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadRequests();
+  }, []);
+
+  if (effectiveRole !== "superuser") {
+    return (
+      <Result
+        status="403"
+        title="Akses Ditolak"
+        subTitle="Hanya Super User yang dapat mengakses halaman Notifikasi persetujuan akun."
+      />
+    );
+  }
+
+  const handleApprove = async (req: AccountRequest) => {
+    const updated = await approveAccountRequest(req.id);
+    setRequests((prev) =>
+      prev.map((item) => (item.id === req.id ? updated : item)),
+    );
+    message.success(`Akun ${req.email} diizinkan dan aktif sebagai Admin.`);
+  };
+
+  const handleReject = async (req: AccountRequest) => {
+    const updated = await rejectAccountRequest(req.id);
+    setRequests((prev) =>
+      prev.map((item) => (item.id === req.id ? updated : item)),
+    );
+    message.info(`Permintaan akun ${req.email} tidak diizinkan (dibatalkan).`);
+  };
+
+  const getStatusTag = (status: AccountRequest["status"]) => {
+    if (status === "pending") {
+      return <Tag color="orange">Menunggu Persetujuan</Tag>;
+    }
+    if (status === "approved") {
+      return <Tag color="green">Diizinkan (Admin Aktif)</Tag>;
+    }
+    return <Tag color="red">Tidak Diizinkan (Batal)</Tag>;
+  };
+
+  const columns: ColumnsType<AccountRequest> = [
+    {
+      title: "Nama Calon Admin",
+      dataIndex: "name",
+      key: "name",
+      render: (v: string) => <Text strong>{v}</Text>,
+    },
+    {
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
+    },
+    {
+      title: "Tanggal Pengajuan",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (v: string) => (v ? formatDate(v) : "-"),
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status: AccountRequest["status"]) => getStatusTag(status),
+    },
+    {
+      title: "Aksi Persetujuan",
+      key: "actions",
+      render: (_: unknown, record: AccountRequest) => {
+        if (record.status !== "pending") {
+          return (
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {record.status === "approved"
+                ? "Akun Admin telah aktif"
+                : "Pembuatan akun dibatalkan"}
+            </Text>
+          );
+        }
+        return (
+          <Space>
+            <Button
+              type="primary"
+              size="small"
+              icon={<CheckCircleOutlined />}
+              onClick={() => handleApprove(record)}
+              aria-label={`Izinkan ${record.email}`}
+            >
+              Izinkan
+            </Button>
+            <Button
+              danger
+              size="small"
+              icon={<CloseCircleOutlined />}
+              onClick={() => handleReject(record)}
+              aria-label={`Tidak Izinkan ${record.email}`}
+            >
+              Tidak Izinkan
+            </Button>
+          </Space>
+        );
+      },
+    },
+  ];
+
+  return (
+    <Space direction="vertical" size="large" style={{ width: "100%" }}>
+      <Space align="center">
+        <div
+          style={{
+            width: 42,
+            height: 42,
+            borderRadius: 10,
+            background: "#722ed115",
+            color: "#722ed1",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 20,
+          }}
+        >
+          <BellOutlined />
+        </div>
+        <div>
+          <Title level={3} style={{ margin: 0 }}>
+            Notifikasi Super User
+          </Title>
+          <Text type="secondary">
+            Kelola permintaan pembuatan akun Admin baru
+          </Text>
+        </div>
+      </Space>
+
+      <Card variant="borderless" style={{ borderRadius: 12 }}>
+        {requests.length === 0 ? (
+          <Empty description="Belum ada permintaan pendaftaran akun baru" />
+        ) : (
+          <Table<AccountRequest>
+            dataSource={requests}
+            columns={columns}
+            rowKey="id"
+            loading={loading}
+            pagination={{ pageSize: 10 }}
+          />
+        )}
+      </Card>
+    </Space>
+  );
+};
+
+export default NotificationsPage;
+
 
 ================================================================================
 FILE: ../src/features/dashboard/api.ts
@@ -1164,6 +1952,97 @@ FILE: ../src/features/products/api.ts
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/products/api.ts
 ================================================================================
 
+import { supabaseClient } from "../../shared/lib/supabaseClient";
+import { TABLES } from "../../shared/lib/constants";
+import { mapProduct } from "../../shared/lib/mappers";
+import type { Product } from "../../shared/types";
+
+export interface BarangInput {
+  kode?: string;
+  nama: string;
+  ukuran?: string | null;
+  spesifikasi?: string | null;
+  kategori?: string;
+  satuan?: string;
+  stok?: number;
+}
+
+export const createBarang = async (input: BarangInput): Promise<Product> => {
+  const rowPayload = {
+    kode:
+      input.kode?.trim() ||
+      `BRG-${String(Math.floor(100 + Math.random() * 900))}`,
+    nama: input.nama.trim(),
+    ukuran: input.ukuran?.trim() || null,
+    spesifikasi: input.spesifikasi?.trim() || null,
+    kategori: input.kategori || "Material",
+    satuan: input.satuan?.trim() || "pcs",
+    stok: Number(input.stok ?? 0),
+  };
+
+  const { data, error } = await supabaseClient
+    .from(TABLES.products)
+    .insert([rowPayload])
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return mapProduct(
+    data ?? {
+      id: Date.now(),
+      ...rowPayload,
+      created_at: new Date().toISOString(),
+    },
+  );
+};
+
+export const updateBarang = async (
+  id: number,
+  input: Partial<BarangInput>,
+): Promise<Product> => {
+  const patch: Record<string, unknown> = {};
+  if (input.kode !== undefined) patch.kode = input.kode.trim();
+  if (input.nama !== undefined) patch.nama = input.nama.trim();
+  if (input.ukuran !== undefined) patch.ukuran = input.ukuran?.trim() || null;
+  if (input.spesifikasi !== undefined)
+    patch.spesifikasi = input.spesifikasi?.trim() || null;
+  if (input.kategori !== undefined) patch.kategori = input.kategori;
+  if (input.satuan !== undefined) patch.satuan = input.satuan.trim();
+  if (input.stok !== undefined) patch.stok = Number(input.stok);
+
+  const { data, error } = await supabaseClient
+    .from(TABLES.products)
+    .update(patch)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return mapProduct(
+    data ?? {
+      id,
+      kode: String(patch.kode ?? `BRG-${id}`),
+      nama: String(patch.nama ?? ""),
+      ukuran: (patch.ukuran as string | null) ?? null,
+      spesifikasi: (patch.spesifikasi as string | null) ?? null,
+      kategori: String(patch.kategori ?? "Material"),
+      satuan: String(patch.satuan ?? "pcs"),
+      stok: Number(patch.stok ?? 0),
+      created_at: new Date().toISOString(),
+    },
+  );
+};
+
+export const deleteBarang = async (id: number): Promise<void> => {
+  const { error } = await supabaseClient
+    .from(TABLES.products)
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+};
 
 
 ================================================================================
@@ -1173,11 +2052,38 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/products/components/
 
 // src/features/products/components/InventoryTable.tsx
 import { useEffect, useState } from "react";
-import { Table, Typography, Tag, Space, Card, Input, Grid } from "antd";
+import {
+  Table,
+  Typography,
+  Tag,
+  Space,
+  Card,
+  Input,
+  Grid,
+  Button,
+  Modal,
+  Select,
+  message,
+} from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { formatNumber } from "../../../shared/lib/format";
-import { SendOutlined, UserOutlined, SearchOutlined } from "@ant-design/icons";
-import type { Product, StockExit, StockExitItem } from "../../../shared/types";
+import {
+  SendOutlined,
+  UserOutlined,
+  SearchOutlined,
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+} from "@ant-design/icons";
+import type {
+  Product,
+  StockExit,
+  StockExitItem,
+  UserRole,
+} from "../../../shared/types";
+import { getStoredUser } from "../../../app/providers/authProvider";
+import { canManageBarang } from "../../../app/providers/accessControlProvider";
+import { createBarang, updateBarang, deleteBarang } from "../api";
 
 const { Text } = Typography;
 
@@ -1189,17 +2095,149 @@ interface OutboundRow extends StockExitItem {
 }
 
 type InventoryTableProps =
-  | { type: "stock"; dataSource: Product[]; loading?: boolean }
-  | { type: "outbound"; dataSource: StockExit[]; loading?: boolean };
+  | {
+      type: "stock";
+      dataSource: Product[];
+      loading?: boolean;
+      defaultCategory?: string;
+      role?: UserRole;
+      onRefetch?: () => void;
+    }
+  | {
+      type: "outbound";
+      dataSource: StockExit[];
+      loading?: boolean;
+      role?: UserRole;
+    };
 
 export const InventoryTable = (props: InventoryTableProps) => {
   const { type, loading } = props;
   const [searchText, setSearchText] = useState("");
 
+  // Deteksi role (superuser & admin bisa melakukan CRUD barang, user/unlogin hanya baca)
+  const storedUser = getStoredUser();
+  const effectiveRole: UserRole = props.role ?? storedUser?.role ?? "user";
+  const isCrudAllowed = type === "stock" && canManageBarang(effectiveRole);
+
+  // State lokal agar perubahan CRUD langsung tercermin di UI & test
+  const [localProducts, setLocalProducts] = useState<Product[]>(
+    type === "stock" ? props.dataSource : [],
+  );
+
+  useEffect(() => {
+    if (type === "stock") {
+      setLocalProducts(props.dataSource);
+    }
+  }, [type, props.dataSource]);
+
+  // Modal Tambah / Edit Barang
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<Product | null>(null);
+  const [deletingItem, setDeletingItem] = useState<Product | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // State form input
+  const [formCode, setFormCode] = useState("");
+  const [formName, setFormName] = useState("");
+  const [formSize, setFormSize] = useState("");
+  const [formSpec, setFormSpec] = useState("");
+  const [formCategory, setFormCategory] = useState(
+    type === "stock" ? (props.defaultCategory ?? "Material") : "Material",
+  );
+  const [formUnit, setFormUnit] = useState("pcs");
+  const [formStock, setFormStock] = useState<string>("0");
+
+  const openCreateModal = () => {
+    setEditingItem(null);
+    setFormCode("");
+    setFormName("");
+    setFormSize("");
+    setFormSpec("");
+    setFormCategory(
+      type === "stock" ? (props.defaultCategory ?? "Material") : "Material",
+    );
+    setFormUnit("pcs");
+    setFormStock("0");
+    setModalOpen(true);
+  };
+
+  const openEditModal = (product: Product) => {
+    setEditingItem(product);
+    setFormCode(product.code || "");
+    setFormName(product.name || "");
+    setFormSize(product.size || "");
+    setFormSpec(product.specification || "");
+    setFormCategory(product.category || "Material");
+    setFormUnit(product.unit || "pcs");
+    setFormStock(String(product.stock ?? 0));
+    setModalOpen(true);
+  };
+
+  const handleSaveBarang = async () => {
+    if (!formName.trim()) {
+      message.error("Nama barang wajib diisi");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      if (editingItem) {
+        const updated = await updateBarang(editingItem.id, {
+          kode: formCode || editingItem.code,
+          nama: formName,
+          ukuran: formSize || null,
+          spesifikasi: formSpec || null,
+          kategori: formCategory,
+          satuan: formUnit || "pcs",
+          stok: Number(formStock || 0),
+        });
+        setLocalProducts((prev) =>
+          prev.map((item) => (item.id === editingItem.id ? updated : item)),
+        );
+        message.success("Barang berhasil diperbarui");
+      } else {
+        const created = await createBarang({
+          kode: formCode,
+          nama: formName,
+          ukuran: formSize || null,
+          spesifikasi: formSpec || null,
+          kategori: formCategory,
+          satuan: formUnit || "pcs",
+          stok: Number(formStock || 0),
+        });
+        setLocalProducts((prev) => [created, ...prev]);
+        message.success("Barang baru berhasil ditambahkan");
+      }
+      setModalOpen(false);
+      if (type === "stock") props.onRefetch?.();
+    } catch (err) {
+      message.error((err as Error)?.message ?? "Gagal menyimpan barang");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingItem) return;
+    setSubmitting(true);
+    try {
+      await deleteBarang(deletingItem.id);
+      setLocalProducts((prev) =>
+        prev.filter((item) => item.id !== deletingItem.id),
+      );
+      message.success("Barang berhasil dihapus");
+      setDeletingItem(null);
+      if (type === "stock") props.onRefetch?.();
+    } catch (err) {
+      message.error((err as Error)?.message ?? "Gagal menghapus barang");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
 
-  // Tinggi viewport dipantau manual supaya scroll.y responsif
   const [vh, setVh] = useState<number>(
     typeof window !== "undefined" ? window.innerHeight : 900,
   );
@@ -1209,9 +2247,6 @@ export const InventoryTable = (props: InventoryTableProps) => {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // Mobile: kurangi 220 (header+tabs+search+pagination compact)
-  // PC    : kurangi 380
-  // Min 280 agar di layar pendek tabel tetap tampil
   const scrollY = Math.max(280, vh - (isMobile ? 220 : 380));
 
   const stockColumns: ColumnsType<Product> = [
@@ -1249,6 +2284,37 @@ export const InventoryTable = (props: InventoryTableProps) => {
         </Tag>
       ),
     },
+    ...(isCrudAllowed
+      ? [
+          {
+            title: "Aksi",
+            key: "actions",
+            width: isMobile ? 120 : 170,
+            align: "center" as const,
+            render: (_: unknown, r: Product) => (
+              <Space size={6}>
+                <Button
+                  size="small"
+                  icon={<EditOutlined />}
+                  onClick={() => openEditModal(r)}
+                  aria-label={`Edit ${r.name}`}
+                >
+                  Edit
+                </Button>
+                <Button
+                  size="small"
+                  danger
+                  icon={<DeleteOutlined />}
+                  onClick={() => setDeletingItem(r)}
+                  aria-label={`Hapus ${r.name}`}
+                >
+                  Hapus
+                </Button>
+              </Space>
+            ),
+          },
+        ]
+      : []),
   ];
 
   const outboundColumns: ColumnsType<OutboundRow> = [
@@ -1331,7 +2397,7 @@ export const InventoryTable = (props: InventoryTableProps) => {
 
   const stockData =
     type === "stock"
-      ? props.dataSource.filter(
+      ? localProducts.filter(
           (item) =>
             !lowerSearch ||
             item.name.toLowerCase().includes(lowerSearch) ||
@@ -1359,8 +2425,6 @@ export const InventoryTable = (props: InventoryTableProps) => {
           )
       : [];
 
-  // ✅ Mobile: x = max-content (kolom bisa menyempit & muat layar).
-  // PC    : x = 750 (kolom lega).
   const scrollConfig = isMobile
     ? { x: "max-content" as const, y: scrollY }
     : { x: 750, y: scrollY };
@@ -1373,7 +2437,6 @@ export const InventoryTable = (props: InventoryTableProps) => {
     simple: isMobile,
   };
 
-  // ✅ Card style: full-bleed 100vw di mobile (edge-to-edge), border-radius 0
   const cardStyle = isMobile
     ? {
         width: "100vw",
@@ -1398,6 +2461,11 @@ export const InventoryTable = (props: InventoryTableProps) => {
         style={{
           padding: isMobile ? "10px 12px" : "16px 20px",
           borderBottom: "1px solid #f0f0f0",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 12,
         }}
       >
         <Input
@@ -1409,6 +2477,16 @@ export const InventoryTable = (props: InventoryTableProps) => {
           onChange={(e) => setSearchText(e.target.value)}
           style={{ maxWidth: isMobile ? "100%" : 400 }}
         />
+
+        {isCrudAllowed && (
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={openCreateModal}
+          >
+            Tambah Barang
+          </Button>
+        )}
       </div>
 
       {type === "stock" ? (
@@ -1440,9 +2518,111 @@ export const InventoryTable = (props: InventoryTableProps) => {
           }
         />
       )}
+
+      {/* Modal Tambah / Edit Barang */}
+      <Modal
+        title={editingItem ? "Edit Barang" : "Tambah Barang"}
+        open={modalOpen}
+        onCancel={() => setModalOpen(false)}
+        onOk={handleSaveBarang}
+        okText="Simpan Barang"
+        cancelText="Batal"
+        confirmLoading={submitting}
+        destroyOnHidden
+      >
+        <Space direction="vertical" style={{ width: "100%" }} size={12}>
+          <div>
+            <Text strong>Kode Barang</Text>
+            <Input
+              placeholder="Contoh: BRG-001 (opsional)"
+              value={formCode}
+              onChange={(e) => setFormCode(e.target.value)}
+              aria-label="Kode Barang"
+            />
+          </div>
+          <div>
+            <Text strong>Nama Barang *</Text>
+            <Input
+              placeholder="Masukkan nama barang"
+              value={formName}
+              onChange={(e) => setFormName(e.target.value)}
+              aria-label="Nama Barang"
+            />
+          </div>
+          <div>
+            <Text strong>Ukuran</Text>
+            <Input
+              placeholder="Contoh: 10mm / A4"
+              value={formSize}
+              onChange={(e) => setFormSize(e.target.value)}
+              aria-label="Ukuran Barang"
+            />
+          </div>
+          <div>
+            <Text strong>Spesifikasi</Text>
+            <Input
+              placeholder="Spesifikasi teknis (opsional)"
+              value={formSpec}
+              onChange={(e) => setFormSpec(e.target.value)}
+              aria-label="Spesifikasi Barang"
+            />
+          </div>
+          <div>
+            <Text strong>Kategori</Text>
+            <Select
+              style={{ width: "100%" }}
+              value={formCategory}
+              onChange={setFormCategory}
+              aria-label="Kategori Barang"
+              options={[
+                { value: "Material", label: "Material" },
+                { value: "Alat Bantu", label: "Alat Bantu" },
+              ]}
+            />
+          </div>
+          <div>
+            <Text strong>Satuan</Text>
+            <Input
+              placeholder="pcs / unit / btg / roll"
+              value={formUnit}
+              onChange={(e) => setFormUnit(e.target.value)}
+              aria-label="Satuan Barang"
+            />
+          </div>
+          <div>
+            <Text strong>Stok</Text>
+            <Input
+              type="number"
+              placeholder="0"
+              value={formStock}
+              onChange={(e) => setFormStock(e.target.value)}
+              aria-label="Stok Barang"
+            />
+          </div>
+        </Space>
+      </Modal>
+
+      {/* Modal Konfirmasi Hapus Barang */}
+      <Modal
+        title="Hapus Barang"
+        open={!!deletingItem}
+        onCancel={() => setDeletingItem(null)}
+        onOk={handleConfirmDelete}
+        okText="Ya, Hapus"
+        okButtonProps={{ danger: true }}
+        cancelText="Batal"
+        confirmLoading={submitting}
+        destroyOnHidden
+      >
+        <Text>
+          Apakah Anda yakin ingin menghapus barang{" "}
+          <Text strong>{deletingItem?.name}</Text>?
+        </Text>
+      </Modal>
     </Card>
   );
 };
+
 
 ================================================================================
 FILE: ../src/features/products/pages/InventoryPage.tsx
@@ -1468,17 +2648,28 @@ enum InventoryTabKey {
 export const InventoryPage = () => {
   const [activeTab, setActiveTab] = useState<string>(InventoryTabKey.MATERIAL);
 
-  const { products: materials, isLoading: isLoadingMaterials } =
-    useProducts("Material");
+  const {
+    products: materials,
+    isLoading: isLoadingMaterials,
+    refetch: refetchMaterials,
+  } = useProducts("Material");
 
-  const { products: tools, isLoading: isLoadingTools } =
-    useProducts("Alat Bantu");
+  const {
+    products: tools,
+    isLoading: isLoadingTools,
+    refetch: refetchTools,
+  } = useProducts("Alat Bantu");
 
   const { exits: breakdownExits, isLoading: isLoadingBreakdown } =
     useStockExits({ breakdown: true });
 
   const { exits: nonBreakdownExits, isLoading: isLoadingNonBreakdown } =
     useStockExits({ breakdown: false });
+
+  const handleRefetchAll = () => {
+    refetchMaterials();
+    refetchTools();
+  };
 
   const tabItems = [
     {
@@ -1489,18 +2680,21 @@ export const InventoryPage = () => {
           type="stock"
           dataSource={materials}
           loading={isLoadingMaterials}
+          defaultCategory="Material"
+          onRefetch={handleRefetchAll}
         />
       ),
     },
     {
       key: InventoryTabKey.TOOLS,
-      // ✅ Rename jadi Stok Persediaan Alat
       label: `Stok Persediaan Alat (${tools.length})`,
       children: (
         <InventoryTable
           type="stock"
           dataSource={tools}
           loading={isLoadingTools}
+          defaultCategory="Alat Bantu"
+          onRefetch={handleRefetchAll}
         />
       ),
     },
@@ -1550,6 +2744,7 @@ export const InventoryPage = () => {
 };
 
 export default InventoryPage;
+
 
 ================================================================================
 FILE: ../src/features/products/pages/ProductCreatePage.tsx
@@ -1795,7 +2990,7 @@ import {
 } from "antd";
 import { ArrowLeftOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import { useMonitoringSPBDetail } from "../useMonitoringSPBDetail";
-import type { SPBItemDetail } from "../../../shared/types";
+import type { MonitoringDetailItem } from "../useMonitoringSPBDetail";
 import { formatDate } from "../../../shared/lib/format";
 
 const { Title, Text } = Typography;
@@ -1805,14 +3000,17 @@ export const MonitoringSPBDetailPage = () => {
   const [searchParams] = useSearchParams();
   const spbNo = searchParams.get("spb");
   const poNo = searchParams.get("po");
-  const sjNo = searchParams.get("sj"); // ✅ Tangkap parameter sj
+  const sjNo = searchParams.get("sj");
 
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
 
-  const { items, isLoading, error } = useMonitoringSPBDetail(spbNo, poNo, sjNo); 
+  const { items, isLoading, error } = useMonitoringSPBDetail(spbNo, poNo, sjNo);
 
   const spbTitle = items.length > 0 ? items[0].judul_spb : null;
+
+  // Card Surat Jalan murni tidak punya PO, jadi status PO tidak ditampilkan
+  const showPoStatus = !!(spbNo || poNo);
 
   const statuses = useMemo(() => {
     if (items.length === 0) return { belumDiPo: false, sudahDiPo: false };
@@ -1829,7 +3027,12 @@ export const MonitoringSPBDetailPage = () => {
         textAlign: "center",
       }}
     >
-      <span style={{ color: active ? "#52c41a" : "#8c8c8c", fontWeight: active ? "bold" : "normal" }}>
+      <span
+        style={{
+          color: active ? "#52c41a" : "#8c8c8c",
+          fontWeight: active ? "bold" : "normal",
+        }}
+      >
         {title}
       </span>
     </Card>
@@ -1838,19 +3041,21 @@ export const MonitoringSPBDetailPage = () => {
   const getStatusColor = (status: string | null | undefined) => {
     if (status === "Belum PO") return "orange";
     if (status === "Sudah PO") return "blue";
-    if (status === "Datang Sesuai") return "green";
+    if (status === "Datang Sesuai" || status === "Datang") return "green";
     if (status === "Datang Kurang") return "volcano";
     if (status === "Datang Lebih") return "purple";
     return "default";
   };
 
-  const renderNamaBarang = (r: SPBItemDetail) => {
+  const renderNamaBarang = (r: MonitoringDetailItem) => {
     const nameWithSize = r.ukuran ? `${r.nama_barang} - ${r.ukuran}` : r.nama_barang;
     return (
-      <Space direction="vertical" size={2}>
-        <Text strong>{nameWithSize}</Text>
+      <Space direction="vertical" size={1} style={{ width: "100%" }}>
+        <Text strong style={{ fontSize: 13, wordBreak: "break-word" }}>
+          {nameWithSize}
+        </Text>
         {r.spesifikasi_teknis && r.spesifikasi_teknis !== "-" && (
-          <Text style={{ fontSize: 12, color: "#8c8c8c", lineHeight: 1.2 }}>
+          <Text style={{ fontSize: 11, color: "#8c8c8c", lineHeight: 1.2 }}>
             • {r.spesifikasi_teknis}
           </Text>
         )}
@@ -1859,22 +3064,150 @@ export const MonitoringSPBDetailPage = () => {
   };
 
   const mobileColumns = [
-    { title: "No", key: "no", width: 40, align: "center" as const, render: (_: any, __: SPBItemDetail, i: number) => i + 1 },
-    { title: "Nama Barang", key: "nama_barang", ellipsis: true, render: (_: any, r: SPBItemDetail) => renderNamaBarang(r) },
-    { title: "Jumlah", key: "jumlah", width: 80, align: "right" as const, render: (_: any, r: SPBItemDetail) => (<Text>{r.jumlah_permintaan ?? 0} <Text type="secondary" style={{ fontSize: 12 }}>{r.satuan ?? ""}</Text></Text>) },
-    { title: "Status", key: "status", width: 90, align: "center" as const, render: (_: any, r: SPBItemDetail) => (<Tag color={getStatusColor(r.status)} style={{ margin: 0, padding: "0 4px", fontSize: 11, whiteSpace: "normal", textAlign: "center" }}>{r.status || "Belum PO"}</Tag>) },
-    { title: "Aksi", key: "detail", width: 85, align: "center" as const, render: (_: any, r: SPBItemDetail) => (<Button type="primary" size="small" icon={<InfoCircleOutlined />} style={{ fontSize: 12, padding: "0 8px" }} onClick={() => navigate(`/monitoring-spb/item/${r.id}?type=${r.no_spb ? "spb" : "po"}`)}>Detail</Button>) },
+    {
+      title: "No",
+      key: "no",
+      width: 36,
+      align: "center" as const,
+      render: (_: any, __: MonitoringDetailItem, i: number) => i + 1,
+    },
+    {
+      title: "Nama Barang",
+      key: "nama_barang",
+      ellipsis: true,
+      render: (_: any, r: MonitoringDetailItem) => renderNamaBarang(r),
+    },
+    {
+      title: "Jumlah",
+      key: "jumlah",
+      width: 72,
+      align: "right" as const,
+      render: (_: any, r: MonitoringDetailItem) => (
+        <Text style={{ fontSize: 12 }}>
+          {r.jumlah_permintaan ?? "-"}{" "}
+          <Text type="secondary" style={{ fontSize: 11 }}>
+            {r.jumlah_permintaan != null ? (r.satuan ?? "") : ""}
+          </Text>
+        </Text>
+      ),
+    },
+    {
+      title: "Status",
+      key: "status",
+      width: 84,
+      align: "center" as const,
+      render: (_: any, r: MonitoringDetailItem) => (
+        <Tag
+          color={getStatusColor(r.status)}
+          style={{
+            margin: 0,
+            padding: "0 4px",
+            fontSize: 11,
+            whiteSpace: "normal",
+            textAlign: "center",
+          }}
+        >
+          {r.status || "Belum PO"}
+        </Tag>
+      ),
+    },
+    {
+      title: "Aksi",
+      key: "detail",
+      width: 76,
+      align: "center" as const,
+      render: (_: any, r: MonitoringDetailItem) => (
+        <Button
+          type="primary"
+          size="small"
+          icon={<InfoCircleOutlined />}
+          style={{ fontSize: 11, padding: "0 6px" }}
+          onClick={() => navigate(`/monitoring-spb/item/${r.id}?type=${r.sumber}`)}
+        >
+          Detail
+        </Button>
+      ),
+    },
   ];
 
+  // ✅ Kolom "Sumber" dihapus dan lebar kolom diringkas agar muat dalam satu bagian tanpa scroll
   const desktopColumns = [
-    { title: "No", key: "no", width: 56, align: "center" as const, render: (_: any, __: SPBItemDetail, i: number) => i + 1 },
-    { title: "Nama Barang", key: "nama_barang", render: (_: any, r: SPBItemDetail) => renderNamaBarang(r) },
-    { title: "Jumlah", key: "jumlah", width: 100, align: "right" as const, render: (_: any, r: SPBItemDetail) => (<Text>{r.jumlah_permintaan ?? 0} <Text type="secondary" style={{ fontSize: 12 }}>{r.satuan ?? ""}</Text></Text>) },
-    { title: "No PO", dataIndex: "no_po", key: "no_po", width: 130, render: (v: string | null) => v || "-" },
-    { title: "Tanggal Datang", dataIndex: "tanggal_datang", key: "tanggal_datang", width: 140, render: (v: string | null) => (v ? formatDate(v) : "-") },
-    { title: "Jumlah Datang", dataIndex: "qty_datang", key: "jumlah_datang", width: 140, align: "right" as const, render: (v: number | null, r: SPBItemDetail) => `${v ?? 0} ${r.satuan ?? ""}`.trim() },
-    { title: "Status", key: "status", width: 130, render: (_: any, r: SPBItemDetail) => (<Tag color={getStatusColor(r.status)}>{r.status || "Belum PO"}</Tag>) },
-    { title: "Detail", key: "detail", width: 100, align: "center" as const, render: (_: any, r: SPBItemDetail) => (<Button type="primary" size="small" icon={<InfoCircleOutlined />} onClick={() => navigate(`/monitoring-spb/item/${r.id}?type=${r.no_spb ? "spb" : "po"}`)}>Detail</Button>) },
+    {
+      title: "No",
+      key: "no",
+      width: 44,
+      align: "center" as const,
+      render: (_: any, __: MonitoringDetailItem, i: number) => i + 1,
+    },
+    {
+      title: "Nama Barang",
+      key: "nama_barang",
+      render: (_: any, r: MonitoringDetailItem) => renderNamaBarang(r),
+    },
+    {
+      title: "Jumlah",
+      key: "jumlah",
+      width: 90,
+      align: "right" as const,
+      render: (_: any, r: MonitoringDetailItem) => (
+        <Text style={{ fontSize: 13 }}>
+          {r.jumlah_permintaan ?? "-"}{" "}
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            {r.jumlah_permintaan != null ? (r.satuan ?? "") : ""}
+          </Text>
+        </Text>
+      ),
+    },
+    {
+      title: "No PO",
+      dataIndex: "no_po",
+      key: "no_po",
+      width: 95,
+      render: (v: string | null) => v || "-",
+    },
+    {
+      title: "Tanggal Datang",
+      dataIndex: "tanggal_datang",
+      key: "tanggal_datang",
+      width: 110,
+      render: (v: string | null) => (v ? formatDate(v) : "-"),
+    },
+    {
+      title: "Jumlah Datang",
+      dataIndex: "qty_datang",
+      key: "jumlah_datang",
+      width: 105,
+      align: "right" as const,
+      render: (v: number | null, r: MonitoringDetailItem) =>
+        `${v ?? 0} ${r.satuan ?? ""}`.trim(),
+    },
+    {
+      title: "Status",
+      key: "status",
+      width: 110,
+      align: "center" as const,
+      render: (_: any, r: MonitoringDetailItem) => (
+        <Tag color={getStatusColor(r.status)} style={{ margin: 0 }}>
+          {r.status || "Belum PO"}
+        </Tag>
+      ),
+    },
+    {
+      title: "Detail",
+      key: "detail",
+      width: 84,
+      align: "center" as const,
+      render: (_: any, r: MonitoringDetailItem) => (
+        <Button
+          type="primary"
+          size="small"
+          icon={<InfoCircleOutlined />}
+          onClick={() => navigate(`/monitoring-spb/item/${r.id}?type=${r.sumber}`)}
+        >
+          Detail
+        </Button>
+      ),
+    },
   ];
 
   const columns = isMobile ? mobileColumns : desktopColumns;
@@ -1882,41 +3215,83 @@ export const MonitoringSPBDetailPage = () => {
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", paddingBottom: 32 }}>
       <Space align="center" style={{ marginBottom: 16 }}>
-        <Button type="text" size="large" icon={<ArrowLeftOutlined />} onClick={() => navigate("/monitoring-spb")} />
+        <Button
+          type="text"
+          size="large"
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate("/monitoring-spb")}
+        />
         <div>
-          <Title level={3} style={{ margin: 0 }}>Detail SPB / PO</Title>
+          <Title level={3} style={{ margin: 0 }}>
+            Detail SPB / PO
+          </Title>
           <div style={{ marginTop: 4 }}>
-            {spbNo && (<Text strong style={{ fontSize: 18 }}>SPB: {spbNo} {spbTitle ? ` - ${spbTitle}` : ""}</Text>)}
-            {poNo && (<Text strong style={{ fontSize: 18, display: "block", marginTop: 4 }}>PO: {poNo}</Text>)}
-            {sjNo && (<Text strong style={{ fontSize: 18, display: "block", marginTop: 4 }}>Surat Jalan: {sjNo}</Text>)}
+            {spbNo && (
+              <Text strong style={{ fontSize: 18 }}>
+                SPB: {spbNo} {spbTitle ? ` - ${spbTitle}` : ""}
+              </Text>
+            )}
+            {poNo && (
+              <Text strong style={{ fontSize: 18, display: "block", marginTop: 4 }}>
+                PO: {poNo}
+              </Text>
+            )}
+            {sjNo && (
+              <Text strong style={{ fontSize: 18, display: "block", marginTop: 4 }}>
+                Surat Jalan: {sjNo}
+              </Text>
+            )}
           </div>
         </div>
       </Space>
 
-      {isLoading && (<div style={{ textAlign: "center", padding: 50 }}><Spin size="large" /></div>)}
-      {!isLoading && error && (<Result status="error" title="Gagal memuat detail" subTitle={error.message} />)}
-      {!isLoading && !error && items.length === 0 && (<Empty description="Dokumen tidak ditemukan atau sudah dihapus" />)}
+      {isLoading && (
+        <div style={{ textAlign: "center", padding: 50 }}>
+          <Spin size="large" />
+        </div>
+      )}
+      {!isLoading && error && (
+        <Result status="error" title="Gagal memuat detail" subTitle={error.message} />
+      )}
+      {!isLoading && !error && items.length === 0 && (
+        <Empty description="Dokumen tidak ditemukan atau sudah dihapus" />
+      )}
 
       {!isLoading && !error && items.length > 0 && (
         <>
-          <Row gutter={[8, 8]} style={{ marginBottom: 16 }}>
-            <Col xs={12} md={12}><StatusCard title="Belum di PO" active={statuses.belumDiPo} /></Col>
-            <Col xs={12} md={12}><StatusCard title="Sudah di PO" active={statuses.sudahDiPo} /></Col>
-          </Row>
+          {showPoStatus && (
+            <Row gutter={[8, 8]} style={{ marginBottom: 16 }}>
+              <Col xs={12} md={12}>
+                <StatusCard title="Belum di PO" active={statuses.belumDiPo} />
+              </Col>
+              <Col xs={12} md={12}>
+                <StatusCard title="Sudah di PO" active={statuses.sudahDiPo} />
+              </Col>
+            </Row>
+          )}
 
           <Card
             title={`Daftar Barang (${items.length})`}
             variant="borderless"
-            style={{ borderRadius: isMobile ? 0 : 12, ...(isMobile && { width: "100vw", position: "relative", left: "50%", transform: "translateX(-50%)" }) }}
+            style={{
+              borderRadius: isMobile ? 0 : 12,
+              ...(isMobile && {
+                width: "100vw",
+                position: "relative",
+                left: "50%",
+                transform: "translateX(-50%)",
+              }),
+            }}
             styles={{ body: { padding: 0 } }}
           >
-            <Table<SPBItemDetail>
+            <Table<MonitoringDetailItem>
               dataSource={items}
               columns={columns}
-              rowKey="id"
+              rowKey="key"
               size="small"
+              tableLayout="fixed"
               pagination={{ pageSize: 20, size: "small" }}
-              scroll={isMobile ? undefined : { x: "max-content" }}
+              scroll={undefined}
             />
           </Card>
         </>
@@ -1926,6 +3301,7 @@ export const MonitoringSPBDetailPage = () => {
 };
 
 export default MonitoringSPBDetailPage;
+
 
 ================================================================================
 FILE: ../src/features/spb/pages/MonitoringSPBItemDetailPage.tsx
@@ -1951,7 +3327,34 @@ interface DetailRow {
   value: ReactNode;
 }
 
+const calcLamaProses = (
+  tglMulai: string | null | undefined,
+  tglDatang: string | null | undefined,
+  fallback?: string | number | null,
+): string => {
+  if (fallback && fallback !== "-") return String(fallback);
+  if (tglMulai && tglDatang) {
+    const start = dayjs(tglMulai);
+    const end = dayjs(tglDatang);
+    if (start.isValid() && end.isValid()) {
+      const diff = end.diff(start, "day");
+      return `${diff >= 0 ? diff : 0} Hari`;
+    }
+  }
+  return "-";
+};
+
+const getStatusColor = (status: string | null | undefined) => {
+  if (status === "Belum PO" || status === "Belum Datang") return "orange";
+  if (status === "Sudah PO") return "blue";
+  if (status === "Datang Sesuai" || status === "Datang" || status === "Selesai") return "green";
+  if (status === "Datang Kurang") return "volcano";
+  if (status === "Datang Lebih") return "purple";
+  return "blue";
+};
+
 const useSPBItem = (id: string | undefined, type: string) => {
+  const enabled = !!id;
   return useQuery<SPBItemDetail | null, Error>({
     queryKey: ["spb-item", id, type],
     queryFn: async () => {
@@ -1965,13 +3368,76 @@ const useSPBItem = (id: string | undefined, type: string) => {
           .eq("id", id)
           .single();
         if (error) throw error;
-        
-        // ... (logika mapping PO sama seperti sebelumnya)
+        if (!data) return null;
+
+        const tglDatang = data.material_datang_tgl || null;
+        const arr = data.material_datang_qty ?? 0;
+        const satuanDatang = data.material_datang_satuan || data.satuan || "-";
+        const status = tglDatang ? "Datang" : "Sudah PO";
+
         return {
           ...data,
           no_spb: "-",
-          nama_barang: data.nama_barang_po || "-",
-          // ... field lainnya
+          tanggal_spb: null,
+          nama_barang: data.nama_barang_po || data.nama_barang || "-",
+          ukuran: data.ukuran || "-",
+          jumlah_permintaan: data.qty_permintaan ?? null,
+          satuan: data.satuan || data.material_datang_satuan || "-",
+          no_po: data.no_po || "-",
+          tanggal_po: data.tanggal_po || null,
+          supplier: data.nama_supplier || data.supplier || "-",
+          merk: data.merk || "-",
+          spesifikasi_teknis: data.spesifikasi_teknis || data.spesifikasi || "-",
+          lokasi_pemasangan: data.lokasi_pemasangan || "-",
+          rencana_pemasangan: data.rencana_pemasangan || "-",
+          tanggal_datang: tglDatang,
+          qty_datang: arr,
+          satuan_datang: satuanDatang,
+          lama_proses: calcLamaProses(data.tanggal_po, tglDatang, data.lama_proses),
+          kurang_lebih: data.kurang_lebih ?? "-",
+          keterangan: data.keterangan || "-",
+          status,
+        } as SPBItemDetail;
+      }
+
+      // SKENARIO 3: Ambil dari tabel Surat Jalan
+      if (type === "sj") {
+        const { data, error } = await supabaseClient
+          .from("surat_jalan")
+          .select(`*, spb:spb!id_spb (no_spb, tgl_spb), po:po!id_po (no_po, tanggal_po, nama_supplier)`)
+          .eq("id", id)
+          .single();
+        if (error) throw error;
+        if (!data) return null;
+
+        const spbRel = Array.isArray(data.spb) ? data.spb[0] : data.spb;
+        const poRel = Array.isArray(data.po) ? data.po[0] : data.po;
+        const tgl = data.material_datang_tgl || null;
+        const arr = data.material_datang_qty ?? data.jumlah ?? 0;
+
+        return {
+          ...data,
+          no_surat_jalan: data.no_surat_jalan ?? "-",
+          no_spb: spbRel?.no_spb || "-",
+          tanggal_spb: spbRel?.tgl_spb || null,
+          no_po: poRel?.no_po || "-",
+          tanggal_po: poRel?.tanggal_po || null,
+          supplier: poRel?.nama_supplier || data.supplier || "-",
+          nama_barang: data.nama_barang || "-",
+          ukuran: data.ukuran || "-",
+          jumlah_permintaan: data.jumlah ?? null,
+          satuan: data.satuan || data.material_datang_satuan || "-",
+          merk: data.merk || "-",
+          spesifikasi_teknis: data.spesifikasi || data.spesifikasi_teknis || "-",
+          lokasi_pemasangan: data.lokasi_pemasangan || "-",
+          rencana_pemasangan: data.rencana_pemasangan || "-",
+          tanggal_datang: tgl,
+          qty_datang: arr,
+          satuan_datang: data.material_datang_satuan || data.satuan || "-",
+          lama_proses: calcLamaProses( data.tanggal_surat_jalan || poRel?.tanggal_po, tgl, data.lama_proses),
+          kurang_lebih: data.kurang_lebih ?? "-",
+          keterangan: data.keterangan || "-",
+          status: tgl ? "Datang" : "Belum Datang",
         } as SPBItemDetail;
       }
 
@@ -1983,11 +3449,31 @@ const useSPBItem = (id: string | undefined, type: string) => {
         .single();
 
       if (error) throw error;
-      
-      const dataPo = Array.isArray(data.po) ? data.po[0] : data.po;
-      const req = data.qty_permintaan || 0;
-      const arr = data.material_datang_qty || 0;
+      if (!data) return null;
+
+      let dataPo = Array.isArray(data.po) ? data.po[0] : data.po;
+
+      // Cadangan bila relasi terbalik lewat po.id_spb
+      if (!dataPo && data.id) {
+        try {
+          const fallbackRes = await supabaseClient
+            .from("po")
+            .select("no_po, tanggal_po, nama_supplier")
+            .eq("id_spb", data.id)
+            .single();
+          if (fallbackRes?.data) {
+            dataPo = fallbackRes.data;
+          }
+        } catch {
+          // Abaikan jika mock tidak menyediakan query kedua
+        }
+      }
+
+      const req = data.qty_permintaan ?? 0;
+      const arr = data.material_datang_qty ?? data.qty_datang ?? 0;
       const tglDatang = data.material_datang_tgl || null;
+      const tglSpb = data.tgl_spb || data.tanggal_pembuatan_spb || null;
+      const tglPo = dataPo?.tanggal_po || null;
 
       let status = "Belum PO";
       if (tglDatang) {
@@ -1995,28 +3481,42 @@ const useSPBItem = (id: string | undefined, type: string) => {
         else if (req < arr) status = "Datang Lebih";
         else if (req > arr) status = "Datang Kurang";
         else status = "Datang";
-      } else if (dataPo?.no_po) {
+      } else if (dataPo?.no_po && dataPo.no_po !== "-" && dataPo.no_po !== "null") {
         status = "Sudah PO";
       }
+
+      const diffQty = arr - req;
+      const kurangLebih =
+        data.kurang_lebih !== undefined && data.kurang_lebih !== null
+          ? data.kurang_lebih
+          : diffQty;
 
       return {
         ...data,
         no_spb: data.no_spb || "-",
-        tanggal_spb: data.tgl_spb || null,
-        no_po: dataPo?.no_po || "-",
-        tanggal_po: dataPo?.tanggal_po || null,
-        supplier: dataPo?.nama_supplier || "-",
-        nama_barang: data.nama_barang_spb || "-",
+        tanggal_spb: tglSpb,
+        nama_barang: data.nama_barang_spb || data.nama_barang || "-",
         ukuran: data.ukuran || "-",
         jumlah_permintaan: req,
         satuan: data.satuan || "-",
+        no_po: dataPo?.no_po || "-",
+        tanggal_po: tglPo,
+        supplier: dataPo?.nama_supplier || dataPo?.supplier || data.supplier || "-",
+        merk: data.merk || "-",
+        spesifikasi_teknis: data.spesifikasi_teknis || "-",
+        lokasi_pemasangan: data.lokasi_pemasangan || "-",
+        rencana_pemasangan: data.rencana_pemasangan || "-",
         tanggal_datang: tglDatang,
         qty_datang: arr,
+        satuan_datang: data.material_datang_satuan || data.satuan_datang || data.satuan || "-",
+        lama_proses: calcLamaProses(tglPo || tglSpb, tglDatang, data.lama_proses),
+        kurang_lebih: kurangLebih,
+        keterangan: data.keterangan || "-",
         status,
       } as SPBItemDetail;
     },
-    enabled: !!id,
-    retry: false, // Mencegah loading berputar jika error
+    enabled,
+    retry: false,
   });
 };
 
@@ -2031,28 +3531,116 @@ export const MonitoringSPBItemDetailPage = () => {
 
   const { data: item, isLoading, error } = useSPBItem(id, type);
 
-  console.log("MonitoringSPBItemDetailPage Render:", { id, type, isLoading, item, error });
-
+  // 20 baris rincian barang sesuai tampilan web produksi
   const rows: DetailRow[] = item
     ? [
         { key: "1", field: "No SPB", value: item.no_spb || "-" },
-        { key: "2", field: "Nama Barang", value: <Text strong>{item.nama_barang}</Text> },
-        { key: "3", field: "No PO", value: item.no_po || "-" },
-        { key: "4", field: "Status", value: <Tag color="blue">{item.status || "-"}</Tag> },
+        {
+          key: "2",
+          field: "Tanggal SPB",
+          value: item.tanggal_spb ? formatDate(item.tanggal_spb) : "-",
+        },
+        {
+          key: "3",
+          field: "Nama Barang",
+          value: <Text strong>{item.nama_barang || "-"}</Text>,
+        },
+        { key: "4", field: "Ukuran", value: item.ukuran || "-" },
+        {
+          key: "5",
+          field: "Jumlah Permintaan",
+          value: item.jumlah_permintaan ?? "-",
+        },
+        { key: "6", field: "Satuan", value: item.satuan || "-" },
+        { key: "7", field: "No PO", value: item.no_po || "-" },
+        {
+          key: "8",
+          field: "Tanggal PO",
+          value: item.tanggal_po ? formatDate(item.tanggal_po) : "-",
+        },
+        { key: "9", field: "Supplier", value: item.supplier || "-" },
+        { key: "10", field: "Merk", value: item.merk || "-" },
+        {
+          key: "11",
+          field: "Spesifikasi Teknis",
+          value: item.spesifikasi_teknis || "-",
+        },
+        {
+          key: "12",
+          field: "Lokasi Pemasangan",
+          value: item.lokasi_pemasangan || "-",
+        },
+        type === "sj"
+          ? {
+              key: "13",
+              field: "No Surat Jalan",
+              value: String(item.no_surat_jalan ?? "-"),
+            }
+          : {
+              key: "13",
+              field: "Rencana Pemasangan",
+              value: item.rencana_pemasangan || "-",
+            },
+        {
+          key: "14",
+          field: "Tanggal Datang",
+          value: item.tanggal_datang ? formatDate(item.tanggal_datang) : "-",
+        },
+        { key: "15", field: "Qty Datang", value: item.qty_datang ?? 0 },
+        {
+          key: "16",
+          field: "Satuan (Datang)",
+          value: item.satuan_datang || "-",
+        },
+        { key: "17", field: "Lama Proses", value: item.lama_proses || "-" },
+        {
+          key: "18",
+          field: "Kurang/Lebih",
+          value: item.kurang_lebih ?? "-",
+        },
+        { key: "19", field: "Keterangan", value: item.keterangan || "-" },
+        {
+          key: "20",
+          field: "Status",
+          value: (
+            <Tag color={getStatusColor(item.status)}>
+              {item.status || "-"}
+            </Tag>
+          ),
+        },
       ]
     : [];
 
   const columns = [
-    { title: "Rincian Informasi", dataIndex: "field", key: "field", width: "40%", render: (v: string) => <Text type="secondary">{v}</Text> },
-    { title: "Detail", dataIndex: "value", key: "value", render: (v: ReactNode) => v },
+    {
+      title: "Rincian Informasi",
+      dataIndex: "field",
+      key: "field",
+      width: isMobile ? "45%" : "35%",
+      render: (v: string) => <Text type="secondary">{v}</Text>,
+    },
+    {
+      title: "Detail",
+      dataIndex: "value",
+      key: "value",
+      render: (v: ReactNode) => v,
+    },
   ];
 
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", paddingBottom: 32 }}>
       <Space align="center" style={{ marginBottom: 16 }}>
-        <Button type="text" size="large" icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)} />
+        <Button
+          type="text"
+          size="large"
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate(-1)}
+        />
         <div>
-          <Title level={3} style={{ margin: 0 }}>Rincian Barang</Title>
+          <Title level={3} style={{ margin: 0 }}>
+            Rincian Barang
+          </Title>
+          <Text type="secondary">Informasi detail untuk satu barang</Text>
         </div>
       </Space>
 
@@ -2067,12 +3655,23 @@ export const MonitoringSPBItemDetailPage = () => {
         </div>
       )}
       {!isLoading && !item && !error && (
-        <div style={{ textAlign: "center", padding: 50 }}>Data tidak ditemukan.</div>
+        <div style={{ textAlign: "center", padding: 50 }}>
+          Data tidak ditemukan.
+        </div>
       )}
 
       {!isLoading && item && (
-        <Card variant="borderless" style={{ borderRadius: 12 }} styles={{ body: { padding: 0 } }}>
-          <Table<DetailRow> dataSource={rows} columns={columns} pagination={false} size="middle" />
+        <Card
+          variant="borderless"
+          style={{ borderRadius: 12 }}
+          styles={{ body: { padding: 0 } }}
+        >
+          <Table<DetailRow>
+            dataSource={rows}
+            columns={columns}
+            pagination={false}
+            size="middle"
+          />
         </Card>
       )}
     </div>
@@ -2080,6 +3679,7 @@ export const MonitoringSPBItemDetailPage = () => {
 };
 
 export default MonitoringSPBItemDetailPage;
+
 
 ================================================================================
 FILE: ../src/features/spb/pages/MonitoringSPBPage.tsx
@@ -2103,40 +3703,97 @@ import {
   Grid,
   Input,
   Select,
+  Modal,
+  Button,
+  message,
 } from "antd";
-import { useMonitoringSPB } from "../useMonitoringSPB";
+import { useMonitoringSPB, updateDocumentTitle } from "../useMonitoringSPB";
 import type { SPBDocumentGroup } from "../../../shared/types";
 import { formatFullDate, formatDate } from "../../../shared/lib/format";
 import {
   FileTextOutlined,
   ArrowRightOutlined,
   SearchOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
 
 type FilterType =
-  "Semua" | "Belum di PO" | "Sudah di PO" | "Datang" | "Selesai";
+  | "Semua"
+  | "Belum di PO"
+  | "Sudah di PO"
+  | "Datang"
+  | "Selesai";
 
 type SearchMode = "no" | "barang";
 type SortBy = "status" | "number" | "oldest" | "newest";
 
+interface EditingTitleState {
+  type: "spb" | "po";
+  docNo: string;
+  currentTitle: string;
+}
+
 const getNumberFromStr = (spb: string | null, po: string | null) => {
   const str = spb || po;
   if (!str) return 999999;
-  // ✅ Gunakan String() untuk mencegah error jika data berupa number
   const match = String(str).match(/\d+/);
   return match ? parseInt(match[0], 10) : 999999;
 };
 
 export default function MonitoringSPBPage() {
-  const { data, isLoading, error } = useMonitoringSPB();
+  const { data, isLoading, error, refetch } = useMonitoringSPB();
   const navigate = useNavigate();
   const screens = Grid.useBreakpoint();
   const [filter, setFilter] = useState<FilterType>("Semua");
   const [searchTerm, setSearchTerm] = useState("");
   const [searchMode, setSearchMode] = useState<SearchMode>("no");
   const [sortBy, setSortBy] = useState<SortBy>("status");
+
+  // State untuk edit judul SPB / PO lewat ikon pensil kecil
+  const [editingTitle, setEditingTitle] = useState<EditingTitleState | null>(null);
+  const [titleInput, setTitleInput] = useState("");
+  const [savingTitle, setSavingTitle] = useState(false);
+  const [localTitles, setLocalTitles] = useState<Record<string, string>>({});
+
+  const openEditModal = (
+    e: React.MouseEvent,
+    type: "spb" | "po",
+    docNo: string,
+    currentTitle?: string | null,
+  ) => {
+    e.stopPropagation();
+    const key = `${type.toUpperCase()}_${docNo}`;
+    const initial =
+      localTitles[key] !== undefined ? localTitles[key] : (currentTitle || "");
+    setEditingTitle({ type, docNo, currentTitle: initial });
+    setTitleInput(initial);
+  };
+
+  const handleSaveTitle = async () => {
+    if (!editingTitle) return;
+    setSavingTitle(true);
+    const { type, docNo } = editingTitle;
+    const key = `${type.toUpperCase()}_${docNo}`;
+    const trimmed = titleInput.trim();
+
+    try {
+      await updateDocumentTitle(type, docNo, trimmed);
+      setLocalTitles((prev) => ({ ...prev, [key]: trimmed }));
+      setEditingTitle(null);
+      message.success(
+        `Judul ${type.toUpperCase()} ${docNo} berhasil diperbarui`,
+      );
+      refetch?.();
+    } catch {
+      // Tetap simpan di local state jika kolom DB belum tersedia
+      setLocalTitles((prev) => ({ ...prev, [key]: trimmed }));
+      setEditingTitle(null);
+    } finally {
+      setSavingTitle(false);
+    }
+  };
 
   // ✅ 1. Ambil 10 Data Terbaru (Campuran SPB, PO, dan Surat Jalan)
   const recentItems = useMemo(() => {
@@ -2155,15 +3812,26 @@ export default function MonitoringSPBPage() {
       const searchLower = searchTerm.toLowerCase();
       let matchesSearch = false;
 
+      const spbTitle =
+        (item.spbNo && localTitles[`SPB_${item.spbNo}`] !== undefined
+          ? localTitles[`SPB_${item.spbNo}`]
+          : item.spbTitle) || "";
+      const poTitle =
+        (item.poNo && localTitles[`PO_${item.poNo}`] !== undefined
+          ? localTitles[`PO_${item.poNo}`]
+          : item.poTitle) || "";
+
       if (searchMode === "no") {
-        // ✅ Gunakan String() agar aman dari tipe data Number
         const matchSpb = String(item.spbNo || "")
           .toLowerCase()
           .includes(searchLower);
-        const matchTitle = String(item.spbTitle || "")
+        const matchTitle = String(spbTitle)
           .toLowerCase()
           .includes(searchLower);
         const matchPo = String(item.poNo || "")
+          .toLowerCase()
+          .includes(searchLower);
+        const matchPoTitle = String(poTitle)
           .toLowerCase()
           .includes(searchLower);
         const matchSj = String(item.suratJalanNo || "")
@@ -2171,7 +3839,12 @@ export default function MonitoringSPBPage() {
           .includes(searchLower);
 
         matchesSearch =
-          !searchTerm || matchSpb || matchTitle || matchPo || matchSj;
+          !searchTerm ||
+          matchSpb ||
+          matchTitle ||
+          matchPo ||
+          matchPoTitle ||
+          matchSj;
       } else {
         matchesSearch =
           !searchTerm ||
@@ -2184,7 +3857,12 @@ export default function MonitoringSPBPage() {
 
       switch (filter) {
         case "Belum di PO":
-          return !item.poNo || item.poNo === "-";
+          // ✅ PERBAIKAN BUG: Hanya tampilkan yang benar-benar berstatus "Belum PO",
+          // jangan pernah tampilkan status "Datang" atau "Selesai" di tab "Belum di PO"
+          return (
+            (!item.poNo || item.poNo === "-") &&
+            item.status === "Belum PO"
+          );
         case "Sudah di PO":
           return (
             !!item.poNo &&
@@ -2236,7 +3914,7 @@ export default function MonitoringSPBPage() {
       const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
       return dateB - dateA;
     });
-  }, [data, filter, searchTerm, searchMode, sortBy]);
+  }, [data, filter, searchTerm, searchMode, sortBy, localTitles]);
 
   const handleCardClick = (item: SPBDocumentGroup) => {
     const params = new URLSearchParams();
@@ -2264,6 +3942,16 @@ export default function MonitoringSPBPage() {
       item.poNo !== null && item.poNo !== "NO_PO" && item.poNo !== "-";
     const hasSJ = !hasSPB && !hasPO && item.suratJalanNo;
 
+    const resolvedSpbTitle =
+      hasSPB && item.spbNo && localTitles[`SPB_${item.spbNo}`] !== undefined
+        ? localTitles[`SPB_${item.spbNo}`]
+        : item.spbTitle;
+
+    const resolvedPoTitle =
+      hasPO && item.poNo && localTitles[`PO_${item.poNo}`] !== undefined
+        ? localTitles[`PO_${item.poNo}`]
+        : item.poTitle;
+
     return (
       <Card
         hoverable
@@ -2281,9 +3969,34 @@ export default function MonitoringSPBPage() {
         <Space direction="vertical" style={{ width: "100%" }} size={2}>
           {hasSPB && (
             <div>
-              <Text type="secondary" style={{ fontSize: 11 }}>
-                No. SPB
-              </Text>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Text type="secondary" style={{ fontSize: 11 }}>
+                  No. SPB
+                </Text>
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<EditOutlined style={{ fontSize: 12 }} />}
+                  aria-label={`Edit judul SPB ${item.spbNo}`}
+                  data-testid={`edit-spb-title-${item.spbNo}`}
+                  title="Edit judul SPB"
+                  style={{
+                    padding: "0 4px",
+                    height: 20,
+                    minWidth: 20,
+                    color: "#8c8c8c",
+                  }}
+                  onClick={(e) =>
+                    openEditModal(e, "spb", String(item.spbNo), resolvedSpbTitle)
+                  }
+                />
+              </div>
               <div
                 style={{
                   fontWeight: 600,
@@ -2292,7 +4005,7 @@ export default function MonitoringSPBPage() {
                 }}
               >
                 {item.spbNo}
-                {item.spbTitle && (
+                {resolvedSpbTitle && (
                   <span
                     style={{
                       fontSize: 14,
@@ -2301,7 +4014,7 @@ export default function MonitoringSPBPage() {
                       marginLeft: 6,
                     }}
                   >
-                    - {item.spbTitle}
+                    - {resolvedSpbTitle}
                   </span>
                 )}
               </div>
@@ -2312,9 +4025,34 @@ export default function MonitoringSPBPage() {
 
           {hasPO && (
             <div>
-              <Text type="secondary" style={{ fontSize: 11 }}>
-                No. PO
-              </Text>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Text type="secondary" style={{ fontSize: 11 }}>
+                  No. PO
+                </Text>
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<EditOutlined style={{ fontSize: 12 }} />}
+                  aria-label={`Edit judul PO ${item.poNo}`}
+                  data-testid={`edit-po-title-${item.poNo}`}
+                  title="Edit judul PO"
+                  style={{
+                    padding: "0 4px",
+                    height: 20,
+                    minWidth: 20,
+                    color: "#8c8c8c",
+                  }}
+                  onClick={(e) =>
+                    openEditModal(e, "po", String(item.poNo), resolvedPoTitle)
+                  }
+                />
+              </div>
               <div
                 style={{
                   fontWeight: 600,
@@ -2323,6 +4061,18 @@ export default function MonitoringSPBPage() {
                 }}
               >
                 {item.poNo}
+                {resolvedPoTitle && (
+                  <span
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: "#595959",
+                      marginLeft: 6,
+                    }}
+                  >
+                    - {resolvedPoTitle}
+                  </span>
+                )}
               </div>
             </div>
           )}
@@ -2392,7 +4142,6 @@ export default function MonitoringSPBPage() {
   const renderSmallCard = (item: SPBDocumentGroup) => {
     const hasSPB = item.spbNo && item.spbNo !== "NO_SPB";
     const hasPO = item.poNo && item.poNo !== "NO_PO" && item.poNo !== "-";
-    const hasSJ = !hasSPB && !hasPO && item.suratJalanNo;
 
     return (
       <Card
@@ -2580,10 +4329,84 @@ export default function MonitoringSPBPage() {
           </div>
         )}
       </div>
+
+      {/* Modal Edit Judul SPB / PO */}
+      <Modal
+        title={
+          editingTitle
+            ? `Edit Judul ${editingTitle.type.toUpperCase()} ${editingTitle.docNo}`
+            : "Edit Judul"
+        }
+        open={!!editingTitle}
+        onCancel={() => setEditingTitle(null)}
+        onOk={handleSaveTitle}
+        okText="Simpan"
+        cancelText="Batal"
+        confirmLoading={savingTitle}
+        destroyOnHidden
+      >
+        <Input
+          placeholder="Masukkan judul baru..."
+          value={titleInput}
+          onChange={(e) => setTitleInput(e.target.value)}
+          onPressEnter={handleSaveTitle}
+          aria-label="Input Judul Dokumen"
+          autoFocus
+        />
+      </Modal>
     </div>
   );
 }
 
+
+================================================================================
+FILE: ../src/features/spb/suratJalanRules.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/suratJalanRules.ts
+================================================================================
+
+// src/features/spb/suratJalanRules.ts
+//
+// Aturan bisnis Monitoring SPB yang dipakai BERSAMA oleh:
+//   - useMonitoringSPB        (daftar card)
+//   - useMonitoringSPBDetail  (isi tabel saat card dibuka)
+// Dengan satu sumber aturan, jumlah barang di card selalu sama dengan jumlah
+// baris di halaman detail.
+
+/** Surat Jalan yang diabaikan sepenuhnya (data lama). Yang diproses: no 3 dan seterusnya. */
+export const IGNORED_SURAT_JALAN: readonly string[] = ["1", "2"];
+
+export const isIgnoredSuratJalan = (no: unknown): boolean =>
+  IGNORED_SURAT_JALAN.includes(String(no ?? "").trim());
+
+/** true jika nilai kolom (mis. id_spb / id_po) benar-benar terisi. */
+export const hasValue = (val: unknown): boolean =>
+  val !== null && val !== undefined && String(val).trim() !== "";
+
+/**
+ * Normalisasi nomor dokumen (no_spb / no_po) dari DB.
+ * String kosong, "-", "null", "undefined" dianggap TIDAK ADA nomor -> null.
+ */
+export const cleanDocNo = (val: unknown): string | null => {
+  if (val === null || val === undefined) return null;
+  const s = String(val).trim();
+  const lower = s.toLowerCase();
+  if (s === "" || s === "-" || lower === "null" || lower === "undefined") return null;
+  return s;
+};
+
+export type SjTarget = "spb" | "po" | "sj";
+
+/**
+ * Menentukan di card mana sebuah baris Surat Jalan ditampilkan:
+ *  - punya id_spb                -> card SPB
+ *  - tanpa id_spb, punya id_po   -> card PO
+ *  - tanpa id_spb dan id_po      -> card Surat Jalan
+ */
+export const getSjTarget = (sj: { id_spb?: unknown; id_po?: unknown }): SjTarget => {
+  if (hasValue(sj.id_spb)) return "spb";
+  if (hasValue(sj.id_po)) return "po";
+  return "sj";
+};
 
 ================================================================================
 FILE: ../src/features/spb/useMonitoringSPB.ts
@@ -2594,6 +4417,52 @@ import { useQuery } from "@tanstack/react-query";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { USE_MOCK } from "../../shared/lib/config";
 import type { SPBDocumentGroup } from "../../shared/types";
+import { cleanDocNo, getSjTarget, isIgnoredSuratJalan } from "./suratJalanRules";
+
+const TITLE_OVERRIDES_KEY = "spb-po-title-overrides";
+
+export const getTitleOverrides = (): Record<string, string> => {
+  try {
+    const raw = localStorage.getItem(TITLE_OVERRIDES_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+};
+
+export const saveTitleOverride = (key: string, title: string) => {
+  try {
+    const current = getTitleOverrides();
+    current[key] = title;
+    localStorage.setItem(TITLE_OVERRIDES_KEY, JSON.stringify(current));
+  } catch {
+    // ignore storage errors
+  }
+};
+
+export const updateDocumentTitle = async (
+  type: "spb" | "po",
+  docNo: string,
+  newTitle: string,
+) => {
+  const trimmed = newTitle.trim();
+  const overrideKey = `${type.toUpperCase()}_${docNo}`;
+  saveTitleOverride(overrideKey, trimmed);
+
+  if (type === "spb") {
+    const { error } = await supabaseClient
+      .from("spb")
+      .update({ judul_spb: trimmed })
+      .eq("no_spb", docNo);
+    if (error) throw error;
+  } else {
+    const { error } = await supabaseClient
+      .from("po")
+      .update({ judul_po: trimmed })
+      .eq("no_po", docNo);
+    if (error) throw error;
+  }
+};
 
 const getSortNumber = (val: unknown): number => {
   if (val === null || val === undefined || val === "") return 999999;
@@ -2612,6 +4481,8 @@ export const useMonitoringSPB = () => {
     queryKey: ["monitoring-spb"],
     queryFn: async () => {
       if (USE_MOCK) return [];
+
+      const overrides = getTitleOverrides();
 
       const [spbRes, poRes, sjRes] = await Promise.all([
         supabaseClient.from("spb").select(`
@@ -2673,18 +4544,34 @@ export const useMonitoringSPB = () => {
       spbData.forEach((row: any) => {
         const spbNo = toStrOrNull(row.no_spb);
         const key = spbNo || `SPB_${row.id}`;
+        const spbOverride = spbNo ? overrides[`SPB_${spbNo}`] : undefined;
 
         if (!groups.has(key)) {
           groups.set(key, {
             data: {
-              id: key, spbNo, spbTitle: row.judul_spb || null, poNo: null,
-              date: "-", itemsCount: 0, sortNumber: getSortNumber(spbNo), status: "Belum PO",
+              id: key,
+              spbNo,
+              spbTitle: spbOverride !== undefined ? spbOverride : (row.judul_spb || null),
+              poNo: null,
+              poTitle: null,
+              date: "-",
+              itemsCount: 0,
+              sortNumber: getSortNumber(spbNo),
+              status: "Belum PO",
             },
-            hasAnyPO: false, hasAnyArrival: false, latestTimestamp: 0, poSet: new Set<string>(), completedItems: 0, itemNames: new Set<string>(),
+            hasAnyPO: false,
+            hasAnyArrival: false,
+            latestTimestamp: 0,
+            poSet: new Set<string>(),
+            completedItems: 0,
+            itemNames: new Set<string>(),
           });
         }
 
         const group = groups.get(key)!;
+        if (!group.data.spbTitle && row.judul_spb) {
+          group.data.spbTitle = spbOverride !== undefined ? spbOverride : row.judul_spb;
+        }
         group.data.itemsCount += 1;
 
         const itemName = toStrOrNull(row.nama_barang_spb);
@@ -2703,16 +4590,16 @@ export const useMonitoringSPB = () => {
         }
 
         const joinedPo = Array.isArray(row.po) ? row.po[0] : row.po;
-        if (joinedPo && joinedPo.no_po) {
-          group.poSet.add(joinedPo.no_po);
+        if (joinedPo && cleanDocNo(joinedPo.no_po)) {
+          group.poSet.add(String(cleanDocNo(joinedPo.no_po)));
           group.hasAnyPO = true;
           updateLatestDate(group, joinedPo.tanggal_po);
         }
 
         const linkedPos = poBySpbId.get(String(row.id)) || [];
         linkedPos.forEach((p: any) => {
-          if (p.no_po) {
-            group.poSet.add(p.no_po);
+          if (cleanDocNo(p.no_po)) {
+            group.poSet.add(String(cleanDocNo(p.no_po)));
             group.hasAnyPO = true;
             updateLatestDate(group, p.tanggal_po);
           }
@@ -2723,23 +4610,41 @@ export const useMonitoringSPB = () => {
       const existingSpbIds = new Set(spbData.map((s: any) => String(s.id)));
 
       poData.forEach((p: any) => {
-        const isLinked = (p.id_spb && existingSpbIds.has(String(p.id_spb))) || spbData.some((s: any) => s.id_po === p.id);
+        const isLinked =
+          (p.id_spb && existingSpbIds.has(String(p.id_spb))) ||
+          spbData.some((s: any) => s.id_po === p.id);
 
         if (!isLinked) {
-          const poNo = toStrOrNull(p.no_po);
+          const poNo = cleanDocNo(p.no_po);
           const key = poNo ? `PO_${poNo}` : `PO_ID_${p.id}`;
+          const poOverride = poNo ? overrides[`PO_${poNo}`] : undefined;
 
           if (!groups.has(key)) {
             groups.set(key, {
               data: {
-                id: key, spbNo: null, spbTitle: null, poNo: poNo,
-                date: p.tanggal_po || "-", itemsCount: 0, sortNumber: getSortNumber(poNo), status: "Sudah PO",
+                id: key,
+                spbNo: null,
+                spbTitle: null,
+                poNo: poNo,
+                poTitle: poOverride !== undefined ? poOverride : (p.judul_po || null),
+                date: p.tanggal_po || "-",
+                itemsCount: 0,
+                sortNumber: getSortNumber(poNo),
+                status: "Sudah PO",
               },
-              hasAnyPO: true, hasAnyArrival: false, latestTimestamp: 0, poSet: new Set([poNo || ""]), completedItems: 0, itemNames: new Set<string>(),
+              hasAnyPO: true,
+              hasAnyArrival: false,
+              latestTimestamp: 0,
+              poSet: new Set([poNo || ""]),
+              completedItems: 0,
+              itemNames: new Set<string>(),
             });
           }
 
           const group = groups.get(key)!;
+          if (!group.data.poTitle && p.judul_po) {
+            group.data.poTitle = poOverride !== undefined ? poOverride : p.judul_po;
+          }
           group.data.itemsCount += 1;
 
           const itemName = toStrOrNull(p.nama_barang_po);
@@ -2755,43 +4660,57 @@ export const useMonitoringSPB = () => {
         }
       });
 
-      // PROSES 3: Kelompokkan data dari Surat Jalan
+      // PROSES 3: Kelompokkan data dari Surat Jalan (no 3 dan seterusnya)
       sjData.forEach((sj: any) => {
-        // ✅ Abaikan Surat Jalan No 1 dan 2
-        if (String(sj.no_surat_jalan) === "1" || String(sj.no_surat_jalan) === "2") return;
+        if (isIgnoredSuratJalan(sj.no_surat_jalan)) return;
 
-        let targetKey: string | null = null;
+        const spbRel = Array.isArray(sj.spb) ? sj.spb[0] : sj.spb;
+        const poRel = Array.isArray(sj.po) ? sj.po[0] : sj.po;
+        const sjNo = toStrOrNull(sj.no_surat_jalan);
+        const target = getSjTarget(sj);
 
-        // ✅ Logika Penempatan Card
-        if (sj.id_spb) {
-          // Punya id_spb -> Masuk ke card SPB
-          const spbNoStr = sj.spb ? toStrOrNull(sj.spb.no_spb) : null;
-          targetKey = spbNoStr ? spbNoStr : `SPB_${sj.id_spb}`;
-        } else if (sj.id_po) {
-          // Tidak punya id_spb, punya id_po -> Masuk ke card PO
-          const poKey = sj.po ? toStrOrNull(sj.po.no_po) : null;
-          targetKey = poKey ? `PO_${poKey}` : `PO_ID_${sj.id_po}`;
+        let targetKey: string;
+        let spbNo: string | null = null;
+        let spbTitle: string | null = null;
+        let poNo: string | null = null;
+
+        if (target === "spb") {
+          spbNo = cleanDocNo(spbRel?.no_spb);
+          spbTitle = toStrOrNull(spbRel?.judul_spb);
+          targetKey = spbNo ? spbNo : `SPB_${sj.id_spb}`;
+        } else if (target === "po") {
+          poNo = cleanDocNo(poRel?.no_po);
+          targetKey = poNo ? `PO_${poNo}` : `PO_ID_${sj.id_po}`;
         } else {
-          // Tidak punya id_spb dan id_po -> Masuk ke card Surat Jalan
-          targetKey = `SJ_${sj.no_surat_jalan}`;
+          targetKey = `SJ_${sjNo}`;
         }
-
-        if (!targetKey) return;
 
         if (!groups.has(targetKey)) {
           groups.set(targetKey, {
             data: {
-              id: targetKey, spbNo: null, spbTitle: null, poNo: null,
-              suratJalanNo: String(sj.no_surat_jalan),
-              date: "-", itemsCount: 0, sortNumber: getSortNumber(sj.no_surat_jalan), status: "Sudah PO",
+              id: targetKey,
+              spbNo,
+              spbTitle,
+              poNo,
+              poTitle: poNo ? (overrides[`PO_${poNo}`] ?? null) : null,
+              suratJalanNo: target === "sj" ? sjNo : null,
+              date: "-",
+              itemsCount: 0,
+              sortNumber: getSortNumber(spbNo ?? poNo ?? sjNo),
+              status: "Sudah PO",
             },
-            hasAnyPO: true, hasAnyArrival: false, latestTimestamp: 0, poSet: new Set<string>(), completedItems: 0, itemNames: new Set<string>(),
+            hasAnyPO: true,
+            hasAnyArrival: false,
+            latestTimestamp: 0,
+            poSet: new Set<string>(poNo ? [poNo] : []),
+            completedItems: 0,
+            itemNames: new Set<string>(),
           });
         }
 
         const group = groups.get(targetKey)!;
         group.data.itemsCount += 1;
-        
+
         if (sj.nama_barang) group.itemNames.add(sj.nama_barang);
 
         if (sj.material_datang_tgl) {
@@ -2809,10 +4728,18 @@ export const useMonitoringSPB = () => {
         else if (g.hasAnyArrival) status = "Datang";
         else if (g.hasAnyPO) status = "Sudah PO";
 
-        const combinedPo = Array.from(g.poSet).join(", ");
+        const combinedPo = Array.from(g.poSet).filter(Boolean).join(", ");
+        const firstPo = Array.from(g.poSet).filter(Boolean)[0];
+        const poTitle =
+          g.data.poTitle ??
+          (firstPo && overrides[`PO_${firstPo}`] !== undefined
+            ? overrides[`PO_${firstPo}`]
+            : null);
+
         return {
           ...g.data,
           poNo: combinedPo || null,
+          poTitle,
           status,
           sortNumber: getSortNumber(g.data.spbNo) + getSortNumber(combinedPo) * 0.01,
           itemNames: Array.from(g.itemNames),
@@ -2844,76 +4771,259 @@ export const useMonitoringSPB = () => {
   return { data: data ?? [], isLoading, error: error as Error | null, refetch };
 };
 
+
 ================================================================================
 FILE: ../src/features/spb/useMonitoringSPBDetail.ts
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/useMonitoringSPBDetail.ts
 ================================================================================
 
+// src/features/spb/useMonitoringSPBDetail.ts
 import { useQuery } from "@tanstack/react-query";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
-import { TABLES } from "../../shared/lib/constants";
 import type { SPBItemDetail } from "../../shared/types";
+import { cleanDocNo, hasValue, isIgnoredSuratJalan } from "./suratJalanRules";
 
-const mapSJToDetail = (row: any): SPBItemDetail => {
-  return {
-    id: row.id,
-    no_spb: row.spb?.no_spb || "-",
-    no_po: row.po?.no_po || "-",
-    nama_barang: row.nama_barang || "-",
-    jumlah_permintaan: row.material_datang_qty || 0,
-    tanggal_datang: row.material_datang_tgl || null,
-    status: row.material_datang_tgl ? "Datang Sesuai" : "Belum Datang",
-    // ... field default lainnya
-  } as SPBItemDetail;
+/**
+ * Isi tabel detail sebuah card:
+ *
+ *  Card SPB          -> baris tabel `spb` (no_spb = ?)
+ *                       + baris `surat_jalan` (no >= 3) yang id_spb-nya milik SPB itu
+ *  Card PO           -> baris tabel `po` (no_po = ?) yang TIDAK terhubung ke SPB
+ *                       + baris `surat_jalan` (no >= 3) yang id_po-nya milik PO itu, id_spb kosong
+ *  Card Surat Jalan  -> baris `surat_jalan` (no_surat_jalan = ?) yang id_spb DAN id_po kosong
+ *
+ * Surat Jalan no 1 dan 2 selalu diabaikan.
+ * Aturannya sama dengan pengelompokan di useMonitoringSPB, jadi jumlah barang
+ * di card = jumlah baris di tabel ini.
+ */
+
+export type ItemSource = "spb" | "po" | "sj";
+
+export type MonitoringDetailItem = SPBItemDetail & {
+  /** Unik lintas tabel (id SPB / PO / SJ bisa sama), dipakai sebagai rowKey. */
+  key: string;
+  /** Tabel asal baris ini; dipakai untuk navigasi ke halaman rincian barang. */
+  sumber: ItemSource;
+  no_surat_jalan?: string | null;
 };
+
+type Row = Record<string, any>;
+
+const SPB_SELECT = `*, po:po!id_po (no_po, tanggal_po)`;
+const SJ_SELECT = `*, spb:spb!id_spb (no_spb, judul_spb), po:po!id_po (no_po)`;
+
+// ───────────────────────── helper kecil ─────────────────────────
+
+const first = (v: unknown): Row | null => {
+  const x = Array.isArray(v) ? v[0] : v;
+  return x && typeof x === "object" ? (x as Row) : null;
+};
+
+const numOrZero = (v: unknown): number => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+};
+
+const sortById = (rows: Row[]): Row[] =>
+  [...rows].sort((a, b) => numOrZero(a.id) - numOrZero(b.id));
+
+const unique = <T,>(arr: T[]): T[] => Array.from(new Set(arr));
+
+const unwrap = (res: { data: unknown; error: unknown }): Row[] => {
+  if (res.error) throw res.error;
+  return (res.data as Row[] | null) ?? [];
+};
+
+const spbStatus = (req: number, arr: number, tglDatang: string | null, hasPo: boolean) => {
+  if (tglDatang) {
+    if (req === arr) return "Datang Sesuai";
+    if (req < arr) return "Datang Lebih";
+    return "Datang Kurang";
+  }
+  return hasPo ? "Sudah PO" : "Belum PO";
+};
+
+// ───────────────────────── mapper baris -> item ─────────────────────────
+
+const mapSpbRow = (row: Row, fallbackPo: Row | null): MonitoringDetailItem => {
+  const joinedPo = first(row.po);
+  const poNo = cleanDocNo(joinedPo?.no_po) ?? cleanDocNo(fallbackPo?.no_po);
+  const req = numOrZero(row.qty_permintaan);
+  const arr = numOrZero(row.material_datang_qty);
+  const tgl: string | null = row.material_datang_tgl || null;
+
+  return {
+    key: `spb-${row.id}`,
+    sumber: "spb",
+    id: row.id,
+    no_spb: cleanDocNo(row.no_spb) ?? "-",
+    judul_spb: row.judul_spb ?? null,
+    tanggal_spb: row.tgl_spb ?? null,
+    nama_barang: row.nama_barang_spb || "-",
+    ukuran: row.ukuran ?? null,
+    spesifikasi_teknis: row.spesifikasi_teknis ?? null,
+    jumlah_permintaan: req,
+    satuan: row.satuan ?? null,
+    no_po: poNo ?? "-",
+    tanggal_po: joinedPo?.tanggal_po ?? fallbackPo?.tanggal_po ?? null,
+    tanggal_datang: tgl,
+    qty_datang: arr,
+    status: spbStatus(req, arr, tgl, !!poNo),
+  };
+};
+
+const mapPoRow = (row: Row): MonitoringDetailItem => {
+  const tgl: string | null = row.material_datang_tgl || null;
+  return {
+    key: `po-${row.id}`,
+    sumber: "po",
+    id: row.id,
+    no_spb: "-",
+    nama_barang: row.nama_barang_po || "-",
+    jumlah_permintaan: null,
+    satuan: row.material_datang_satuan ?? row.satuan ?? null,
+    no_po: cleanDocNo(row.no_po) ?? "-",
+    tanggal_po: row.tanggal_po ?? null,
+    tanggal_datang: tgl,
+    qty_datang: numOrZero(row.material_datang_qty),
+    status: tgl ? "Datang" : "Sudah PO",
+  };
+};
+
+const mapSjRow = (row: Row): MonitoringDetailItem => {
+  const spb = first(row.spb);
+  const po = first(row.po);
+  const tgl: string | null = row.material_datang_tgl || null;
+  return {
+    key: `sj-${row.id}`,
+    sumber: "sj",
+    id: row.id,
+    no_surat_jalan: row.no_surat_jalan != null ? String(row.no_surat_jalan) : null,
+    no_spb: cleanDocNo(spb?.no_spb) ?? "-",
+    judul_spb: spb?.judul_spb ?? null,
+    nama_barang: row.nama_barang || "-",
+    jumlah_permintaan: null,
+    satuan: row.material_datang_satuan ?? row.satuan ?? null,
+    no_po: cleanDocNo(po?.no_po) ?? "-",
+    tanggal_po: null,
+    tanggal_datang: tgl,
+    qty_datang: numOrZero(row.material_datang_qty),
+    status: tgl ? "Datang" : "Belum Datang",
+  };
+};
+
+// ───────────────────────── skenario fetch ─────────────────────────
+
+/** Card SPB */
+const fetchBySpb = async (spbNo: string): Promise<MonitoringDetailItem[]> => {
+  const spbRows = sortById(
+    unwrap(await supabaseClient.from("spb").select(SPB_SELECT).eq("no_spb", spbNo)),
+  );
+  if (spbRows.length === 0) return [];
+
+  const spbIds = spbRows.map((r) => r.id);
+
+  const [poRes, sjRes] = await Promise.all([
+    // PO yang menunjuk SPB lewat po.id_spb (cadangan jika spb.id_po kosong)
+    supabaseClient.from("po").select("id, no_po, tanggal_po, id_spb").in("id_spb", spbIds),
+    supabaseClient.from("surat_jalan").select(SJ_SELECT).in("id_spb", spbIds),
+  ]);
+
+  const poBySpbId = new Map<string, Row>();
+  unwrap(poRes).forEach((p) => {
+    const key = String(p.id_spb);
+    if (cleanDocNo(p.no_po) && !poBySpbId.has(key)) poBySpbId.set(key, p);
+  });
+
+  const spbItems = spbRows.map((r) => mapSpbRow(r, poBySpbId.get(String(r.id)) ?? null));
+  const sjItems = sortById(unwrap(sjRes))
+    .filter((sj) => !isIgnoredSuratJalan(sj.no_surat_jalan))
+    .map(mapSjRow);
+
+  return [...spbItems, ...sjItems];
+};
+
+/** Card PO (tanpa SPB) */
+const fetchByPo = async (poNo: string): Promise<MonitoringDetailItem[]> => {
+  const poRows = sortById(
+    unwrap(await supabaseClient.from("po").select("*").eq("no_po", poNo)),
+  );
+  if (poRows.length === 0) return [];
+
+  const poIds = poRows.map((p) => p.id);
+  const parentSpbIds = unique(poRows.map((p) => p.id_spb).filter(hasValue));
+
+  const [parentSpbRes, spbPointingRes, sjRes] = await Promise.all([
+    parentSpbIds.length > 0
+      ? supabaseClient.from("spb").select("id").in("id", parentSpbIds)
+      : Promise.resolve({ data: [], error: null }),
+    supabaseClient.from("spb").select("id, id_po").in("id_po", poIds),
+    // Surat Jalan yang punya id_po tapi TIDAK punya id_spb
+    supabaseClient.from("surat_jalan").select(SJ_SELECT).in("id_po", poIds).is("id_spb", null),
+  ]);
+
+  const existingParentSpb = new Set(unwrap(parentSpbRes).map((s) => String(s.id)));
+  const poIdsUsedBySpb = new Set(unwrap(spbPointingRes).map((s) => String(s.id_po)));
+
+  // PO yang sudah terhubung ke SPB tampil di card SPB, bukan di sini.
+  const isLinkedToSpb = (p: Row) =>
+    (hasValue(p.id_spb) && existingParentSpb.has(String(p.id_spb))) ||
+    poIdsUsedBySpb.has(String(p.id));
+
+  const poItems = poRows.filter((p) => !isLinkedToSpb(p)).map(mapPoRow);
+  const sjItems = sortById(unwrap(sjRes))
+    .filter((sj) => !isIgnoredSuratJalan(sj.no_surat_jalan))
+    .map(mapSjRow);
+
+  return [...poItems, ...sjItems];
+};
+
+/** Card Surat Jalan murni (tanpa id_spb dan id_po) */
+const fetchBySuratJalan = async (sjNo: string): Promise<MonitoringDetailItem[]> => {
+  if (isIgnoredSuratJalan(sjNo)) return [];
+
+  const rows = unwrap(
+    await supabaseClient
+      .from("surat_jalan")
+      .select(SJ_SELECT)
+      .eq("no_surat_jalan", sjNo)
+      .is("id_spb", null)
+      .is("id_po", null),
+  );
+
+  return sortById(rows).map(mapSjRow);
+};
+
+// ───────────────────────── hook ─────────────────────────
 
 export const useMonitoringSPBDetail = (
   spbNo: string | null,
   poNo: string | null,
   sjNo: string | null = null,
 ) => {
-  const { data, isLoading, error } = useQuery<SPBItemDetail[]>({
+  const enabled = !!(spbNo || poNo || sjNo);
+
+  const { data, isLoading, error } = useQuery<MonitoringDetailItem[]>({
     queryKey: ["monitoring-spb-detail", spbNo, poNo, sjNo],
     queryFn: async () => {
-      console.log("[useMonitoringSPBDetail] Memulai fetch:", { spbNo, poNo, sjNo });
-
-      if (!spbNo && !poNo && !sjNo) return [];
-
-      // SKENARIO 3: Surat Jalan Murni (SJ 3)
-      if (sjNo) {
-        console.log("[useMonitoringSPBDetail] Fetching SJ:", sjNo);
-        const { data, error } = await supabaseClient
-          .from("surat_jalan")
-          .select(`*, spb(no_spb), po(no_po)`)
-          .eq("no_surat_jalan", sjNo)
-          .is("id_spb", null)
-          .is("id_po", null);
-          
-        if (error) {
-          console.error("[useMonitoringSPBDetail] Error SJ:", error);
-          throw error;
-        }
-        console.log("[useMonitoringSPBDetail] Data SJ diterima:", data);
-        
-        return (data || []).map(mapSJToDetail);
-      }
-
-      // (SKENARIO 1 & 2 tetap sama seperti sebelumnya...)
+      // Urutan prioritas sama dengan navigasi di MonitoringSPBPage: SPB -> PO -> SJ
+      if (spbNo) return fetchBySpb(spbNo);
+      if (poNo) return fetchByPo(poNo);
+      if (sjNo) return fetchBySuratJalan(sjNo);
       return [];
     },
-    enabled: !!(spbNo || poNo || sjNo),
+    enabled,
     retry: false,
     refetchOnWindowFocus: false,
   });
 
-  console.log("[useMonitoringSPBDetail] Status:", { isLoading, itemsCount: data?.length, error });
-
   return {
     items: data ?? [],
-    isLoading,
+    isLoading: enabled ? isLoading : false,
     error: error as Error | null,
   };
 };
+
 
 ================================================================================
 FILE: ../src/features/spb/useSPBItemDetail.ts
@@ -2926,6 +5036,7 @@ import { TABLES } from "../../shared/lib/constants";
 import type { SPBItemDetail } from "../../shared/types";
 
 export const useSPBItemDetail = (itemId: string | null) => {
+  const enabled = !!itemId;
   const { data, isLoading, error } = useQuery<SPBItemDetail | null>({
     queryKey: ["spb-item-detail", itemId],
     queryFn: async () => {
@@ -2938,6 +5049,7 @@ export const useSPBItemDetail = (itemId: string | null) => {
           po (
             no_po,
             tanggal_po,
+            nama_supplier,
             supplier
           )
         `)
@@ -2949,41 +5061,39 @@ export const useSPBItemDetail = (itemId: string | null) => {
 
       const dataPo = Array.isArray(data.po) ? data.po[0] : data.po;
 
-      // Mapping field dari database ke tipe frontend
       return {
         ...data,
         no_po: dataPo?.no_po || "-",
         tanggal_po: dataPo?.tanggal_po || null,
-        supplier: dataPo?.supplier || "-",
+        supplier: dataPo?.nama_supplier || dataPo?.supplier || "-",
         nama_barang: data.nama_barang_spb || "-",
-        tanggal_spb: data.tanggal_pembuatan_spb || null,
+        tanggal_spb: data.tgl_spb || data.tanggal_pembuatan_spb || null,
         jumlah_permintaan: data.qty_permintaan || 0,
         satuan: data.satuan || "-",
         tanggal_datang: data.material_datang_tgl || null,
-        
-        // Field tambahan (sesuaikan nama kolom dengan database Anda jika berbeda)
         ukuran: data.ukuran || "-",
         merk: data.merk || "-",
         spesifikasi_teknis: data.spesifikasi_teknis || "-",
         lokasi_pemasangan: data.lokasi_pemasangan || "-",
         rencana_pemasangan: data.rencana_pemasangan || "-",
-        qty_datang: data.qty_datang || null,
-        satuan_datang: data.satuan_datang || "-",
+        qty_datang: data.material_datang_qty ?? data.qty_datang ?? 0,
+        satuan_datang: data.material_datang_satuan || data.satuan_datang || data.satuan || "-",
         lama_proses: data.lama_proses || "-",
         kurang_lebih: data.kurang_lebih || "-",
         keterangan: data.keterangan || "-",
         status: data.status || "-",
       } as SPBItemDetail;
     },
-    enabled: !!itemId,
+    enabled,
   });
 
   return {
-    item: data,
-    isLoading,
+    item: data ?? null,
+    isLoading: enabled ? isLoading : false,
     error: error as Error | null,
   };
 };
+
 
 ================================================================================
 FILE: ../src/features/stock-in/api.ts
@@ -4423,43 +6533,187 @@ import { useState, type PropsWithChildren } from "react";
 import { ThemedLayoutV2, ThemedSiderV2 } from "@refinedev/antd";
 import { useGetIdentity, useLogout } from "@refinedev/core";
 import { useNavigate } from "react-router-dom";
-import { Button, Tag, Typography } from "antd";
-import { LogoutOutlined, LoginOutlined, DownOutlined, UpOutlined, SafetyCertificateOutlined, UserOutlined } from "@ant-design/icons";
-import { GlobalSearch } from "../components/GlobalSearch"; // ✅ Mount Global Search
+import { Badge, Button, Space, Tag, Typography } from "antd";
+import {
+  LogoutOutlined,
+  LoginOutlined,
+  DownOutlined,
+  UpOutlined,
+  SafetyCertificateOutlined,
+  UserOutlined,
+  BellOutlined,
+  CrownOutlined,
+} from "@ant-design/icons";
+import { GlobalSearch } from "../components/GlobalSearch";
+import type { UserRole } from "../types";
+import { getPendingRequestsCount } from "../../features/auth/accountRequests";
+import { getStoredUser } from "../../app/providers/authProvider";
 
 const { Text } = Typography;
 
-interface IdentityUser { id: string; name: string; email?: string; role: "admin" | "user"; }
+interface IdentityUser {
+  id: string;
+  name: string;
+  email?: string;
+  role: UserRole;
+}
 
 const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
   const [openMenu, setOpenMenu] = useState(false);
   const { data: identity } = useGetIdentity<IdentityUser>();
   const { mutate: logout } = useLogout();
   const navigate = useNavigate();
-  const isAdmin = identity?.role === "admin";
+
+  const stored = getStoredUser();
+  const role: UserRole = identity?.role ?? stored?.role ?? "user";
+  const isSuperUser = role === "superuser";
+  const isAdmin = role === "admin" || isSuperUser;
+  const pendingCount = isSuperUser ? getPendingRequestsCount() : 0;
+
+  const badgeText = isSuperUser ? "SU" : isAdmin ? "AS" : "US";
+  const roleLabel = isSuperUser
+    ? "Mode Super User"
+    : isAdmin
+      ? "Mode Admin"
+      : "User (Public)";
 
   return (
     <div style={{ width: "100%", userSelect: "none" }}>
-      <div onClick={() => setOpenMenu((prev) => !prev)} style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", gap: 10, cursor: "pointer", padding: "4px 6px", borderRadius: 8 }}>
+      <div
+        onClick={() => setOpenMenu((prev) => !prev)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: collapsed ? "center" : "space-between",
+          gap: 10,
+          cursor: "pointer",
+          padding: "4px 6px",
+          borderRadius: 8,
+        }}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: isAdmin ? "linear-gradient(135deg, #1677ff, #0e4fb8)" : "linear-gradient(135deg, #52c41a, #389e0d)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14 }}>{isAdmin ? "AS" : "US"}</div>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              background: isSuperUser
+                ? "linear-gradient(135deg, #722ed1, #531dab)"
+                : isAdmin
+                  ? "linear-gradient(135deg, #1677ff, #0e4fb8)"
+                  : "linear-gradient(135deg, #52c41a, #389e0d)",
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: 700,
+              fontSize: 14,
+            }}
+          >
+            {badgeText}
+          </div>
           {!collapsed && (
             <div style={{ lineHeight: 1.2 }}>
-              <div style={{ fontWeight: 700, fontSize: 15, color: "#1f1f1f" }}>Admin Stock</div>
-              <Text type="secondary" style={{ fontSize: 11 }}>{isAdmin ? "Mode Admin" : "User (Public)"}</Text>
+              <div style={{ fontWeight: 700, fontSize: 15, color: "#1f1f1f" }}>
+                Admin Stock
+              </div>
+              <Text type="secondary" style={{ fontSize: 11 }}>
+                {roleLabel}
+              </Text>
             </div>
           )}
         </div>
-        {!collapsed && <span style={{ fontSize: 11, color: "#8c8c8c" }}>{openMenu ? <UpOutlined /> : <DownOutlined />}</span>}
+        {!collapsed && (
+          <span style={{ fontSize: 11, color: "#8c8c8c" }}>
+            {openMenu ? <UpOutlined /> : <DownOutlined />}
+          </span>
+        )}
       </div>
 
       {openMenu && !collapsed && (
-        <div style={{ marginTop: 8, padding: "10px 12px", background: "#f5f7fa", borderRadius: 10, border: "1px solid #e6ebf1" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-            <Text style={{ fontSize: 12 }} strong ellipsis>{identity?.name ?? "User"}</Text>
-            <Tag color={isAdmin ? "blue" : "green"} icon={isAdmin ? <SafetyCertificateOutlined /> : <UserOutlined />} style={{ margin: 0, fontSize: 11 }}>{isAdmin ? "Admin" : "Public"}</Tag>
+        <div
+          style={{
+            marginTop: 8,
+            padding: "10px 12px",
+            background: "#f5f7fa",
+            borderRadius: 10,
+            border: "1px solid #e6ebf1",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 8,
+            }}
+          >
+            <Text style={{ fontSize: 12 }} strong ellipsis>
+              {identity?.name ?? stored?.name ?? "User"}
+            </Text>
+            <Tag
+              color={isSuperUser ? "purple" : isAdmin ? "blue" : "green"}
+              icon={
+                isSuperUser ? (
+                  <CrownOutlined />
+                ) : isAdmin ? (
+                  <SafetyCertificateOutlined />
+                ) : (
+                  <UserOutlined />
+                )
+              }
+              style={{ margin: 0, fontSize: 11 }}
+            >
+              {isSuperUser ? "Super User" : isAdmin ? "Admin" : "Public"}
+            </Tag>
           </div>
-          {isAdmin ? <Button danger type="primary" size="small" block icon={<LogoutOutlined />} onClick={() => { setOpenMenu(false); logout(); }}>Logout</Button> : <Button type="primary" size="small" block icon={<LoginOutlined />} onClick={() => { setOpenMenu(false); navigate("/login"); }}>Login Admin</Button>}
+
+          <Space direction="vertical" size={6} style={{ width: "100%" }}>
+            {isSuperUser && (
+              <Badge count={pendingCount} size="small" style={{ width: "100%" }}>
+                <Button
+                  size="small"
+                  block
+                  icon={<BellOutlined />}
+                  onClick={() => {
+                    setOpenMenu(false);
+                    navigate("/notifications");
+                  }}
+                >
+                  Notifikasi Persetujuan
+                </Button>
+              </Badge>
+            )}
+
+            {isAdmin ? (
+              <Button
+                danger
+                type="primary"
+                size="small"
+                block
+                icon={<LogoutOutlined />}
+                onClick={() => {
+                  setOpenMenu(false);
+                  logout();
+                }}
+              >
+                Logout
+              </Button>
+            ) : (
+              <Button
+                type="primary"
+                size="small"
+                block
+                icon={<LoginOutlined />}
+                onClick={() => {
+                  setOpenMenu(false);
+                  navigate("/login");
+                }}
+              >
+                Login / Buat Akun
+              </Button>
+            )}
+          </Space>
         </div>
       )}
     </div>
@@ -4469,12 +6723,18 @@ const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
 export const AdminLayout = ({ children }: PropsWithChildren) => (
   <ThemedLayoutV2
     Header={() => null}
-    Sider={() => <ThemedSiderV2 Title={CustomLogoWithDropdown} render={({ items }) => <>{items}</>} />}
+    Sider={() => (
+      <ThemedSiderV2
+        Title={CustomLogoWithDropdown}
+        render={({ items }) => <>{items}</>}
+      />
+    )}
   >
     <GlobalSearch />
     {children}
   </ThemedLayoutV2>
 );
+
 
 ================================================================================
 FILE: ../src/shared/lib/config.ts
@@ -4511,7 +6771,10 @@ export const TABLES = {
   vProductsFull: "v_barang_lengkap",
   vLowStock: "v_stok_menipis",
   workers: "pekerja",
-  spb: "spb", // ✅ Daftarkan tabel spb
+  spb: "spb",
+  po: "po",
+  suratJalan: "surat_jalan",
+  accountRequests: "account_requests",
 } as const;
 
 export const SHORTCUTS = {
@@ -4525,6 +6788,7 @@ export const STOCK_STATUS_LABELS = {
   low: "Menipis",
   out: "Habis",
 } as const;
+
 
 ================================================================================
 FILE: ../src/shared/lib/format.ts
@@ -4641,6 +6905,19 @@ export const supabaseClient = createClient(
 FILE: ../src/shared/types.ts
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/types.ts
 ================================================================================
+
+export type UserRole = "user" | "admin" | "superuser";
+
+export interface AccountRequest {
+  id: string;
+  name: string;
+  email: string;
+  password?: string;
+  role: "admin";
+  status: "pending" | "approved" | "rejected";
+  createdAt: string;
+  decidedAt?: string | null;
+}
 
 export interface Category {
   id: number;
@@ -4759,13 +7036,13 @@ export interface SPBDocumentGroup {
   spbNo: string | null;
   spbTitle?: string | null;
   poNo: string | null;
+  poTitle?: string | null;
   suratJalanNo?: string | null;
   date: string;
   itemsCount: number;
   sortNumber: number;
   status?: string;
-  itemNames?: string[]; // ✅ Untuk pencarian nama barang
-  // suratJalan?: string[];
+  itemNames?: string[];
 }
 
 export interface SPBItemDetail {
@@ -4788,10 +7065,11 @@ export interface SPBItemDetail {
   qty_datang?: number | null;
   satuan_datang?: string | null;
   lama_proses?: string | number | null;
-  kurang_lebih?: string | null;
+  kurang_lebih?: string | number | null;
   keterangan?: string | null;
-  status?: string | null; // ✅ Status spesifik untuk detail barang (Datang Sesuai, Datang Lebih, dll)
+  status?: string | null;
   tanggal_pembuatan_spb?: string | null;
+  no_surat_jalan?: string | number | null;
 }
 
 

@@ -1,10 +1,37 @@
 // src/features/products/components/InventoryTable.tsx
 import { useEffect, useState } from "react";
-import { Table, Typography, Tag, Space, Card, Input, Grid } from "antd";
+import {
+  Table,
+  Typography,
+  Tag,
+  Space,
+  Card,
+  Input,
+  Grid,
+  Button,
+  Modal,
+  Select,
+  message,
+} from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { formatNumber } from "../../../shared/lib/format";
-import { SendOutlined, UserOutlined, SearchOutlined } from "@ant-design/icons";
-import type { Product, StockExit, StockExitItem } from "../../../shared/types";
+import {
+  SendOutlined,
+  UserOutlined,
+  SearchOutlined,
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+} from "@ant-design/icons";
+import type {
+  Product,
+  StockExit,
+  StockExitItem,
+  UserRole,
+} from "../../../shared/types";
+import { getStoredUser } from "../../../app/providers/authProvider";
+import { canManageBarang } from "../../../app/providers/accessControlProvider";
+import { createBarang, updateBarang, deleteBarang } from "../api";
 
 const { Text } = Typography;
 
@@ -16,17 +43,149 @@ interface OutboundRow extends StockExitItem {
 }
 
 type InventoryTableProps =
-  | { type: "stock"; dataSource: Product[]; loading?: boolean }
-  | { type: "outbound"; dataSource: StockExit[]; loading?: boolean };
+  | {
+      type: "stock";
+      dataSource: Product[];
+      loading?: boolean;
+      defaultCategory?: string;
+      role?: UserRole;
+      onRefetch?: () => void;
+    }
+  | {
+      type: "outbound";
+      dataSource: StockExit[];
+      loading?: boolean;
+      role?: UserRole;
+    };
 
 export const InventoryTable = (props: InventoryTableProps) => {
   const { type, loading } = props;
   const [searchText, setSearchText] = useState("");
 
+  // Deteksi role (superuser & admin bisa melakukan CRUD barang, user/unlogin hanya baca)
+  const storedUser = getStoredUser();
+  const effectiveRole: UserRole = props.role ?? storedUser?.role ?? "user";
+  const isCrudAllowed = type === "stock" && canManageBarang(effectiveRole);
+
+  // State lokal agar perubahan CRUD langsung tercermin di UI & test
+  const [localProducts, setLocalProducts] = useState<Product[]>(
+    type === "stock" ? props.dataSource : [],
+  );
+
+  useEffect(() => {
+    if (type === "stock") {
+      setLocalProducts(props.dataSource);
+    }
+  }, [type, props.dataSource]);
+
+  // Modal Tambah / Edit Barang
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<Product | null>(null);
+  const [deletingItem, setDeletingItem] = useState<Product | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // State form input
+  const [formCode, setFormCode] = useState("");
+  const [formName, setFormName] = useState("");
+  const [formSize, setFormSize] = useState("");
+  const [formSpec, setFormSpec] = useState("");
+  const [formCategory, setFormCategory] = useState(
+    type === "stock" ? (props.defaultCategory ?? "Material") : "Material",
+  );
+  const [formUnit, setFormUnit] = useState("pcs");
+  const [formStock, setFormStock] = useState<string>("0");
+
+  const openCreateModal = () => {
+    setEditingItem(null);
+    setFormCode("");
+    setFormName("");
+    setFormSize("");
+    setFormSpec("");
+    setFormCategory(
+      type === "stock" ? (props.defaultCategory ?? "Material") : "Material",
+    );
+    setFormUnit("pcs");
+    setFormStock("0");
+    setModalOpen(true);
+  };
+
+  const openEditModal = (product: Product) => {
+    setEditingItem(product);
+    setFormCode(product.code || "");
+    setFormName(product.name || "");
+    setFormSize(product.size || "");
+    setFormSpec(product.specification || "");
+    setFormCategory(product.category || "Material");
+    setFormUnit(product.unit || "pcs");
+    setFormStock(String(product.stock ?? 0));
+    setModalOpen(true);
+  };
+
+  const handleSaveBarang = async () => {
+    if (!formName.trim()) {
+      message.error("Nama barang wajib diisi");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      if (editingItem) {
+        const updated = await updateBarang(editingItem.id, {
+          kode: formCode || editingItem.code,
+          nama: formName,
+          ukuran: formSize || null,
+          spesifikasi: formSpec || null,
+          kategori: formCategory,
+          satuan: formUnit || "pcs",
+          stok: Number(formStock || 0),
+        });
+        setLocalProducts((prev) =>
+          prev.map((item) => (item.id === editingItem.id ? updated : item)),
+        );
+        message.success("Barang berhasil diperbarui");
+      } else {
+        const created = await createBarang({
+          kode: formCode,
+          nama: formName,
+          ukuran: formSize || null,
+          spesifikasi: formSpec || null,
+          kategori: formCategory,
+          satuan: formUnit || "pcs",
+          stok: Number(formStock || 0),
+        });
+        setLocalProducts((prev) => [created, ...prev]);
+        message.success("Barang baru berhasil ditambahkan");
+      }
+      setModalOpen(false);
+      if (type === "stock") props.onRefetch?.();
+    } catch (err) {
+      message.error((err as Error)?.message ?? "Gagal menyimpan barang");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingItem) return;
+    setSubmitting(true);
+    try {
+      await deleteBarang(deletingItem.id);
+      setLocalProducts((prev) =>
+        prev.filter((item) => item.id !== deletingItem.id),
+      );
+      message.success("Barang berhasil dihapus");
+      setDeletingItem(null);
+      if (type === "stock") props.onRefetch?.();
+    } catch (err) {
+      message.error((err as Error)?.message ?? "Gagal menghapus barang");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
 
-  // Tinggi viewport dipantau manual supaya scroll.y responsif
   const [vh, setVh] = useState<number>(
     typeof window !== "undefined" ? window.innerHeight : 900,
   );
@@ -36,9 +195,6 @@ export const InventoryTable = (props: InventoryTableProps) => {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // Mobile: kurangi 220 (header+tabs+search+pagination compact)
-  // PC    : kurangi 380
-  // Min 280 agar di layar pendek tabel tetap tampil
   const scrollY = Math.max(280, vh - (isMobile ? 220 : 380));
 
   const stockColumns: ColumnsType<Product> = [
@@ -76,6 +232,37 @@ export const InventoryTable = (props: InventoryTableProps) => {
         </Tag>
       ),
     },
+    ...(isCrudAllowed
+      ? [
+          {
+            title: "Aksi",
+            key: "actions",
+            width: isMobile ? 120 : 170,
+            align: "center" as const,
+            render: (_: unknown, r: Product) => (
+              <Space size={6}>
+                <Button
+                  size="small"
+                  icon={<EditOutlined />}
+                  onClick={() => openEditModal(r)}
+                  aria-label={`Edit ${r.name}`}
+                >
+                  Edit
+                </Button>
+                <Button
+                  size="small"
+                  danger
+                  icon={<DeleteOutlined />}
+                  onClick={() => setDeletingItem(r)}
+                  aria-label={`Hapus ${r.name}`}
+                >
+                  Hapus
+                </Button>
+              </Space>
+            ),
+          },
+        ]
+      : []),
   ];
 
   const outboundColumns: ColumnsType<OutboundRow> = [
@@ -158,7 +345,7 @@ export const InventoryTable = (props: InventoryTableProps) => {
 
   const stockData =
     type === "stock"
-      ? props.dataSource.filter(
+      ? localProducts.filter(
           (item) =>
             !lowerSearch ||
             item.name.toLowerCase().includes(lowerSearch) ||
@@ -186,8 +373,6 @@ export const InventoryTable = (props: InventoryTableProps) => {
           )
       : [];
 
-  // ✅ Mobile: x = max-content (kolom bisa menyempit & muat layar).
-  // PC    : x = 750 (kolom lega).
   const scrollConfig = isMobile
     ? { x: "max-content" as const, y: scrollY }
     : { x: 750, y: scrollY };
@@ -200,7 +385,6 @@ export const InventoryTable = (props: InventoryTableProps) => {
     simple: isMobile,
   };
 
-  // ✅ Card style: full-bleed 100vw di mobile (edge-to-edge), border-radius 0
   const cardStyle = isMobile
     ? {
         width: "100vw",
@@ -225,6 +409,11 @@ export const InventoryTable = (props: InventoryTableProps) => {
         style={{
           padding: isMobile ? "10px 12px" : "16px 20px",
           borderBottom: "1px solid #f0f0f0",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 12,
         }}
       >
         <Input
@@ -236,6 +425,16 @@ export const InventoryTable = (props: InventoryTableProps) => {
           onChange={(e) => setSearchText(e.target.value)}
           style={{ maxWidth: isMobile ? "100%" : 400 }}
         />
+
+        {isCrudAllowed && (
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={openCreateModal}
+          >
+            Tambah Barang
+          </Button>
+        )}
       </div>
 
       {type === "stock" ? (
@@ -267,6 +466,107 @@ export const InventoryTable = (props: InventoryTableProps) => {
           }
         />
       )}
+
+      {/* Modal Tambah / Edit Barang */}
+      <Modal
+        title={editingItem ? "Edit Barang" : "Tambah Barang"}
+        open={modalOpen}
+        onCancel={() => setModalOpen(false)}
+        onOk={handleSaveBarang}
+        okText="Simpan Barang"
+        cancelText="Batal"
+        confirmLoading={submitting}
+        destroyOnHidden
+      >
+        <Space direction="vertical" style={{ width: "100%" }} size={12}>
+          <div>
+            <Text strong>Kode Barang</Text>
+            <Input
+              placeholder="Contoh: BRG-001 (opsional)"
+              value={formCode}
+              onChange={(e) => setFormCode(e.target.value)}
+              aria-label="Kode Barang"
+            />
+          </div>
+          <div>
+            <Text strong>Nama Barang *</Text>
+            <Input
+              placeholder="Masukkan nama barang"
+              value={formName}
+              onChange={(e) => setFormName(e.target.value)}
+              aria-label="Nama Barang"
+            />
+          </div>
+          <div>
+            <Text strong>Ukuran</Text>
+            <Input
+              placeholder="Contoh: 10mm / A4"
+              value={formSize}
+              onChange={(e) => setFormSize(e.target.value)}
+              aria-label="Ukuran Barang"
+            />
+          </div>
+          <div>
+            <Text strong>Spesifikasi</Text>
+            <Input
+              placeholder="Spesifikasi teknis (opsional)"
+              value={formSpec}
+              onChange={(e) => setFormSpec(e.target.value)}
+              aria-label="Spesifikasi Barang"
+            />
+          </div>
+          <div>
+            <Text strong>Kategori</Text>
+            <Select
+              style={{ width: "100%" }}
+              value={formCategory}
+              onChange={setFormCategory}
+              aria-label="Kategori Barang"
+              options={[
+                { value: "Material", label: "Material" },
+                { value: "Alat Bantu", label: "Alat Bantu" },
+              ]}
+            />
+          </div>
+          <div>
+            <Text strong>Satuan</Text>
+            <Input
+              placeholder="pcs / unit / btg / roll"
+              value={formUnit}
+              onChange={(e) => setFormUnit(e.target.value)}
+              aria-label="Satuan Barang"
+            />
+          </div>
+          <div>
+            <Text strong>Stok</Text>
+            <Input
+              type="number"
+              placeholder="0"
+              value={formStock}
+              onChange={(e) => setFormStock(e.target.value)}
+              aria-label="Stok Barang"
+            />
+          </div>
+        </Space>
+      </Modal>
+
+      {/* Modal Konfirmasi Hapus Barang */}
+      <Modal
+        title="Hapus Barang"
+        open={!!deletingItem}
+        onCancel={() => setDeletingItem(null)}
+        onOk={handleConfirmDelete}
+        okText="Ya, Hapus"
+        okButtonProps={{ danger: true }}
+        cancelText="Batal"
+        confirmLoading={submitting}
+        destroyOnHidden
+      >
+        <Text>
+          Apakah Anda yakin ingin menghapus barang{" "}
+          <Text strong>{deletingItem?.name}</Text>?
+        </Text>
+      </Modal>
     </Card>
   );
 };

@@ -4,6 +4,51 @@ import { USE_MOCK } from "../../shared/lib/config";
 import type { SPBDocumentGroup } from "../../shared/types";
 import { cleanDocNo, getSjTarget, isIgnoredSuratJalan } from "./suratJalanRules";
 
+const TITLE_OVERRIDES_KEY = "spb-po-title-overrides";
+
+export const getTitleOverrides = (): Record<string, string> => {
+  try {
+    const raw = localStorage.getItem(TITLE_OVERRIDES_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+};
+
+export const saveTitleOverride = (key: string, title: string) => {
+  try {
+    const current = getTitleOverrides();
+    current[key] = title;
+    localStorage.setItem(TITLE_OVERRIDES_KEY, JSON.stringify(current));
+  } catch {
+    // ignore storage errors
+  }
+};
+
+export const updateDocumentTitle = async (
+  type: "spb" | "po",
+  docNo: string,
+  newTitle: string,
+) => {
+  const trimmed = newTitle.trim();
+  const overrideKey = `${type.toUpperCase()}_${docNo}`;
+  saveTitleOverride(overrideKey, trimmed);
+
+  if (type === "spb") {
+    const { error } = await supabaseClient
+      .from("spb")
+      .update({ judul_spb: trimmed })
+      .eq("no_spb", docNo);
+    if (error) throw error;
+  } else {
+    const { error } = await supabaseClient
+      .from("po")
+      .update({ judul_po: trimmed })
+      .eq("no_po", docNo);
+    if (error) throw error;
+  }
+};
+
 const getSortNumber = (val: unknown): number => {
   if (val === null || val === undefined || val === "") return 999999;
   const s = String(val);
@@ -21,6 +66,8 @@ export const useMonitoringSPB = () => {
     queryKey: ["monitoring-spb"],
     queryFn: async () => {
       if (USE_MOCK) return [];
+
+      const overrides = getTitleOverrides();
 
       const [spbRes, poRes, sjRes] = await Promise.all([
         supabaseClient.from("spb").select(`
@@ -82,18 +129,34 @@ export const useMonitoringSPB = () => {
       spbData.forEach((row: any) => {
         const spbNo = toStrOrNull(row.no_spb);
         const key = spbNo || `SPB_${row.id}`;
+        const spbOverride = spbNo ? overrides[`SPB_${spbNo}`] : undefined;
 
         if (!groups.has(key)) {
           groups.set(key, {
             data: {
-              id: key, spbNo, spbTitle: row.judul_spb || null, poNo: null,
-              date: "-", itemsCount: 0, sortNumber: getSortNumber(spbNo), status: "Belum PO",
+              id: key,
+              spbNo,
+              spbTitle: spbOverride !== undefined ? spbOverride : (row.judul_spb || null),
+              poNo: null,
+              poTitle: null,
+              date: "-",
+              itemsCount: 0,
+              sortNumber: getSortNumber(spbNo),
+              status: "Belum PO",
             },
-            hasAnyPO: false, hasAnyArrival: false, latestTimestamp: 0, poSet: new Set<string>(), completedItems: 0, itemNames: new Set<string>(),
+            hasAnyPO: false,
+            hasAnyArrival: false,
+            latestTimestamp: 0,
+            poSet: new Set<string>(),
+            completedItems: 0,
+            itemNames: new Set<string>(),
           });
         }
 
         const group = groups.get(key)!;
+        if (!group.data.spbTitle && row.judul_spb) {
+          group.data.spbTitle = spbOverride !== undefined ? spbOverride : row.judul_spb;
+        }
         group.data.itemsCount += 1;
 
         const itemName = toStrOrNull(row.nama_barang_spb);
@@ -132,23 +195,41 @@ export const useMonitoringSPB = () => {
       const existingSpbIds = new Set(spbData.map((s: any) => String(s.id)));
 
       poData.forEach((p: any) => {
-        const isLinked = (p.id_spb && existingSpbIds.has(String(p.id_spb))) || spbData.some((s: any) => s.id_po === p.id);
+        const isLinked =
+          (p.id_spb && existingSpbIds.has(String(p.id_spb))) ||
+          spbData.some((s: any) => s.id_po === p.id);
 
         if (!isLinked) {
           const poNo = cleanDocNo(p.no_po);
           const key = poNo ? `PO_${poNo}` : `PO_ID_${p.id}`;
+          const poOverride = poNo ? overrides[`PO_${poNo}`] : undefined;
 
           if (!groups.has(key)) {
             groups.set(key, {
               data: {
-                id: key, spbNo: null, spbTitle: null, poNo: poNo,
-                date: p.tanggal_po || "-", itemsCount: 0, sortNumber: getSortNumber(poNo), status: "Sudah PO",
+                id: key,
+                spbNo: null,
+                spbTitle: null,
+                poNo: poNo,
+                poTitle: poOverride !== undefined ? poOverride : (p.judul_po || null),
+                date: p.tanggal_po || "-",
+                itemsCount: 0,
+                sortNumber: getSortNumber(poNo),
+                status: "Sudah PO",
               },
-              hasAnyPO: true, hasAnyArrival: false, latestTimestamp: 0, poSet: new Set([poNo || ""]), completedItems: 0, itemNames: new Set<string>(),
+              hasAnyPO: true,
+              hasAnyArrival: false,
+              latestTimestamp: 0,
+              poSet: new Set([poNo || ""]),
+              completedItems: 0,
+              itemNames: new Set<string>(),
             });
           }
 
           const group = groups.get(key)!;
+          if (!group.data.poTitle && p.judul_po) {
+            group.data.poTitle = poOverride !== undefined ? poOverride : p.judul_po;
+          }
           group.data.itemsCount += 1;
 
           const itemName = toStrOrNull(p.nama_barang_po);
@@ -166,7 +247,6 @@ export const useMonitoringSPB = () => {
 
       // PROSES 3: Kelompokkan data dari Surat Jalan (no 3 dan seterusnya)
       sjData.forEach((sj: any) => {
-        // Surat Jalan no 1 dan 2 diabaikan
         if (isIgnoredSuratJalan(sj.no_surat_jalan)) return;
 
         const spbRel = Array.isArray(sj.spb) ? sj.spb[0] : sj.spb;
@@ -180,16 +260,13 @@ export const useMonitoringSPB = () => {
         let poNo: string | null = null;
 
         if (target === "spb") {
-          // Punya id_spb -> card SPB
           spbNo = cleanDocNo(spbRel?.no_spb);
           spbTitle = toStrOrNull(spbRel?.judul_spb);
           targetKey = spbNo ? spbNo : `SPB_${sj.id_spb}`;
         } else if (target === "po") {
-          // Tanpa id_spb, punya id_po -> card PO
           poNo = cleanDocNo(poRel?.no_po);
           targetKey = poNo ? `PO_${poNo}` : `PO_ID_${sj.id_po}`;
         } else {
-          // Tanpa id_spb dan id_po -> card Surat Jalan
           targetKey = `SJ_${sjNo}`;
         }
 
@@ -200,6 +277,7 @@ export const useMonitoringSPB = () => {
               spbNo,
               spbTitle,
               poNo,
+              poTitle: poNo ? (overrides[`PO_${poNo}`] ?? null) : null,
               suratJalanNo: target === "sj" ? sjNo : null,
               date: "-",
               itemsCount: 0,
@@ -235,10 +313,18 @@ export const useMonitoringSPB = () => {
         else if (g.hasAnyArrival) status = "Datang";
         else if (g.hasAnyPO) status = "Sudah PO";
 
-        const combinedPo = Array.from(g.poSet).join(", ");
+        const combinedPo = Array.from(g.poSet).filter(Boolean).join(", ");
+        const firstPo = Array.from(g.poSet).filter(Boolean)[0];
+        const poTitle =
+          g.data.poTitle ??
+          (firstPo && overrides[`PO_${firstPo}`] !== undefined
+            ? overrides[`PO_${firstPo}`]
+            : null);
+
         return {
           ...g.data,
           poNo: combinedPo || null,
+          poTitle,
           status,
           sortNumber: getSortNumber(g.data.spbNo) + getSortNumber(combinedPo) * 0.01,
           itemNames: Array.from(g.itemNames),

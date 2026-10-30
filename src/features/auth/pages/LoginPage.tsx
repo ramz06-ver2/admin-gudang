@@ -1,10 +1,24 @@
 import { useState } from "react";
 import { useLogin } from "@refinedev/core";
-import { Button, Card, Form, Input, Typography, Alert, Space } from "antd";
-import { UserOutlined, LockOutlined } from "@ant-design/icons";
+import {
+  Button,
+  Card,
+  Form,
+  Input,
+  Typography,
+  Alert,
+  Space,
+  Segmented,
+} from "antd";
+import {
+  UserOutlined,
+  LockOutlined,
+  MailOutlined,
+  IdcardOutlined,
+} from "@ant-design/icons";
 
-// ✅ Path import disesuaikan dengan arsitektur baru (naik 3 tingkat ke shared/lib)
 import { USE_MOCK } from "../../../shared/lib/config";
+import { registerAccountRequest } from "../accountRequests";
 
 const { Title, Text } = Typography;
 
@@ -13,17 +27,45 @@ interface LoginForm {
   password: string;
 }
 
+interface RegisterForm {
+  name: string;
+  email: string;
+  password: string;
+}
+
 export const LoginPage = () => {
   const { mutate: login, isLoading } = useLogin<LoginForm>();
+  const [mode, setMode] = useState<"login" | "register">("login");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [registerForm] = Form.useForm<RegisterForm>();
 
-  const handleSubmit = (values: LoginForm) => {
+  const handleSubmitLogin = (values: LoginForm) => {
     setErrorMsg(null);
+    setSuccessMsg(null);
     login(values, {
       onError: (error) => {
         setErrorMsg(error?.message ?? "Login gagal, coba lagi");
       },
     });
+  };
+
+  const handleSubmitRegister = async (values: RegisterForm) => {
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setIsRegistering(true);
+    try {
+      await registerAccountRequest(values);
+      setSuccessMsg(
+        "Permintaan pembuatan akun berhasil dikirim! Akun Anda telah masuk ke halaman Notifikasi Super User dan menunggu persetujuan.",
+      );
+      registerForm.resetFields();
+    } catch (err) {
+      setErrorMsg((err as Error)?.message ?? "Gagal membuat permintaan akun");
+    } finally {
+      setIsRegistering(false);
+    }
   };
 
   return (
@@ -41,14 +83,14 @@ export const LoginPage = () => {
       <Card
         style={{
           width: "100%",
-          maxWidth: 420,
+          maxWidth: 440,
           borderRadius: 16,
           boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
         }}
         styles={{ body: { padding: 32 } }}
       >
         {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: 28 }}>
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
           <div
             style={{
               width: 64,
@@ -69,7 +111,28 @@ export const LoginPage = () => {
           <Title level={3} style={{ margin: 0 }}>
             Admin Stok
           </Title>
-          <Text type="secondary">Masuk untuk mengelola inventaris</Text>
+          <Text type="secondary">
+            {mode === "login"
+              ? "Masuk untuk mengelola inventaris"
+              : "Daftar akun Admin baru (perlu persetujuan Super User)"}
+          </Text>
+        </div>
+
+        {/* Toggle Masuk / Buat Akun */}
+        <div style={{ marginBottom: 20 }}>
+          <Segmented
+            block
+            value={mode}
+            onChange={(val) => {
+              setMode(val as "login" | "register");
+              setErrorMsg(null);
+              setSuccessMsg(null);
+            }}
+            options={[
+              { label: "Masuk", value: "login" },
+              { label: "Buat Akun", value: "register" },
+            ]}
+          />
         </div>
 
         {/* Error */}
@@ -84,61 +147,136 @@ export const LoginPage = () => {
           />
         )}
 
-        {/* Form */}
-        <Form<LoginForm>
-          layout="vertical"
-          onFinish={handleSubmit}
-          autoComplete="off"
-          requiredMark={false}
-          initialValues={
-            USE_MOCK
-              ? { email: "admin@admin.com", password: "admin123" }
-              : undefined
-          }
-        >
-          <Form.Item
-            name="email"
-            label="Email"
-            rules={[
-              { required: true, message: "Email wajib diisi" },
-              { type: "email", message: "Format email tidak valid" },
-            ]}
-          >
-            <Input
-              size="large"
-              prefix={<UserOutlined />}
-              placeholder="admin@admin.com"
-              autoFocus
-            />
-          </Form.Item>
+        {/* Success */}
+        {successMsg && (
+          <Alert
+            type="success"
+            message={successMsg}
+            showIcon
+            closable
+            onClose={() => setSuccessMsg(null)}
+            style={{ marginBottom: 16 }}
+          />
+        )}
 
-          <Form.Item
-            name="password"
-            label="Password"
-            rules={[{ required: true, message: "Password wajib diisi" }]}
+        {mode === "login" ? (
+          <Form<LoginForm>
+            layout="vertical"
+            onFinish={handleSubmitLogin}
+            autoComplete="off"
+            requiredMark={false}
+            initialValues={
+              USE_MOCK
+                ? { email: "admin@admin.com", password: "admin123" }
+                : undefined
+            }
           >
-            <Input.Password
-              size="large"
-              prefix={<LockOutlined />}
-              placeholder="••••••••"
-            />
-          </Form.Item>
-
-          <Form.Item style={{ marginBottom: 12 }}>
-            <Button
-              type="primary"
-              htmlType="submit"
-              size="large"
-              block
-              loading={isLoading}
+            <Form.Item
+              name="email"
+              label="Email"
+              rules={[
+                { required: true, message: "Email wajib diisi" },
+                { type: "email", message: "Format email tidak valid" },
+              ]}
             >
-              Masuk
-            </Button>
-          </Form.Item>
-        </Form>
+              <Input
+                size="large"
+                prefix={<UserOutlined />}
+                placeholder="admin@admin.com"
+                autoFocus
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="password"
+              label="Password"
+              rules={[{ required: true, message: "Password wajib diisi" }]}
+            >
+              <Input.Password
+                size="large"
+                prefix={<LockOutlined />}
+                placeholder="••••••••"
+              />
+            </Form.Item>
+
+            <Form.Item style={{ marginBottom: 12 }}>
+              <Button
+                type="primary"
+                htmlType="submit"
+                size="large"
+                block
+                loading={isLoading}
+              >
+                Masuk
+              </Button>
+            </Form.Item>
+          </Form>
+        ) : (
+          <Form<RegisterForm>
+            form={registerForm}
+            layout="vertical"
+            onFinish={handleSubmitRegister}
+            autoComplete="off"
+            requiredMark={false}
+          >
+            <Form.Item
+              name="name"
+              label="Nama Lengkap"
+              rules={[{ required: true, message: "Nama lengkap wajib diisi" }]}
+            >
+              <Input
+                size="large"
+                prefix={<IdcardOutlined />}
+                placeholder="Nama calon admin"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="email"
+              label="Email"
+              rules={[
+                { required: true, message: "Email wajib diisi" },
+                { type: "email", message: "Format email tidak valid" },
+              ]}
+            >
+              <Input
+                size="large"
+                prefix={<MailOutlined />}
+                placeholder="calonadmin@email.com"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="password"
+              label="Password"
+              rules={[
+                { required: true, message: "Password wajib diisi" },
+                { min: 6, message: "Password minimal 6 karakter" },
+              ]}
+            >
+              <Input.Password
+                size="large"
+                prefix={<LockOutlined />}
+                placeholder="Minimal 6 karakter"
+              />
+            </Form.Item>
+
+            <Form.Item style={{ marginBottom: 12 }}>
+              <Button
+                type="primary"
+                htmlType="submit"
+                size="large"
+                block
+                loading={isRegistering}
+              >
+                Daftar Akun
+              </Button>
+            </Form.Item>
+          </Form>
+        )}
 
         {/* Info mock */}
-        {USE_MOCK && (
+        {USE_MOCK && mode === "login" && (
           <Alert
             type="info"
             showIcon
@@ -147,10 +285,12 @@ export const LoginPage = () => {
             description={
               <Space direction="vertical" size={2}>
                 <Text style={{ fontSize: 12 }}>
-                  Email: <Text code>admin@admin.com</Text>
+                  Admin: <Text code>admin@admin.com</Text> /{" "}
+                  <Text code>admin123</Text>
                 </Text>
                 <Text style={{ fontSize: 12 }}>
-                  Password: <Text code>admin123</Text>
+                  Super User: <Text code>superuser@admin.com</Text> /{" "}
+                  <Text code>super123</Text>
                 </Text>
               </Space>
             }
@@ -161,5 +301,4 @@ export const LoginPage = () => {
   );
 };
 
-// ✅ Wajib ada agar React.lazy() di App.tsx tidak error
 export default LoginPage;

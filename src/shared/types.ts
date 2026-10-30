@@ -1,3 +1,16 @@
+export type UserRole = "user" | "admin" | "superuser";
+
+export interface AccountRequest {
+  id: string;
+  name: string;
+  email: string;
+  password?: string;
+  role: "admin";
+  status: "pending" | "approved" | "rejected";
+  createdAt: string;
+  decidedAt?: string | null;
+}
+
 export interface Category {
   id: number;
   name: string;
@@ -115,13 +128,13 @@ export interface SPBDocumentGroup {
   spbNo: string | null;
   spbTitle?: string | null;
   poNo: string | null;
+  poTitle?: string | null;
   suratJalanNo?: string | null;
   date: string;
   itemsCount: number;
   sortNumber: number;
   status?: string;
-  itemNames?: string[]; // ✅ Untuk pencarian nama barang
-  // suratJalan?: string[];
+  itemNames?: string[];
 }
 
 export interface SPBItemDetail {
@@ -144,8 +157,9 @@ export interface SPBItemDetail {
   qty_datang?: number | null;
   satuan_datang?: string | null;
   lama_proses?: string | number | null;
-  kurang_lebih?: string | null;
+  kurang_lebih?: string | number | null;
   keterangan?: string | null;
-  status?: string | null; // ✅ Status spesifik untuk detail barang (Datang Sesuai, Datang Lebih, dll)
+  status?: string | null;
   tanggal_pembuatan_spb?: string | null;
+  no_surat_jalan?: string | number | null;
 }

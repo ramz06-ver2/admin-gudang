@@ -1,0 +1,104 @@
+id 920 = 15 pcs
+id 924 = 10 pcs
+id 928 = 10 pcs
+id 932 = 10 pcs 
+id 936 = 10 pcs
+id 940 = 10 pcs
+id 941 = 15 pcs
+id 946 = 6 btg
+id 947 = 40 btg
+id 948 = 80 btg
+id 949 tidak ada, hapus saja datanya
+id 950 tidak ada, hapus saja datanya
+id 951 tidak ada, hapus saja datanya
+id 952 = tidak ada, hapus saja datanya
+id 953 = 150 set
+id 954 = 100 set
+id 955 tidak ada, hapus saja datanya
+id 956 = 316 set
+id 957 = 626 set
+id 958 = 889 set
+id 959 = 1462 set
+id 960 = 150 set
+id 961 = 100 set
+id 962 = 250 set 
+id 963 = 550 set
+id 964 = 750 set
+id 965 = 600 set
+id 966 = 600 set
+id 967 tidak ada, hapus saja datanya
+id 968 tidak ada, hapus saja datanya 
+id 969 tidak ada, hapus saja datanya
+id 970 tidak ada, hapus saja datanya
+id 971 tidak ada, hapus saja datanya
+id 972 tidak ada, hapus saja datanya
+id 973 tidak ada, hapus saja datanya
+id 974 tidak ada, hapus saja datanya
+id 944 = 8 pcs
+id 975 tidak ada, hapus saja datanya
+id 976 tidak ada, hapus saja datanya
+id 977 tidak ada, hapus saja datanya
+id 978 tidak ada, hapus saja datanya
+id 979 tidak ada, hapus saja datanya
+id 981 tidak ada, hapus saja datanya
+id 982 tidak ada, hapus saja datanya
+id 983 tidak ada, hapus saja datanya
+id 984 tidak ada, hapus saja datanya
+id 985 tidak ada, hapus saja datanya
+id 986 tidak ada, hapus saja datanya
+id 987 tidak ada, hapus saja datanya
+id 989 id 920 = 15 pcs
+id 924 = 10 pcs
+id 928 = 10 pcs
+id 932 = 10 pcs 
+id 936 = 10 pcs
+id 940 = 10 pcs
+id 941 = 15 pcs
+id 946 = 6 btg
+id 947 = 40 btg
+id 948 = 80 btg
+id 949 tidak ada, hapus saja datanya
+id 950 tidak ada, hapus saja datanya
+id 951 tidak ada, hapus saja datanya
+id 952 = tidak ada, hapus saja datanya
+id 953 = 150 set
+id 954 = 100 set
+id 955 tidak ada, hapus saja datanya
+id 956 = 316 set
+id 957 = 626 set
+id 958 = 889 set
+id 959 = 1462 set
+id 960 = 150 set
+id 961 = 100 set
+id 962 = 250 set 
+id 963 = 550 set
+id 964 = 750 set
+id 965 = 600 set
+id 966 = 600 set
+id 967 tidak ada, hapus saja datanya
+id 968 tidak ada, hapus saja datanya 
+id 969 tidak ada, hapus saja datanya
+id 970 tidak ada, hapus saja datanya
+id 971 tidak ada, hapus saja datanya
+id 972 tidak ada, hapus saja datanya
+id 973 tidak ada, hapus saja datanya
+id 974 tidak ada, hapus saja datanya
+id 944 = 8 pcs
+id 975 tidak ada, hapus saja datanya
+id 976 tidak ada, hapus saja datanya
+id 977 tidak ada, hapus saja datanya
+id 978 tidak ada, hapus saja datanya
+id 979 tidak ada, hapus saja datanya
+id 981 tidak ada, hapus saja datanya
+id 982 tidak ada, hapus saja datanya
+id 983 tidak ada, hapus saja datanya
+id 984 tidak ada, hapus saja datanya
+id 985 tidak ada, hapus saja datanya
+id 986 tidak ada, hapus saja datanya
+id 987 tidak ada, hapus saja datanya
+id 989 tidak ada, hapus saja datanya
+id 990 = 2 pcs
+id 991 = 2 pcs
+id 992 = 2 pcs
+id 993 = 1 pcs
+

@@ -222,6 +222,8 @@ export const useMonitoringSPBDetail = (
   poNo: string | null,
   sjNo: string | null = null,
 ) => {
+  const enabled = !!(spbNo || poNo || sjNo);
+
   const { data, isLoading, error } = useQuery<MonitoringDetailItem[]>({
     queryKey: ["monitoring-spb-detail", spbNo, poNo, sjNo],
     queryFn: async () => {
@@ -231,14 +233,14 @@ export const useMonitoringSPBDetail = (
       if (sjNo) return fetchBySuratJalan(sjNo);
       return [];
     },
-    enabled: !!(spbNo || poNo || sjNo),
+    enabled,
     retry: false,
     refetchOnWindowFocus: false,
   });
 
   return {
     items: data ?? [],
-    isLoading,
+    isLoading: enabled ? isLoading : false,
     error: error as Error | null,
   };
 };

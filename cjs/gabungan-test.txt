@@ -1420,6 +1420,238 @@ describe("Smoke: App module", () => {
 });
 
 ================================================================================
+FILE: test/unit/auth/auth-roles-notifications.test.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/auth/auth-roles-notifications.test.tsx
+================================================================================
+
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
+import { App as AntdApp, ConfigProvider } from "antd";
+import type { ReactNode } from "react";
+
+vi.mock("@/shared/lib/supabaseClient", async () => {
+  const m = await import("../../utils/fakeSupabase");
+  return { supabaseClient: m.fakeSupabaseClient };
+});
+
+import { fakeDb } from "../../utils/fakeSupabase";
+import {
+  authProvider,
+  setStoredUser,
+} from "@/app/providers/authProvider";
+import {
+  resetAccountRequests,
+  registerAccountRequest,
+  getAccountRequests,
+} from "@/features/auth/accountRequests";
+import { NotificationsPage } from "@/features/auth/pages/NotificationsPage";
+
+function Wrapper({ children }: { children: ReactNode }) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return (
+    <ConfigProvider>
+      <AntdApp>
+        <QueryClientProvider client={qc}>
+          <MemoryRouter>{children}</MemoryRouter>
+        </QueryClientProvider>
+      </AntdApp>
+    </ConfigProvider>
+  );
+}
+
+describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Notifikasi", () => {
+  beforeEach(() => {
+    fakeDb.reset();
+    resetAccountRequests();
+    setStoredUser(null);
+  });
+
+  it("User/unlogin memiliki role 'user' secara default", async () => {
+    const identity = (await authProvider.getIdentity?.()) as any;
+    expect(identity.role).toBe("user");
+  });
+
+  it("User buat akun -> masuk ke Notifikasi Super User -> Super User klik Izinkan -> Akun Admin jadi & bisa login", async () => {
+    // 1. User / unlogin membuat akun baru
+    const req = await registerAccountRequest({
+      name: "Budi Santoso",
+      email: "budi@proyek.com",
+      password: "password123",
+    });
+    expect(req.status).toBe("pending");
+
+    // 2. Sebelum diizinkan Super User, Budi belum bisa login sebagai Admin
+    const loginBefore = await authProvider.login({
+      email: "budi@proyek.com",
+      password: "password123",
+    });
+    expect(loginBefore.success).toBe(false);
+    expect(loginBefore.error?.message).toMatch(/menunggu persetujuan Super User/i);
+
+    // 3. Super User login dan membuka halaman Notifikasi
+    const superLogin = await authProvider.login({
+      email: "superuser@admin.com",
+      password: "super123",
+    });
+    expect(superLogin.success).toBe(true);
+    const superIdentity = (await authProvider.getIdentity?.()) as any;
+    expect(superIdentity.role).toBe("superuser");
+
+    render(<NotificationsPage />, { wrapper: Wrapper });
+
+    // Pastikan permintaan akun Budi muncul di halaman Notifikasi Super User
+    expect(await screen.findByText("Budi Santoso")).toBeInTheDocument();
+    expect(screen.getByText("budi@proyek.com")).toBeInTheDocument();
+    expect(screen.getByText("Menunggu Persetujuan")).toBeInTheDocument();
+
+    // 4. Super User klik tombol "Izinkan"
+    const approveBtn = screen.getByRole("button", {
+      name: /Izinkan budi@proyek.com/i,
+    });
+    fireEvent.click(approveBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText("Diizinkan (Admin Aktif)")).toBeInTheDocument();
+    });
+
+    // 5. Kini Budi login dan akunnya telah aktif menjadi Admin
+    const loginAfter = await authProvider.login({
+      email: "budi@proyek.com",
+      password: "password123",
+    });
+    expect(loginAfter.success).toBe(true);
+
+    const budiIdentity = (await authProvider.getIdentity?.()) as any;
+    expect(budiIdentity.role).toBe("admin");
+    expect(budiIdentity.name).toBe("Budi Santoso");
+  });
+
+  it("User buat akun -> masuk ke Notifikasi Super User -> Super User klik Tidak Izinkan -> Akun Admin batal jadi", async () => {
+    // 1. User / unlogin mendaftar akun
+    await registerAccountRequest({
+      name: "Andi Pratama",
+      email: "andi@proyek.com",
+      password: "password123",
+    });
+
+    // 2. Super User login dan membuka halaman Notifikasi
+    await authProvider.login({
+      email: "superuser@admin.com",
+      password: "super123",
+    });
+
+    render(<NotificationsPage />, { wrapper: Wrapper });
+
+    expect(await screen.findByText("Andi Pratama")).toBeInTheDocument();
+
+    // 3. Super User klik tombol "Tidak Izinkan"
+    const rejectBtn = screen.getByRole("button", {
+      name: /Tidak Izinkan andi@proyek.com/i,
+    });
+    fireEvent.click(rejectBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText("Tidak Diizinkan (Batal)")).toBeInTheDocument();
+    });
+
+    // 4. Andi mencoba login -> ditolak karena pembuatan akun Admin dibatalkan
+    const loginRejected = await authProvider.login({
+      email: "andi@proyek.com",
+      password: "password123",
+    });
+    expect(loginRejected.success).toBe(false);
+    expect(loginRejected.error?.message).toMatch(/tidak diizinkan/i);
+
+    const list = await getAccountRequests();
+    expect(list.find((r) => r.email === "andi@proyek.com")?.status).toBe("rejected");
+  });
+
+  it("Halaman Notifikasi menolak akses jika dibuka oleh User/Unlogin atau Admin biasa", async () => {
+    setStoredUser({
+      id: "admin-1",
+      email: "admin@admin.com",
+      name: "Administrator",
+      role: "admin",
+    });
+
+    render(<NotificationsPage />, { wrapper: Wrapper });
+
+    expect(await screen.findByText("Akses Ditolak")).toBeInTheDocument();
+  });
+});
+
+
+================================================================================
+FILE: test/unit/hooks/suratJalanRules.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/hooks/suratJalanRules.test.ts
+================================================================================
+
+import { describe, it, expect } from "vitest";
+import {
+  cleanDocNo,
+  getSjTarget,
+  hasValue,
+  isIgnoredSuratJalan,
+} from "@/features/spb/suratJalanRules";
+
+describe("isIgnoredSuratJalan", () => {
+  it.each(["1", "2", 1, 2, " 1 "])("mengabaikan Surat Jalan no %s", (no) => {
+    expect(isIgnoredSuratJalan(no)).toBe(true);
+  });
+
+  it.each(["3", 3, "4", "10", "12", "SJ-001", "", null, undefined])(
+    "memproses Surat Jalan no %s",
+    (no) => {
+      expect(isIgnoredSuratJalan(no)).toBe(false);
+    },
+  );
+});
+
+describe("hasValue", () => {
+  it.each([null, undefined, "", "   "])("menganggap %j sebagai kosong", (v) => {
+    expect(hasValue(v)).toBe(false);
+  });
+  it.each([0, 1, "5", "abc"])("menganggap %j sebagai terisi", (v) => {
+    expect(hasValue(v)).toBe(true);
+  });
+});
+
+describe("cleanDocNo", () => {
+  it.each([null, undefined, "", "  ", "-", "null", "NULL", "undefined"])(
+    "mengubah %j menjadi null (tanpa nomor)",
+    (v) => {
+      expect(cleanDocNo(v)).toBeNull();
+    },
+  );
+
+  it("mempertahankan nomor valid (dan memangkas spasi)", () => {
+    expect(cleanDocNo("PO-123")).toBe("PO-123");
+    expect(cleanDocNo("63#R1")).toBe("63#R1");
+    expect(cleanDocNo(" 10 REV ")).toBe("10 REV");
+    expect(cleanDocNo(34)).toBe("34");
+  });
+});
+
+describe("getSjTarget — penentuan card tujuan Surat Jalan", () => {
+  it("punya id_spb -> card SPB (walau juga punya id_po)", () => {
+    expect(getSjTarget({ id_spb: 5, id_po: null })).toBe("spb");
+    expect(getSjTarget({ id_spb: 5, id_po: 9 })).toBe("spb");
+  });
+
+  it("tanpa id_spb, punya id_po -> card PO", () => {
+    expect(getSjTarget({ id_spb: null, id_po: 9 })).toBe("po");
+    expect(getSjTarget({ id_po: 9 })).toBe("po");
+  });
+
+  it("tanpa id_spb dan id_po -> card Surat Jalan", () => {
+    expect(getSjTarget({ id_spb: null, id_po: null })).toBe("sj");
+    expect(getSjTarget({})).toBe("sj");
+  });
+});
+
+================================================================================
 FILE: test/unit/hooks/useKeyboardShortcut.test.ts
 PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/hooks/useKeyboardShortcut.test.ts
 ================================================================================
@@ -1495,42 +1727,33 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
+
+vi.mock("@/shared/lib/supabaseClient", async () => {
+  const m = await import("../../utils/fakeSupabase");
+  return { supabaseClient: m.fakeSupabaseClient };
+});
+
+import { fakeDb } from "../../utils/fakeSupabase";
 import { useMonitoringSPB } from "@/features/spb/useMonitoringSPB";
-
-let mockSpbData: any[] = [];
-let mockPoData: any[] = [];
-let mockSjData: any[] = []; // ✅ Tambahkan mock untuk surat_jalan
-
-vi.mock("@/shared/lib/supabaseClient", () => ({
-  supabaseClient: {
-    from: vi.fn((table) => {
-      let data: any[] = [];
-      if (table === "spb") data = mockSpbData;
-      else if (table === "po") data = mockPoData;
-      else if (table === "surat_jalan") data = mockSjData;
-
-      return {
-        select: vi.fn().mockResolvedValue({ data, error: null }),
-      };
-    }),
-  },
-}));
 
 function wrapper({ children }: { children: ReactNode }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
 }
 
-describe("useMonitoringSPB - Grouping PO Tanpa SPB", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockSpbData = [];
-    mockPoData = [];
-    mockSjData = [];
-  });
+async function loadCards() {
+  const { result } = renderHook(() => useMonitoringSPB(), { wrapper });
+  await waitFor(() => expect(result.current.isLoading).toBe(false));
+  return result.current.data;
+}
 
-  it("harus menggabungkan 42 barang dengan No PO 34 menjadi 1 card", async () => {
-    mockPoData = Array.from({ length: 42 }, (_, i) => ({
+beforeEach(() => {
+  fakeDb.reset();
+});
+
+describe("useMonitoringSPB - PO tanpa SPB", () => {
+  it("menggabungkan 42 barang dengan No PO 34 menjadi 1 card", async () => {
+    fakeDb.tables.po = Array.from({ length: 42 }, (_, i) => ({
       id: 100 + i,
       no_po: "34",
       tanggal_po: "2026-08-21",
@@ -1539,20 +1762,110 @@ describe("useMonitoringSPB - Grouping PO Tanpa SPB", () => {
       material_datang_qty: 0,
     }));
 
-    const { result } = renderHook(() => useMonitoringSPB(), { wrapper });
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    const cards = await loadCards();
 
-    const data = result.current.data;
-    expect(data).toHaveLength(1);
+    expect(cards).toHaveLength(1);
+    expect(cards[0]).toMatchObject({ poNo: "34", itemsCount: 42, status: "Sudah PO", spbNo: null });
+  });
 
-    const group = data[0];
-    expect(group.poNo).toBe("34");
-    expect(group.itemsCount).toBe(42);
-    expect(group.status).toBe("Sudah PO");
-    expect(group.spbNo).toBeNull();
+  it("PO yang sudah terhubung ke SPB tidak membuat card PO sendiri", async () => {
+    fakeDb.tables.spb = [{ id: 1, no_spb: "63#R1", judul_spb: "Listrik", tgl_spb: "2026-09-01", id_po: 10, po: { no_po: "50", tanggal_po: "2026-09-02" } }];
+    fakeDb.tables.po = [{ id: 10, no_po: "50", tanggal_po: "2026-09-02", id_spb: 1 }];
+
+    const cards = await loadCards();
+
+    expect(cards).toHaveLength(1);
+    expect(cards[0]).toMatchObject({ spbNo: "63#R1", poNo: "50", itemsCount: 1 });
   });
 });
 
+describe("useMonitoringSPB - penempatan Surat Jalan (no 3 dst)", () => {
+  it("Surat Jalan no 1 dan 2 diabaikan sepenuhnya (tidak membuat card)", async () => {
+    fakeDb.tables.surat_jalan = [
+      { id: 1, no_surat_jalan: "1", id_spb: null, id_po: null, nama_barang: "Lama 1" },
+      { id: 2, no_surat_jalan: "2", id_spb: null, id_po: null, nama_barang: "Lama 2" },
+      { id: 3, no_surat_jalan: 2, id_spb: 5, id_po: null, nama_barang: "Lama 2 (number)", spb: { no_spb: "63#R1" } },
+    ];
+
+    expect(await loadCards()).toEqual([]);
+  });
+
+  it("punya id_spb -> masuk ke card SPB, tidak membuat card terpisah", async () => {
+    fakeDb.tables.spb = [{ id: 1, no_spb: "63#R1", judul_spb: "Listrik", tgl_spb: "2026-09-01", nama_barang_spb: "Kabel" }];
+    fakeDb.tables.surat_jalan = [
+      { id: 10, no_surat_jalan: "3", id_spb: 1, id_po: null, nama_barang: "Kabel NYM", spb: { no_spb: "63#R1", judul_spb: "Listrik" } },
+    ];
+
+    const cards = await loadCards();
+
+    expect(cards).toHaveLength(1);
+    expect(cards[0]).toMatchObject({ id: "63#R1", spbNo: "63#R1", itemsCount: 2 });
+    expect(cards[0].itemNames).toEqual(expect.arrayContaining(["Kabel", "Kabel NYM"]));
+  });
+
+  it("tanpa id_spb tetapi punya id_po -> masuk ke card PO", async () => {
+    fakeDb.tables.po = [{ id: 100, no_po: "34", tanggal_po: "2026-08-21", id_spb: null, nama_barang_po: "Besi" }];
+    fakeDb.tables.surat_jalan = [
+      { id: 11, no_surat_jalan: "4", id_spb: null, id_po: 100, nama_barang: "Besi 8mm", po: { no_po: "34" } },
+    ];
+
+    const cards = await loadCards();
+
+    expect(cards).toHaveLength(1);
+    expect(cards[0]).toMatchObject({ id: "PO_34", poNo: "34", spbNo: null, itemsCount: 2 });
+  });
+
+  it("SJ dengan id_po yang PO-nya terhubung ke SPB tetap tampil di card PO (bukan card SJ)", async () => {
+    fakeDb.tables.spb = [{ id: 1, no_spb: "63#R1", id_po: 10, po: { no_po: "50", tanggal_po: "2026-09-02" }, nama_barang_spb: "Pipa" }];
+    fakeDb.tables.po = [{ id: 10, no_po: "50", id_spb: 1, tanggal_po: "2026-09-02" }];
+    fakeDb.tables.surat_jalan = [
+      { id: 12, no_surat_jalan: "5", id_spb: null, id_po: 10, nama_barang: "Pipa PVC", po: { no_po: "50" } },
+    ];
+
+    const cards = await loadCards();
+    const poCard = cards.find((c) => c.id === "PO_50");
+
+    expect(poCard).toBeDefined();
+    expect(poCard).toMatchObject({ poNo: "50", spbNo: null, itemsCount: 1 });
+    // card tersebut harus dikenali sebagai card PO, bukan card Surat Jalan
+    expect(poCard!.suratJalanNo ?? null).toBeNull();
+  });
+
+  it("tanpa id_spb dan id_po -> card Surat Jalan; beberapa barang SJ yang sama digabung", async () => {
+    fakeDb.tables.surat_jalan = [
+      { id: 20, no_surat_jalan: "3", id_spb: null, id_po: null, nama_barang: "Kabel Roll 100m", material_datang_tgl: "2026-10-20", material_datang_qty: 2 },
+      { id: 21, no_surat_jalan: "3", id_spb: null, id_po: null, nama_barang: "Lampu LED 15 Watt", material_datang_tgl: "2026-10-20", material_datang_qty: 10 },
+      { id: 22, no_surat_jalan: "4", id_spb: null, id_po: null, nama_barang: "Semen" },
+    ];
+
+    const cards = await loadCards();
+    const sj3 = cards.find((c) => c.id === "SJ_3");
+    const sj4 = cards.find((c) => c.id === "SJ_4");
+
+    expect(cards).toHaveLength(2);
+    expect(sj3).toMatchObject({ suratJalanNo: "3", spbNo: null, poNo: null, itemsCount: 2, status: "Selesai" });
+    expect(sj4).toMatchObject({ suratJalanNo: "4", itemsCount: 1, status: "Sudah PO" });
+  });
+
+  it("satu barang tidak muncul di dua card sekaligus", async () => {
+    fakeDb.tables.spb = [{ id: 1, no_spb: "63#R1", nama_barang_spb: "A" }];
+    fakeDb.tables.po = [{ id: 100, no_po: "34", id_spb: null, nama_barang_po: "B" }];
+    fakeDb.tables.surat_jalan = [
+      { id: 30, no_surat_jalan: "3", id_spb: 1, id_po: 100, nama_barang: "Ke SPB", spb: { no_spb: "63#R1" }, po: { no_po: "34" } },
+      { id: 31, no_surat_jalan: "3", id_spb: null, id_po: 100, nama_barang: "Ke PO", po: { no_po: "34" } },
+      { id: 32, no_surat_jalan: "3", id_spb: null, id_po: null, nama_barang: "Ke SJ" },
+    ];
+
+    const cards = await loadCards();
+    const total = cards.reduce((sum, c) => sum + c.itemsCount, 0);
+
+    // 1 SPB + 1 PO + 3 SJ, masing-masing dihitung tepat satu kali
+    expect(total).toBe(5);
+    expect(cards.find((c) => c.id === "63#R1")!.itemsCount).toBe(2);
+    expect(cards.find((c) => c.id === "PO_34")!.itemsCount).toBe(2);
+    expect(cards.find((c) => c.id === "SJ_3")!.itemsCount).toBe(1);
+  });
+});
 
 ================================================================================
 FILE: test/unit/hooks/useMonitoringSPB.test.tsx
@@ -1636,73 +1949,423 @@ describe("useMonitoringSPBDetail - Logika Filtering Kebal Peluru", () => {
 });
 
 ================================================================================
+FILE: test/unit/hooks/useMonitoringSPBdetail.test.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/hooks/useMonitoringSPBdetail.test.tsx
+================================================================================
+
+
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { renderHook, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactNode } from "react";
+
+vi.mock("@/shared/lib/supabaseClient", async () => {
+  const m = await import("../../utils/fakeSupabase");
+  return { supabaseClient: m.fakeSupabaseClient };
+});
+
+import { fakeDb } from "../../utils/fakeSupabase";
+import { useMonitoringSPBDetail } from "@/features/spb/useMonitoringSPBDetail";
+
+function wrapper({ children }: { children: ReactNode }) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
+}
+
+/** Render hook, tunggu selesai loading, lalu kembalikan hasilnya. */
+async function loadDetail(spb: string | null, po: string | null, sj: string | null = null) {
+  const { result } = renderHook(() => useMonitoringSPBDetail(spb, po, sj), { wrapper });
+  await waitFor(() => expect(result.current.isLoading).toBe(false));
+  return result.current;
+}
+
+const names = (items: { nama_barang: string }[]) => items.map((i) => i.nama_barang);
+
+beforeEach(() => {
+  fakeDb.reset();
+});
+
+// ─────────────────────────────────────────────────────────────
+describe("Detail card SPB", () => {
+  it("menampilkan SEMUA barang SPB, baik yang sudah punya PO maupun belum", async () => {
+    fakeDb.tables.spb = [
+      { id: 1, no_spb: "63#R1", nama_barang_spb: "Barang A", qty_permintaan: 1, po: null },
+      { id: 2, no_spb: "63#R1", nama_barang_spb: "Barang B", qty_permintaan: 1, po: { no_po: "PO-001", tanggal_po: "2026-01-01" } },
+    ];
+
+    const { items, error } = await loadDetail("63#R1", null);
+
+    expect(error).toBeNull();
+    expect(items).toHaveLength(2);
+    expect(items[0]).toMatchObject({ nama_barang: "Barang A", no_po: "-", status: "Belum PO", sumber: "spb" });
+    expect(items[1]).toMatchObject({ nama_barang: "Barang B", no_po: "PO-001", status: "Sudah PO", sumber: "spb" });
+  });
+
+  it("hanya mengambil barang milik SPB yang diminta", async () => {
+    fakeDb.tables.spb = [
+      { id: 1, no_spb: "63#R1", nama_barang_spb: "Milik 63" },
+      { id: 2, no_spb: "64", nama_barang_spb: "Milik 64" },
+    ];
+
+    const { items } = await loadDetail("63#R1", null);
+    expect(names(items)).toEqual(["Milik 63"]);
+  });
+
+  it("menganggap no_po kosong, '-', dan 'null' sebagai TANPA PO, tetapi barangnya tetap tampil", async () => {
+    fakeDb.tables.spb = [
+      { id: 1, no_spb: "63#R1", nama_barang_spb: "A", po: { no_po: "", tanggal_po: "2026-01-01" } },
+      { id: 2, no_spb: "63#R1", nama_barang_spb: "B", po: { no_po: "-", tanggal_po: "2026-01-01" } },
+      { id: 3, no_spb: "63#R1", nama_barang_spb: "C", po: { no_po: "null", tanggal_po: "2026-01-01" } },
+      { id: 4, no_spb: "63#R1", nama_barang_spb: "D", po: { no_po: "PO-123", tanggal_po: "2026-01-01" } },
+    ];
+
+    const { items } = await loadDetail("63#R1", null);
+
+    expect(items).toHaveLength(4);
+    expect(items.map((i) => i.no_po)).toEqual(["-", "-", "-", "PO-123"]);
+    expect(items.map((i) => i.status)).toEqual(["Belum PO", "Belum PO", "Belum PO", "Sudah PO"]);
+  });
+
+  it("menghitung status kedatangan: sesuai / lebih / kurang", async () => {
+    const base = { no_spb: "70", material_datang_tgl: "2026-10-01" };
+    fakeDb.tables.spb = [
+      { ...base, id: 1, nama_barang_spb: "Pas", qty_permintaan: 10, material_datang_qty: 10 },
+      { ...base, id: 2, nama_barang_spb: "Lebih", qty_permintaan: 10, material_datang_qty: 12 },
+      { ...base, id: 3, nama_barang_spb: "Kurang", qty_permintaan: 10, material_datang_qty: 4 },
+    ];
+
+    const { items } = await loadDetail("70", null);
+    expect(items.map((i) => i.status)).toEqual(["Datang Sesuai", "Datang Lebih", "Datang Kurang"]);
+  });
+
+  it("memakai PO yang menunjuk SPB lewat po.id_spb bila spb.id_po kosong", async () => {
+    fakeDb.tables.spb = [{ id: 7, no_spb: "80", nama_barang_spb: "Pipa", po: null }];
+    fakeDb.tables.po = [{ id: 50, no_po: "PO-80", tanggal_po: "2026-02-02", id_spb: 7 }];
+
+    const { items } = await loadDetail("80", null);
+    expect(items[0]).toMatchObject({ no_po: "PO-80", status: "Sudah PO" });
+  });
+
+  it("menambahkan barang Surat Jalan (no 3+) yang punya id_spb ke card SPB, SJ no 1 & 2 diabaikan", async () => {
+    fakeDb.tables.spb = [{ id: 1, no_spb: "63#R1", nama_barang_spb: "Barang SPB" }];
+    fakeDb.tables.surat_jalan = [
+      { id: 10, no_surat_jalan: "1", id_spb: 1, nama_barang: "SJ 1 (diabaikan)" },
+      { id: 11, no_surat_jalan: "2", id_spb: 1, nama_barang: "SJ 2 (diabaikan)" },
+      { id: 12, no_surat_jalan: "3", id_spb: 1, nama_barang: "SJ 3 masuk SPB", spb: { no_spb: "63#R1" } },
+      { id: 13, no_surat_jalan: "12", id_spb: 1, nama_barang: "SJ 12 masuk SPB" },
+    ];
+
+    const { items } = await loadDetail("63#R1", null);
+
+    expect(names(items)).toEqual(["Barang SPB", "SJ 3 masuk SPB", "SJ 12 masuk SPB"]);
+    expect(items.map((i) => i.sumber)).toEqual(["spb", "sj", "sj"]);
+    expect(items[1].no_spb).toBe("63#R1");
+  });
+
+  it("tidak menampilkan Surat Jalan milik SPB lain", async () => {
+    fakeDb.tables.spb = [
+      { id: 1, no_spb: "63#R1", nama_barang_spb: "A" },
+      { id: 2, no_spb: "64", nama_barang_spb: "B" },
+    ];
+    fakeDb.tables.surat_jalan = [
+      { id: 20, no_surat_jalan: "5", id_spb: 2, nama_barang: "SJ milik SPB 64" },
+    ];
+
+    const { items } = await loadDetail("63#R1", null);
+    expect(names(items)).toEqual(["A"]);
+  });
+
+  it("memberi key unik walau id SPB dan id SJ sama", async () => {
+    fakeDb.tables.spb = [{ id: 1, no_spb: "63#R1", nama_barang_spb: "A" }];
+    fakeDb.tables.surat_jalan = [{ id: 1, no_surat_jalan: "3", id_spb: 1, nama_barang: "B" }];
+
+    const { items } = await loadDetail("63#R1", null);
+    expect(new Set(items.map((i) => i.key)).size).toBe(2);
+  });
+
+  it("mengembalikan array kosong jika SPB tidak ditemukan", async () => {
+    const { items, error } = await loadDetail("TIDAK-ADA", null);
+    expect(items).toEqual([]);
+    expect(error).toBeNull();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
+describe("Detail card PO (tanpa SPB)", () => {
+  it("menampilkan barang PO yang tidak terhubung ke SPB + Surat Jalan yang hanya punya id_po", async () => {
+    fakeDb.tables.po = [
+      { id: 100, no_po: "34", id_spb: null, nama_barang_po: "Besi 10mm" },
+      { id: 101, no_po: "34", id_spb: null, nama_barang_po: "Besi 12mm" },
+    ];
+    fakeDb.tables.surat_jalan = [
+      { id: 30, no_surat_jalan: "4", id_spb: null, id_po: 100, nama_barang: "SJ 4 untuk PO 34", po: { no_po: "34" } },
+    ];
+
+    const { items } = await loadDetail(null, "34");
+
+    expect(names(items)).toEqual(["Besi 10mm", "Besi 12mm", "SJ 4 untuk PO 34"]);
+    expect(items.map((i) => i.sumber)).toEqual(["po", "po", "sj"]);
+    expect(items.every((i) => i.no_po === "34")).toBe(true);
+  });
+
+  it("TIDAK menampilkan barang yang sudah muncul di card SPB", async () => {
+    fakeDb.tables.spb = [
+      { id: 1, no_spb: "63#R1", id_po: null, nama_barang_spb: "Barang SPB" },
+      { id: 2, no_spb: "63#R1", id_po: 201, nama_barang_spb: "Barang SPB kedua" },
+    ];
+    fakeDb.tables.po = [
+      { id: 200, no_po: "50", id_spb: 1, nama_barang_po: "PO terhubung lewat po.id_spb" },
+      { id: 201, no_po: "50", id_spb: null, nama_barang_po: "PO terhubung lewat spb.id_po" },
+      { id: 202, no_po: "50", id_spb: null, nama_barang_po: "PO murni" },
+    ];
+    fakeDb.tables.surat_jalan = [
+      { id: 40, no_surat_jalan: "6", id_spb: 1, id_po: 200, nama_barang: "SJ punya id_spb (masuk card SPB)" },
+      { id: 41, no_surat_jalan: "7", id_spb: null, id_po: 202, nama_barang: "SJ hanya id_po" },
+    ];
+
+    const { items } = await loadDetail(null, "50");
+    expect(names(items)).toEqual(["PO murni", "SJ hanya id_po"]);
+  });
+
+  it("mengabaikan Surat Jalan no 1 dan 2", async () => {
+    fakeDb.tables.po = [{ id: 100, no_po: "34", id_spb: null, nama_barang_po: "Besi" }];
+    fakeDb.tables.surat_jalan = [
+      { id: 50, no_surat_jalan: "1", id_po: 100, id_spb: null, nama_barang: "SJ 1" },
+      { id: 51, no_surat_jalan: "2", id_po: 100, id_spb: null, nama_barang: "SJ 2" },
+    ];
+
+    const { items } = await loadDetail(null, "34");
+    expect(names(items)).toEqual(["Besi"]);
+  });
+
+  it("mengembalikan array kosong jika PO tidak ditemukan", async () => {
+    expect((await loadDetail(null, "999")).items).toEqual([]);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
+describe("Detail card Surat Jalan murni (tanpa id_spb dan id_po)", () => {
+  it("menampilkan hanya barang dari SJ tersebut yang tidak punya id_spb maupun id_po", async () => {
+    fakeDb.tables.surat_jalan = [
+      { id: 3, no_surat_jalan: "3", id_spb: null, id_po: null, nama_barang: "Kabel Roll 100m", material_datang_qty: 2, material_datang_tgl: "2026-10-20" },
+      { id: 4, no_surat_jalan: "3", id_spb: null, id_po: null, nama_barang: "Lampu LED 15 Watt", material_datang_qty: 10, material_datang_tgl: "2026-10-20" },
+      { id: 5, no_surat_jalan: "3", id_spb: 9, id_po: null, nama_barang: "SJ 3 tapi punya SPB (card SPB)" },
+      { id: 6, no_surat_jalan: "3", id_spb: null, id_po: 8, nama_barang: "SJ 3 tapi punya PO (card PO)" },
+      { id: 7, no_surat_jalan: "4", id_spb: null, id_po: null, nama_barang: "SJ lain" },
+    ];
+
+    const { items } = await loadDetail(null, null, "3");
+
+    expect(names(items)).toEqual(["Kabel Roll 100m", "Lampu LED 15 Watt"]);
+    expect(items[0]).toMatchObject({ sumber: "sj", status: "Datang", qty_datang: 2, no_spb: "-", no_po: "-" });
+  });
+
+  it.each(["1", "2"])("Surat Jalan no %s diabaikan: hasil kosong dan tanpa query ke DB", async (no) => {
+    fakeDb.tables.surat_jalan = [
+      { id: 1, no_surat_jalan: no, id_spb: null, id_po: null, nama_barang: "Data lama" },
+    ];
+
+    const { items } = await loadDetail(null, null, no);
+
+    expect(items).toEqual([]);
+    expect(fakeDb.queriesTo("surat_jalan")).toBe(0);
+  });
+
+  it("status 'Belum Datang' jika material_datang_tgl kosong", async () => {
+    fakeDb.tables.surat_jalan = [
+      { id: 1, no_surat_jalan: "5", id_spb: null, id_po: null, nama_barang: "Semen" },
+    ];
+    const { items } = await loadDetail(null, null, "5");
+    expect(items[0].status).toBe("Belum Datang");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
+describe("Perilaku umum hook", () => {
+  it("tanpa parameter apa pun: tidak melakukan query dan mengembalikan []", async () => {
+    const { result } = renderHook(() => useMonitoringSPBDetail(null, null, null), { wrapper });
+
+    expect(result.current.items).toEqual([]);
+    expect(result.current.isLoading).toBe(false);
+    expect(fakeDb.calls).toHaveLength(0);
+  });
+
+  it("meneruskan error dari Supabase ke pemanggil", async () => {
+    fakeDb.errors.spb = { message: "koneksi gagal" };
+
+    const { items, error } = await loadDetail("63#R1", null);
+
+    expect(items).toEqual([]);
+    expect(error).toMatchObject({ message: "koneksi gagal" });
+  });
+});
+
+
+================================================================================
+FILE: test/unit/pages/inventory-crud-barang.test.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/pages/inventory-crud-barang.test.tsx
+================================================================================
+
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
+import { App as AntdApp, ConfigProvider } from "antd";
+import type { ReactNode } from "react";
+
+vi.mock("@/shared/lib/supabaseClient", async () => {
+  const m = await import("../../utils/fakeSupabase");
+  return { supabaseClient: m.fakeSupabaseClient };
+});
+
+import { fakeDb } from "../../utils/fakeSupabase";
+import { InventoryTable } from "@/features/products/components/InventoryTable";
+import { setStoredUser } from "@/app/providers/authProvider";
+import type { Product } from "@/shared/types";
+
+function Wrapper({ children }: { children: ReactNode }) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return (
+    <ConfigProvider>
+      <AntdApp>
+        <QueryClientProvider client={qc}>
+          <MemoryRouter>{children}</MemoryRouter>
+        </QueryClientProvider>
+      </AntdApp>
+    </ConfigProvider>
+  );
+}
+
+const initialProducts: Product[] = [
+  {
+    id: 1,
+    code: "BRG-001",
+    name: "Semen Gresik",
+    size: "50kg",
+    specification: "PCC",
+    category: "Material",
+    categoryId: null,
+    unit: "sak",
+    stock: 25,
+    minStock: 5,
+    costPrice: 0,
+    createdAt: "2026-10-01T00:00:00Z",
+  },
+];
+
+describe("CRUD Barang untuk Admin dan Super User (serta pembatasan User/Unlogin)", () => {
+  beforeEach(() => {
+    fakeDb.reset();
+    fakeDb.tables.barang = [
+      {
+        id: 1,
+        kode: "BRG-001",
+        nama: "Semen Gresik",
+        ukuran: "50kg",
+        spesifikasi: "PCC",
+        kategori: "Material",
+        satuan: "sak",
+        stok: 25,
+        created_at: "2026-10-01T00:00:00Z",
+      },
+    ];
+    setStoredUser(null);
+  });
+
+  it("User/Unlogin hanya bisa melihat daftar barang tanpa tombol Tambah, Edit, atau Hapus", () => {
+    render(
+      <InventoryTable type="stock" dataSource={initialProducts} role="user" />,
+      { wrapper: Wrapper },
+    );
+
+    expect(screen.getByText("Semen Gresik")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Tambah Barang/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Edit Semen Gresik/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Hapus Semen Gresik/i })).not.toBeInTheDocument();
+  });
+
+  it("Admin dapat melakukan Create, Update, dan Delete pada bagian Barang", async () => {
+    render(
+      <InventoryTable type="stock" dataSource={initialProducts} role="admin" />,
+      { wrapper: Wrapper },
+    );
+
+    // 1. CREATE (Tambah Barang)
+    fireEvent.click(screen.getByRole("button", { name: /Tambah Barang/i }));
+
+    const nameInput = await screen.findByLabelText("Nama Barang");
+    const sizeInput = screen.getByLabelText("Ukuran Barang");
+    const stockInput = screen.getByLabelText("Stok Barang");
+
+    fireEvent.change(nameInput, { target: { value: "Cat Tembok Dulux" } });
+    fireEvent.change(sizeInput, { target: { value: "5 Liter" } });
+    fireEvent.change(stockInput, { target: { value: "12" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /Simpan Barang/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Cat Tembok Dulux")).toBeInTheDocument();
+    });
+
+    // 2. UPDATE (Edit Barang)
+    fireEvent.click(screen.getByRole("button", { name: /Edit Semen Gresik/i }));
+
+    const editNameInput = await screen.findByLabelText("Nama Barang");
+    fireEvent.change(editNameInput, { target: { value: "Semen Tiga Roda" } });
+    fireEvent.click(screen.getByRole("button", { name: /Simpan Barang/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Semen Tiga Roda")).toBeInTheDocument();
+    });
+
+    // 3. DELETE (Hapus Barang)
+    fireEvent.click(screen.getByRole("button", { name: /Hapus Semen Tiga Roda/i }));
+    const confirmDeleteBtn = await screen.findByRole("button", { name: /Ya, Hapus/i });
+    fireEvent.click(confirmDeleteBtn);
+
+    await waitFor(() => {
+      expect(screen.queryByText("Semen Tiga Roda")).not.toBeInTheDocument();
+    });
+  });
+
+  it("Super User juga dapat melakukan Create, Update, dan Delete pada bagian Barang", async () => {
+    render(
+      <InventoryTable type="stock" dataSource={initialProducts} role="superuser" />,
+      { wrapper: Wrapper },
+    );
+
+    expect(screen.getByRole("button", { name: /Tambah Barang/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Edit Semen Gresik/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Hapus Semen Gresik/i })).toBeInTheDocument();
+  });
+});
+
+
+================================================================================
 FILE: test/unit/pages/monitoring-spb-item-detail-sj.test.tsx
 PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/pages/monitoring-spb-item-detail-sj.test.tsx
 ================================================================================
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within, fireEvent } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { MemoryRouter, Routes, Route, useLocation } from "react-router-dom";
 import { App as AntdApp, ConfigProvider } from "antd";
 import type { ReactNode } from "react";
 
-vi.mock("@/shared/lib/supabaseClient", () => ({
-  supabaseClient: {
-    from: vi.fn().mockImplementation((table) => {
-      console.log(`\n[MOCK] from() dipanggil untuk tabel: ${table}`);
-      
-      const builder: any = {
-        then: (resolve: any, reject: any) => {
-          console.log(`[MOCK] .then() terpanggil untuk tabel ${table}. Meresolve data...`);
-          const data = table === "surat_jalan" ? [
-            {
-              id: 3,
-              no_surat_jalan: "3",
-              nama_barang: "Kabel Roll 100m",
-              material_datang_qty: 2,
-              material_datang_tgl: "2026-10-20",
-              spb: null,
-              po: null,
-            },
-            {
-              id: 4,
-              no_surat_jalan: "3",
-              nama_barang: "Lampu LED 15 Watt",
-              material_datang_qty: 10,
-              material_datang_tgl: "2026-10-20",
-              spb: null,
-              po: null,
-            }
-          ] : [];
-          
-          return Promise.resolve({ data, error: null }).then(resolve, reject);
-        }
-      };
-      
-      builder.select = vi.fn((cols) => {
-        console.log(`[MOCK] .select(${cols})`);
-        return builder;
-      });
-      builder.eq = vi.fn((col, val) => {
-        console.log(`[MOCK] .eq(${col}, ${val})`);
-        return builder;
-      });
-      builder.is = vi.fn((col, val) => {
-        console.log(`[MOCK] .is(${col}, ${val})`);
-        return builder;
-      });
-      builder.in = vi.fn((col, val) => {
-        console.log(`[MOCK] .in(${col}, ${val})`);
-        return builder;
-      });
-      
-      return builder;
-    })
-  }
-}));
+vi.mock("@/shared/lib/supabaseClient", async () => {
+  const m = await import("../../utils/fakeSupabase");
+  return { supabaseClient: m.fakeSupabaseClient };
+});
 
+import { fakeDb } from "../../utils/fakeSupabase";
 import { MonitoringSPBDetailPage } from "@/features/spb/pages/MonitoringSPBDetailPage";
+
+/** Menampilkan URL tujuan navigasi agar bisa dicek di test. */
+function LocationProbe() {
+  const loc = useLocation();
+  return <div data-testid="location">{loc.pathname + loc.search}</div>;
+}
 
 function Wrapper({ children, route }: { children: ReactNode; route: string }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -1713,6 +2376,7 @@ function Wrapper({ children, route }: { children: ReactNode; route: string }) {
           <MemoryRouter initialEntries={[route]}>
             <Routes>
               <Route path="/monitoring-spb/detail" element={children} />
+              <Route path="/monitoring-spb/item/:id" element={<LocationProbe />} />
             </Routes>
           </MemoryRouter>
         </QueryClientProvider>
@@ -1721,28 +2385,114 @@ function Wrapper({ children, route }: { children: ReactNode; route: string }) {
   );
 }
 
-describe("MonitoringSPBDetailPage - Rincian Barang Surat Jalan (SJ 3)", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+const renderAt = (route: string) =>
+  render(<MonitoringSPBDetailPage />, {
+    wrapper: ({ children }) => <Wrapper route={route}>{children}</Wrapper>,
   });
 
-  it("harus menampilkan tabel barang dari Surat Jalan no 3 murni", async () => {
-    render(<MonitoringSPBDetailPage />, {
-      wrapper: ({ children }) => (
-        <Wrapper route="/monitoring-spb/detail?sj=3">{children}</Wrapper>
-      ),
-    });
+beforeEach(() => {
+  fakeDb.reset();
+});
 
-    // ✅ Gunakan findByText agar menunggu loading selesai
-    const sjHeader = await screen.findByText(/Surat Jalan:\s*3/i, {}, { timeout: 5000 });
-    expect(sjHeader).toBeInTheDocument();
+describe("MonitoringSPBDetailPage - Surat Jalan murni (SJ 3)", () => {
+  beforeEach(() => {
+    fakeDb.tables.surat_jalan = [
+      { id: 3, no_surat_jalan: "3", id_spb: null, id_po: null, nama_barang: "Kabel Roll 100m", material_datang_qty: 2, material_datang_tgl: "2026-10-20" },
+      { id: 4, no_surat_jalan: "3", id_spb: null, id_po: null, nama_barang: "Lampu LED 15 Watt", material_datang_qty: 10, material_datang_tgl: "2026-10-20" },
+      // tidak boleh tampil di card SJ murni:
+      { id: 5, no_surat_jalan: "3", id_spb: 9, id_po: null, nama_barang: "Milik card SPB" },
+      { id: 6, no_surat_jalan: "3", id_spb: null, id_po: 8, nama_barang: "Milik card PO" },
+    ];
+  });
 
-    // ✅ Cek tabel dan datanya
-    expect(screen.getByText("Daftar Barang (2)")).toBeInTheDocument();
+  it("menampilkan tabel barang dari Surat Jalan no 3 murni", async () => {
+    renderAt("/monitoring-spb/detail?sj=3");
+
+    expect(await screen.findByText("Daftar Barang (2)", {}, { timeout: 5000 })).toBeInTheDocument();
+    expect(screen.getByText(/Surat Jalan:\s*3/i)).toBeInTheDocument();
     expect(screen.getByText("Kabel Roll 100m")).toBeInTheDocument();
     expect(screen.getByText("Lampu LED 15 Watt")).toBeInTheDocument();
   });
+
+  it("tidak menampilkan kolom 'Sumber' agar tabel ringkas dalam satu bagian tanpa scroll", async () => {
+    renderAt("/monitoring-spb/detail?sj=3");
+
+    await screen.findByText("Daftar Barang (2)");
+    expect(screen.queryByRole("columnheader", { name: /sumber/i })).not.toBeInTheDocument();
+  });
+
+  it("tidak menampilkan barang yang menjadi milik card SPB / PO", async () => {
+    renderAt("/monitoring-spb/detail?sj=3");
+
+    await screen.findByText("Daftar Barang (2)");
+    expect(screen.queryByText("Milik card SPB")).not.toBeInTheDocument();
+    expect(screen.queryByText("Milik card PO")).not.toBeInTheDocument();
+  });
+
+  it("tidak menampilkan kartu status PO untuk Surat Jalan murni", async () => {
+    renderAt("/monitoring-spb/detail?sj=3");
+
+    await screen.findByText("Daftar Barang (2)");
+    expect(screen.queryByText("Belum di PO")).not.toBeInTheDocument();
+    expect(screen.queryByText("Sudah di PO")).not.toBeInTheDocument();
+  });
+
+  it("tombol Detail membuka rincian barang dengan type=sj", async () => {
+    renderAt("/monitoring-spb/detail?sj=3");
+
+    const row = (await screen.findByText("Lampu LED 15 Watt")).closest("tr") as HTMLElement;
+    fireEvent.click(within(row).getByRole("button", { name: /detail/i }));
+
+    expect(await screen.findByTestId("location")).toHaveTextContent("/monitoring-spb/item/4?type=sj");
+  });
+
+  it("Surat Jalan no 1 menampilkan 'dokumen tidak ditemukan'", async () => {
+    fakeDb.tables.surat_jalan = [
+      { id: 1, no_surat_jalan: "1", id_spb: null, id_po: null, nama_barang: "Data lama" },
+    ];
+    renderAt("/monitoring-spb/detail?sj=1");
+
+    expect(await screen.findByText(/Dokumen tidak ditemukan/i)).toBeInTheDocument();
+    expect(screen.queryByText("Data lama")).not.toBeInTheDocument();
+  });
 });
+
+describe("MonitoringSPBDetailPage - card SPB dan PO", () => {
+  it("card SPB: barang SPB + barang Surat Jalan (no 3+) milik SPB tersebut", async () => {
+    fakeDb.tables.spb = [
+      { id: 1, no_spb: "63#R1", judul_spb: "Listrik Gudang", nama_barang_spb: "Kabel NYM", qty_permintaan: 5, satuan: "roll", po: null },
+    ];
+    fakeDb.tables.surat_jalan = [
+      { id: 1, no_surat_jalan: "3", id_spb: 1, nama_barang: "Stop kontak" },
+      { id: 2, no_surat_jalan: "2", id_spb: 1, nama_barang: "SJ 2 diabaikan" },
+    ];
+
+    renderAt("/monitoring-spb/detail?spb=63%23R1");
+
+    expect(await screen.findByText("Daftar Barang (2)")).toBeInTheDocument();
+    expect(screen.getByText("Kabel NYM")).toBeInTheDocument();
+    expect(screen.getByText("Stop kontak")).toBeInTheDocument();
+    expect(screen.queryByText("SJ 2 diabaikan")).not.toBeInTheDocument();
+    expect(screen.getByText("Belum di PO")).toBeInTheDocument();
+  });
+
+  it("card PO: hanya barang PO yang belum masuk SPB + Surat Jalan yang hanya punya id_po", async () => {
+    fakeDb.tables.po = [
+      { id: 100, no_po: "34", id_spb: null, nama_barang_po: "Besi 10mm" },
+    ];
+    fakeDb.tables.surat_jalan = [
+      { id: 7, no_surat_jalan: "4", id_spb: null, id_po: 100, nama_barang: "Besi 12mm", po: { no_po: "34" } },
+    ];
+
+    renderAt("/monitoring-spb/detail?po=34");
+
+    expect(await screen.findByText("Daftar Barang (2)")).toBeInTheDocument();
+    expect(screen.getByText("Besi 10mm")).toBeInTheDocument();
+    expect(screen.getByText("Besi 12mm")).toBeInTheDocument();
+    expect(screen.getByText("Sudah di PO")).toBeInTheDocument();
+  });
+});
+
 
 ================================================================================
 FILE: test/unit/pages/monitoring-spb-item-detail.test.tsx
@@ -1786,48 +2536,84 @@ function Wrapper({ children, route }: { children: ReactNode; route: string }) {
   );
 }
 
-describe("MonitoringSPBItemDetailPage - Render Rincian", () => {
+describe("MonitoringSPBItemDetailPage - Render Rincian (20 Baris)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("harus menampilkan data dengan benar saat membuka item dari SPB (type=spb)", async () => {
-    // Mock data SPB
+  it("harus menampilkan 20 baris rincian dengan benar saat membuka item dari SPB (type=spb)", async () => {
     mockSingle.mockResolvedValueOnce({
       data: {
         id: 198,
-        no_spb: "37",
-        tgl_spb: "2026-09-21",
-        nama_barang_spb: "Stang las karbit",
-        qty_permintaan: 10,
+        no_spb: "18 #R1",
+        tgl_spb: "2026-08-18",
+        nama_barang_spb: "Bola lampu sorot 100 Watt",
+        ukuran: "100W",
+        qty_permintaan: 2,
         satuan: "bh",
+        merk: "Philips",
+        spesifikasi_teknis: "IP65 Outdoor",
+        lokasi_pemasangan: "Area Proyek",
+        rencana_pemasangan: "Segera",
         po: {
-          no_po: "10 REV",
-          tanggal_po: "2026-07-21",
-          nama_supplier: "PT ABC",
+          no_po: "36",
+          tanggal_po: "2026-09-29",
+          nama_supplier: "CV. Samudra Raya",
         },
-        material_datang_tgl: "2026-08-01",
-        material_datang_qty: 10,
+        material_datang_tgl: "2026-10-05",
+        material_datang_qty: 2,
         material_datang_satuan: "bh",
+        keterangan: "Sesuai pesanan",
       },
       error: null,
     });
 
-    render(<MonitoringSPBItemDetailPage />, {
+    const { container } = render(<MonitoringSPBItemDetailPage />, {
       wrapper: ({ children }) => (
         <Wrapper route="/monitoring-spb/item/198?type=spb">{children}</Wrapper>
       ),
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Stang las karbit")).toBeInTheDocument();
-      expect(screen.getByText("10 REV")).toBeInTheDocument();
+      expect(screen.getByText("Bola lampu sorot 100 Watt")).toBeInTheDocument();
+      expect(screen.getByText("36")).toBeInTheDocument();
+      expect(screen.getByText("CV. Samudra Raya")).toBeInTheDocument();
       expect(screen.getByText("Datang Sesuai")).toBeInTheDocument();
     });
+
+    // Pastikan tepat 20 baris rincian informasi ditampilkan
+    const bodyRows = container.querySelectorAll(".ant-table-tbody tr.ant-table-row");
+    expect(bodyRows).toHaveLength(20);
+
+    // Pastikan semua label 20 baris tampil sesuai web produksi
+    const expectedLabels = [
+      "No SPB",
+      "Tanggal SPB",
+      "Nama Barang",
+      "Ukuran",
+      "Jumlah Permintaan",
+      "Satuan",
+      "No PO",
+      "Tanggal PO",
+      "Supplier",
+      "Merk",
+      "Spesifikasi Teknis",
+      "Lokasi Pemasangan",
+      "Rencana Pemasangan",
+      "Tanggal Datang",
+      "Qty Datang",
+      "Satuan (Datang)",
+      "Lama Proses",
+      "Kurang/Lebih",
+      "Keterangan",
+      "Status",
+    ];
+    for (const label of expectedLabels) {
+      expect(screen.getByText(label)).toBeInTheDocument();
+    }
   });
 
   it("harus menampilkan data dengan benar saat membuka item dari PO tanpa SPB (type=po)", async () => {
-    // Mock data PO
     mockSingle.mockResolvedValueOnce({
       data: {
         id: 152,
@@ -1842,7 +2628,7 @@ describe("MonitoringSPBItemDetailPage - Render Rincian", () => {
       error: null,
     });
 
-    render(<MonitoringSPBItemDetailPage />, {
+    const { container } = render(<MonitoringSPBItemDetailPage />, {
       wrapper: ({ children }) => (
         <Wrapper route="/monitoring-spb/item/152?type=po">{children}</Wrapper>
       ),
@@ -1851,10 +2637,46 @@ describe("MonitoringSPBItemDetailPage - Render Rincian", () => {
     await waitFor(() => {
       expect(screen.getByText("Stang las karbit")).toBeInTheDocument();
       expect(screen.getByText("10 REV")).toBeInTheDocument();
-      // Karena ini PO murni, kolom No SPB harus strip
       const spbRow = screen.getByText("No SPB").closest("tr");
       expect(spbRow).toHaveTextContent("-");
     });
+
+    const bodyRows = container.querySelectorAll(".ant-table-tbody tr.ant-table-row");
+    expect(bodyRows).toHaveLength(20);
+  });
+
+  it("harus menampilkan data dengan benar saat membuka item Surat Jalan (type=sj)", async () => {
+    mockSingle.mockResolvedValueOnce({
+      data: {
+        id: 4,
+        no_surat_jalan: "3",
+        nama_barang: "Lampu LED 15 Watt",
+        material_datang_qty: 10,
+        material_datang_tgl: "2026-10-20",
+        spb: null,
+        po: null,
+      },
+      error: null,
+    });
+
+    const { container } = render(<MonitoringSPBItemDetailPage />, {
+      wrapper: ({ children }) => (
+        <Wrapper route="/monitoring-spb/item/4?type=sj">{children}</Wrapper>
+      ),
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Lampu LED 15 Watt")).toBeInTheDocument();
+      expect(screen.getByText("Datang")).toBeInTheDocument();
+      const sjRow = screen.getByText("No Surat Jalan").closest("tr");
+      expect(sjRow).toHaveTextContent("3");
+      // Surat Jalan murni: tidak punya SPB maupun PO
+      expect(screen.getByText("No SPB").closest("tr")).toHaveTextContent("-");
+      expect(screen.getByText("No PO").closest("tr")).toHaveTextContent("-");
+    });
+
+    const bodyRows = container.querySelectorAll(".ant-table-tbody tr.ant-table-row");
+    expect(bodyRows).toHaveLength(20);
   });
 });
 
@@ -1865,7 +2687,7 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/pages/monitoring-spb-p
 ================================================================================
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import { render, screen, fireEvent, within, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { App as AntdApp, ConfigProvider } from "antd";
@@ -1874,12 +2696,14 @@ import type { ReactNode } from "react";
 // Mock Hook
 vi.mock("@/features/spb/useMonitoringSPB", () => ({
   useMonitoringSPB: vi.fn(),
+  updateDocumentTitle: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { useMonitoringSPB } from "@/features/spb/useMonitoringSPB";
+import { useMonitoringSPB, updateDocumentTitle } from "@/features/spb/useMonitoringSPB";
 import MonitoringSPBPage from "@/features/spb/pages/MonitoringSPBPage";
 
 const mockUseMonitoringSPB = vi.mocked(useMonitoringSPB);
+const mockUpdateDocumentTitle = vi.mocked(updateDocumentTitle);
 
 // Wrapper untuk Antd & React Query
 function Wrapper({ children }: { children: ReactNode }) {
@@ -1895,13 +2719,14 @@ function Wrapper({ children }: { children: ReactNode }) {
   );
 }
 
-// Mock Data
+// Mock Data mencakup SPB tanpa PO yang statusnya Belum PO, Datang, dan Selesai
 const mockData = [
   {
     id: "SPB_1",
     spbNo: "SPB-01",
     spbTitle: "Proyek A",
     poNo: null,
+    poTitle: null,
     suratJalanNo: null,
     date: "2026-10-20",
     itemsCount: 5,
@@ -1910,10 +2735,37 @@ const mockData = [
     itemNames: ["Semen", "Pasir"],
   },
   {
+    id: "SPB_1A",
+    spbNo: "1A",
+    spbTitle: "Material Office & Gudang Proyek",
+    poNo: null,
+    poTitle: null,
+    suratJalanNo: null,
+    date: "2026-08-01",
+    itemsCount: 18,
+    sortNumber: 1,
+    status: "Datang",
+    itemNames: ["Printer"],
+  },
+  {
+    id: "SPB_29",
+    spbNo: "29",
+    spbTitle: "Drain AC Wellnes & Vanna",
+    poNo: null,
+    poTitle: null,
+    suratJalanNo: null,
+    date: "2026-10-12",
+    itemsCount: 3,
+    sortNumber: 29,
+    status: "Selesai",
+    itemNames: ["Pipa Drain"],
+  },
+  {
     id: "PO_2",
     spbNo: null,
     spbTitle: null,
     poNo: "PO-02",
+    poTitle: "Besi Utama",
     suratJalanNo: null,
     date: "2026-10-21",
     itemsCount: 3,
@@ -1926,6 +2778,7 @@ const mockData = [
     spbNo: null,
     spbTitle: null,
     poNo: null,
+    poTitle: null,
     suratJalanNo: 3 as any,
     date: "2026-10-22",
     itemsCount: 1,
@@ -1935,7 +2788,7 @@ const mockData = [
   },
 ];
 
-describe("MonitoringSPBPage - Fitur Pencarian, Filter, dan Sorting", () => {
+describe("MonitoringSPBPage - Fitur Pencarian, Filter, Sorting, dan Edit Judul", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseMonitoringSPB.mockReturnValue({
@@ -1957,11 +2810,10 @@ describe("MonitoringSPBPage - Fitur Pencarian, Filter, dan Sorting", () => {
   it("bisa mencari berdasarkan Nama Barang", () => {
     render(<MonitoringSPBPage />, { wrapper: Wrapper });
 
-    // Buka dropdown Select
-    const modeSelect = document.querySelector('.ant-select[aria-label="Mode Pencarian"] .ant-select-selector')!;
+    const modeSelect = document.querySelector(
+      '.ant-select[aria-label="Mode Pencarian"] .ant-select-selector',
+    )!;
     fireEvent.mouseDown(modeSelect);
-
-    // Pilih opsi "Nama Barang"
     fireEvent.click(screen.getByText("Nama Barang"));
 
     const searchInput = screen.getByPlaceholderText(/Cari Nama Barang/i);
@@ -1973,29 +2825,44 @@ describe("MonitoringSPBPage - Fitur Pencarian, Filter, dan Sorting", () => {
     expect(within(mainGrid).queryByText("PO-02")).not.toBeInTheDocument();
   });
 
-  it("bisa memfilter status 'Sudah PO'", () => {
+  it("bisa memfilter status 'Sudah di PO'", () => {
     render(<MonitoringSPBPage />, { wrapper: Wrapper });
 
-    // ✅ PERBAIKAN: Label opsi Segmented di komponen adalah "Sudah di PO",
-    // bukan "Sudah PO".
     const segmentedFilter = document.querySelector(".ant-segmented") as HTMLElement;
     const filterOption = within(segmentedFilter).getByText("Sudah di PO");
-
-    // Klik tombol filter tersebut
     fireEvent.click(filterOption);
 
     const mainGrid = document.querySelector(".ant-row") as HTMLElement;
 
-    // Cek apakah PO-02 muncul, dan SPB-01 menghilang
     expect(within(mainGrid).getByText("PO-02")).toBeInTheDocument();
     expect(within(mainGrid).queryByText("SPB-01")).not.toBeInTheDocument();
+  });
+
+  it("PERBAIKAN BUG: filter 'Belum di PO' TIDAK menampilkan card berstatus 'Datang' atau 'Selesai'", () => {
+    render(<MonitoringSPBPage />, { wrapper: Wrapper });
+
+    const segmentedFilter = document.querySelector(".ant-segmented") as HTMLElement;
+    const filterOption = within(segmentedFilter).getByText("Belum di PO");
+    fireEvent.click(filterOption);
+
+    const mainGrid = document.querySelector(".ant-row") as HTMLElement;
+
+    // Hanya SPB-01 (status "Belum PO") yang boleh muncul
+    expect(within(mainGrid).getByText("SPB-01")).toBeInTheDocument();
+
+    // SPB 1A (status "Datang"), SPB 29 (status "Selesai"), dan SJ 3 (status "Selesai") TIDAK boleh muncul!
+    expect(within(mainGrid).queryByText("1A")).not.toBeInTheDocument();
+    expect(within(mainGrid).queryByText("29")).not.toBeInTheDocument();
+    expect(within(mainGrid).queryByText("Datang")).not.toBeInTheDocument();
+    expect(within(mainGrid).queryByText("Selesai")).not.toBeInTheDocument();
   });
 
   it("bisa mengurutkan berdasarkan 'Paling Baru'", () => {
     render(<MonitoringSPBPage />, { wrapper: Wrapper });
 
-    // Buka dropdown Sort
-    const sortSelect = document.querySelector('.ant-select[aria-label="Urutan Data"] .ant-select-selector')!;
+    const sortSelect = document.querySelector(
+      '.ant-select[aria-label="Urutan Data"] .ant-select-selector',
+    )!;
     fireEvent.mouseDown(sortSelect);
     fireEvent.click(screen.getByText("Urut: Paling Baru"));
 
@@ -2003,7 +2870,36 @@ describe("MonitoringSPBPage - Fitur Pencarian, Filter, dan Sorting", () => {
     expect(bigCards[0]).toHaveTextContent("No. Surat Jalan");
     expect(bigCards[0]).toHaveTextContent("3");
   });
+
+  it("menampilkan ikon pensil kecil pada card SPB dan PO serta dapat mengedit judulnya", async () => {
+    render(<MonitoringSPBPage />, { wrapper: Wrapper });
+
+    // Tombol pensil di card SPB-01 dan PO-02 harus ada
+    const editSpbBtn = screen.getByTestId("edit-spb-title-SPB-01");
+    const editPoBtn = screen.getByTestId("edit-po-title-PO-02");
+    expect(editSpbBtn).toBeInTheDocument();
+    expect(editPoBtn).toBeInTheDocument();
+
+    // Klik ikon pensil pada SPB-01
+    fireEvent.click(editSpbBtn);
+
+    const input = await screen.findByLabelText("Input Judul Dokumen");
+    expect(input).toHaveValue("Proyek A");
+
+    fireEvent.change(input, { target: { value: "Proyek Renovasi Villa" } });
+    fireEvent.click(screen.getByRole("button", { name: /simpan/i }));
+
+    await waitFor(() => {
+      expect(mockUpdateDocumentTitle).toHaveBeenCalledWith(
+        "spb",
+        "SPB-01",
+        "Proyek Renovasi Villa",
+      );
+      expect(screen.getByText(/- Proyek Renovasi Villa/)).toBeInTheDocument();
+    });
+  });
 });
+
 
 ================================================================================
 FILE: test/unit/pages/monitoring-spb.test.tsx
@@ -2085,6 +2981,219 @@ describe("useMonitoringSPBDetail - Logika Filtering Kebal Peluru", () => {
     expect(result.current.items).toHaveLength(4);
   });
 });
+
+================================================================================
+FILE: test/utils/fakeSupabase.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/utils/fakeSupabase.ts
+================================================================================
+
+// tests/utils/fakeSupabase.ts
+//
+// Supabase palsu berbasis memori. Berbeda dari mock `then` biasa, builder ini
+// BENAR-BENAR menerapkan filter .eq / .is / .in serta operasi .insert / .update / .delete,
+// sehingga test ikut memverifikasi bahwa query & mutasi bekerja secara nyata di memori.
+
+export type Row = Record<string, any>;
+
+export interface QueryCall {
+  table: string;
+  method:
+    | "select"
+    | "eq"
+    | "is"
+    | "in"
+    | "single"
+    | "insert"
+    | "update"
+    | "delete"
+    | "order"
+    | "limit";
+  args: unknown[];
+}
+
+type Filter = (row: Row) => boolean;
+
+const sameValue = (a: unknown, b: unknown) => String(a) === String(b);
+
+export const fakeDb = {
+  tables: {
+    spb: [],
+    po: [],
+    surat_jalan: [],
+    barang: [],
+    account_requests: [],
+  } as Record<string, Row[]>,
+  calls: [] as QueryCall[],
+  /** isi untuk membuat query ke tabel tertentu gagal: errors.po = { message: "boom" } */
+  errors: {} as Record<string, { message: string } | undefined>,
+
+  reset() {
+    this.tables = {
+      spb: [],
+      po: [],
+      surat_jalan: [],
+      barang: [],
+      account_requests: [],
+    };
+    this.calls = [];
+    this.errors = {};
+  },
+
+  /** Jumlah query .select() yang dikirim ke sebuah tabel. */
+  queriesTo(table: string) {
+    return this.calls.filter((c) => c.table === table && c.method === "select").length;
+  },
+};
+
+export const fakeSupabaseClient = {
+  auth: {
+    getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+    getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+    signInWithPassword: () =>
+      Promise.resolve({ data: { user: null, session: null }, error: { message: "Invalid login" } }),
+    signOut: () => Promise.resolve({ error: null }),
+    onAuthStateChange: () => ({
+      data: { subscription: { unsubscribe: () => {} } },
+    }),
+  },
+
+  from(table: string) {
+    const filters: Filter[] = [];
+    let pendingOp: "select" | "insert" | "update" | "delete" = "select";
+    let insertPayload: Row[] = [];
+    let updatePatch: Row = {};
+    let executedResult: { data: Row[] | null; error: any } | null = null;
+
+    const log = (method: QueryCall["method"], args: unknown[]) =>
+      fakeDb.calls.push({ table, method, args });
+
+    const ensureTable = () => {
+      if (!fakeDb.tables[table]) {
+        fakeDb.tables[table] = [];
+      }
+      return fakeDb.tables[table];
+    };
+
+    const run = () => {
+      if (executedResult) return executedResult;
+
+      const err = fakeDb.errors[table];
+      if (err) {
+        executedResult = { data: null, error: err };
+        return executedResult;
+      }
+
+      const rows = ensureTable();
+
+      if (pendingOp === "insert") {
+        const created = insertPayload.map((item, idx) => {
+          const nextId =
+            item.id ??
+            (rows.reduce((max, r) => Math.max(max, Number(r.id) || 0), 0) + idx + 1);
+          const row = {
+            id: nextId,
+            created_at: item.created_at ?? new Date().toISOString(),
+            ...item,
+          };
+          rows.push(row);
+          return row;
+        });
+        executedResult = { data: created, error: null };
+        return executedResult;
+      }
+
+      if (pendingOp === "update") {
+        const updated: Row[] = [];
+        fakeDb.tables[table] = rows.map((r) => {
+          if (filters.every((f) => f(r))) {
+            const next = { ...r, ...updatePatch };
+            updated.push(next);
+            return next;
+          }
+          return r;
+        });
+        executedResult = { data: updated, error: null };
+        return executedResult;
+      }
+
+      if (pendingOp === "delete") {
+        const removed: Row[] = [];
+        fakeDb.tables[table] = rows.filter((r) => {
+          const match = filters.every((f) => f(r));
+          if (match) removed.push(r);
+          return !match;
+        });
+        executedResult = { data: removed, error: null };
+        return executedResult;
+      }
+
+      executedResult = {
+        data: rows.filter((r) => filters.every((f) => f(r))),
+        error: null,
+      };
+      return executedResult;
+    };
+
+    const builder: any = {
+      select(...args: unknown[]) {
+        log("select", args);
+        return builder;
+      },
+      insert(rowsInput: Row | Row[]) {
+        log("insert", [rowsInput]);
+        pendingOp = "insert";
+        insertPayload = Array.isArray(rowsInput) ? rowsInput : [rowsInput];
+        return builder;
+      },
+      update(patch: Row) {
+        log("update", [patch]);
+        pendingOp = "update";
+        updatePatch = patch;
+        return builder;
+      },
+      delete() {
+        log("delete", []);
+        pendingOp = "delete";
+        return builder;
+      },
+      eq(col: string, val: unknown) {
+        log("eq", [col, val]);
+        filters.push((r) => r[col] != null && sameValue(r[col], val));
+        return builder;
+      },
+      is(col: string, val: unknown) {
+        log("is", [col, val]);
+        filters.push((r) => (r[col] ?? null) === val);
+        return builder;
+      },
+      in(col: string, vals: unknown[]) {
+        log("in", [col, vals]);
+        const set = new Set(vals.map(String));
+        filters.push((r) => r[col] != null && set.has(String(r[col])));
+        return builder;
+      },
+      order(...args: unknown[]) {
+        log("order", args);
+        return builder;
+      },
+      limit(...args: unknown[]) {
+        log("limit", args);
+        return builder;
+      },
+      single() {
+        log("single", []);
+        const { data, error } = run();
+        return Promise.resolve({ data: data?.[0] ?? null, error });
+      },
+      // supaya `await builder` berfungsi seperti query Supabase asli
+      then(resolve: (v: unknown) => unknown, reject?: (e: unknown) => unknown) {
+        return Promise.resolve(run()).then(resolve, reject);
+      },
+    };
+    return builder;
+  },
+};
+
 
 ================================================================================
 FILE: test/utils/mocks.ts

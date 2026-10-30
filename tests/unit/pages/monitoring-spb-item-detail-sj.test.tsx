@@ -60,11 +60,17 @@ describe("MonitoringSPBDetailPage - Surat Jalan murni (SJ 3)", () => {
   it("menampilkan tabel barang dari Surat Jalan no 3 murni", async () => {
     renderAt("/monitoring-spb/detail?sj=3");
 
-    // Header sudah tampil selagi loading, jadi tunggu judul tabel (baru ada setelah data masuk).
     expect(await screen.findByText("Daftar Barang (2)", {}, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.getByText(/Surat Jalan:\s*3/i)).toBeInTheDocument();
     expect(screen.getByText("Kabel Roll 100m")).toBeInTheDocument();
     expect(screen.getByText("Lampu LED 15 Watt")).toBeInTheDocument();
+  });
+
+  it("tidak menampilkan kolom 'Sumber' agar tabel ringkas dalam satu bagian tanpa scroll", async () => {
+    renderAt("/monitoring-spb/detail?sj=3");
+
+    await screen.findByText("Daftar Barang (2)");
+    expect(screen.queryByRole("columnheader", { name: /sumber/i })).not.toBeInTheDocument();
   });
 
   it("tidak menampilkan barang yang menjadi milik card SPB / PO", async () => {

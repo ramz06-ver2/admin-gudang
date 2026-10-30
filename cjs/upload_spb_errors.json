@@ -1,0 +1,272 @@
+[
+  {
+    "success": false,
+    "rowNumber": 6,
+    "id": 920,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(461) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 10,
+    "id": 924,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(465) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 14,
+    "id": 928,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(469) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 18,
+    "id": 932,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(473) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 22,
+    "id": 936,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(477) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 26,
+    "id": 940,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(481) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 27,
+    "id": 941,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(455) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 30,
+    "id": 944,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(542) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 32,
+    "id": 946,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(492) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 33,
+    "id": 947,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(485) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 34,
+    "id": 948,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(491) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 35,
+    "id": 953,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(495) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 36,
+    "id": 954,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(499) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 37,
+    "id": 956,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(507) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 38,
+    "id": 957,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(511) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 39,
+    "id": 958,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(515) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 40,
+    "id": 959,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(519) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 41,
+    "id": 960,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(496) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 42,
+    "id": 961,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(500) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 43,
+    "id": 962,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(504) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 44,
+    "id": 963,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(524) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 45,
+    "id": 964,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(528) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 46,
+    "id": 965,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(532) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 47,
+    "id": 966,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(536) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 48,
+    "id": 980,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(562) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 49,
+    "id": 988,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(561) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 50,
+    "id": 990,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(569) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 51,
+    "id": 991,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(572) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 52,
+    "id": 992,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(575) is not present in table \"po\".",
+    "hint": null
+  },
+  {
+    "success": false,
+    "rowNumber": 53,
+    "id": 993,
+    "code": "23503",
+    "message": "insert or update on table \"spb\" violates foreign key constraint \"fk_po\"",
+    "details": "Key (id_po)=(578) is not present in table \"po\".",
+    "hint": null
+  }
+]

@@ -17,17 +17,28 @@ enum InventoryTabKey {
 export const InventoryPage = () => {
   const [activeTab, setActiveTab] = useState<string>(InventoryTabKey.MATERIAL);
 
-  const { products: materials, isLoading: isLoadingMaterials } =
-    useProducts("Material");
+  const {
+    products: materials,
+    isLoading: isLoadingMaterials,
+    refetch: refetchMaterials,
+  } = useProducts("Material");
 
-  const { products: tools, isLoading: isLoadingTools } =
-    useProducts("Alat Bantu");
+  const {
+    products: tools,
+    isLoading: isLoadingTools,
+    refetch: refetchTools,
+  } = useProducts("Alat Bantu");
 
   const { exits: breakdownExits, isLoading: isLoadingBreakdown } =
     useStockExits({ breakdown: true });
 
   const { exits: nonBreakdownExits, isLoading: isLoadingNonBreakdown } =
     useStockExits({ breakdown: false });
+
+  const handleRefetchAll = () => {
+    refetchMaterials();
+    refetchTools();
+  };
 
   const tabItems = [
     {
@@ -38,18 +49,21 @@ export const InventoryPage = () => {
           type="stock"
           dataSource={materials}
           loading={isLoadingMaterials}
+          defaultCategory="Material"
+          onRefetch={handleRefetchAll}
         />
       ),
     },
     {
       key: InventoryTabKey.TOOLS,
-      // ✅ Rename jadi Stok Persediaan Alat
       label: `Stok Persediaan Alat (${tools.length})`,
       children: (
         <InventoryTable
           type="stock"
           dataSource={tools}
           loading={isLoadingTools}
+          defaultCategory="Alat Bantu"
+          onRefetch={handleRefetchAll}
         />
       ),
     },

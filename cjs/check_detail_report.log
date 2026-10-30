@@ -1,0 +1,61 @@
+ℹ️ [INFO] ========================================
+ℹ️ [INFO]    CEK INTEGRITAS DATA PO & SPB (DETAIL)
+ℹ️ [INFO] ========================================
+
+ℹ️ [INFO] File add_po.json  : 100 baris
+ℹ️ [INFO] File add_spb.json : 53 baris
+
+ℹ️ [INFO] Menarik data dari database...
+ℹ️ [INFO] Terkumpul 100 PO dan 121 SPB dari DB (termasuk relasi).
+
+ℹ️ [INFO] --- [A] CEK PO FILE LOKAL VS DATABASE ---
+❌ [ERROR] Mismatch PO ID 455: id_spb di file = null, di DB = 941
+❌ [ERROR] Mismatch PO ID 461: id_spb di file = null, di DB = 920
+❌ [ERROR] Mismatch PO ID 465: id_spb di file = null, di DB = 924
+❌ [ERROR] Mismatch PO ID 469: id_spb di file = null, di DB = 928
+❌ [ERROR] Mismatch PO ID 473: id_spb di file = null, di DB = 932
+❌ [ERROR] Mismatch PO ID 477: id_spb di file = null, di DB = 936
+❌ [ERROR] Mismatch PO ID 481: id_spb di file = null, di DB = 940
+❌ [ERROR] Mismatch PO ID 485: id_spb di file = null, di DB = 947
+❌ [ERROR] Mismatch PO ID 491: id_spb di file = null, di DB = 948
+❌ [ERROR] Mismatch PO ID 492: id_spb di file = null, di DB = 946
+❌ [ERROR] Mismatch PO ID 495: id_spb di file = null, di DB = 953
+❌ [ERROR] Mismatch PO ID 496: id_spb di file = null, di DB = 960
+❌ [ERROR] Mismatch PO ID 499: id_spb di file = null, di DB = 954
+❌ [ERROR] Mismatch PO ID 500: id_spb di file = null, di DB = 961
+❌ [ERROR] Mismatch PO ID 504: id_spb di file = null, di DB = 962
+❌ [ERROR] Mismatch PO ID 507: id_spb di file = null, di DB = 956
+❌ [ERROR] Mismatch PO ID 511: id_spb di file = null, di DB = 957
+❌ [ERROR] Mismatch PO ID 515: id_spb di file = null, di DB = 958
+❌ [ERROR] Mismatch PO ID 519: id_spb di file = null, di DB = 959
+❌ [ERROR] Mismatch PO ID 524: id_spb di file = null, di DB = 963
+❌ [ERROR] Mismatch PO ID 528: id_spb di file = null, di DB = 964
+❌ [ERROR] Mismatch PO ID 532: id_spb di file = null, di DB = 965
+❌ [ERROR] Mismatch PO ID 536: id_spb di file = null, di DB = 966
+❌ [ERROR] Mismatch PO ID 542: id_spb di file = null, di DB = 944
+❌ [ERROR] Mismatch PO ID 561: id_spb di file = null, di DB = 988
+❌ [ERROR] Mismatch PO ID 562: id_spb di file = null, di DB = 980
+❌ [ERROR] Mismatch PO ID 569: id_spb di file = null, di DB = 990
+❌ [ERROR] Mismatch PO ID 572: id_spb di file = null, di DB = 991
+❌ [ERROR] Mismatch PO ID 575: id_spb di file = null, di DB = 992
+❌ [ERROR] Mismatch PO ID 578: id_spb di file = null, di DB = 993
+ℹ️ [INFO] >> Cek PO Lokal selesai.
+
+ℹ️ [INFO] --- [B] CEK SPB FILE LOKAL VS DATABASE ---
+⚠️ [WARNING] SPB ID 980 (Mur + baut + ring plat + ring per M20 x 3"): qty di DB tidak valid (null).
+⚠️ [WARNING] SPB ID 980 (Mur + baut + ring plat + ring per M20 x 3"): satuan kosong di database.
+⚠️ [WARNING] SPB ID 988 (Gunting PPR 42mm merk Belter HS03): qty di DB tidak valid (null).
+⚠️ [WARNING] SPB ID 988 (Gunting PPR 42mm merk Belter HS03): satuan kosong di database.
+ℹ️ [INFO] >> Cek SPB Lokal selesai.
+
+ℹ️ [INFO] --- [C] CEK RELASI SILANG (PO <-> SPB) ---
+❌ [ERROR] Mismatch Relasi: PO ID 535 menunjuk SPB ID 874, tetapi SPB tersebut menunjuk ke PO ID 523 (seharusnya PO ID 535).
+❌ [ERROR] Mismatch Relasi: PO ID 537 menunjuk SPB ID 889, tetapi SPB tersebut menunjuk ke PO ID 525 (seharusnya PO ID 537).
+ℹ️ [INFO] >> Cek Relasi selesai.
+
+ℹ️ [INFO] ========================================
+ℹ️ [INFO]            RINGKASAN AKHIR
+ℹ️ [INFO] ========================================
+ℹ️ [INFO] Total Error   : 32
+ℹ️ [INFO] Total Warning : 4
+❌ [ERROR] Terdapat ERROR. Cek log di atas atau buka file log untuk perbaikan.
