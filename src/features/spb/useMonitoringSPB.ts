@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { USE_MOCK } from "../../shared/lib/config";
 import type { SPBDocumentGroup } from "../../shared/types";
+import { cleanDocNo, getSjTarget, isIgnoredSuratJalan } from "./suratJalanRules";
 
 const getSortNumber = (val: unknown): number => {
   if (val === null || val === undefined || val === "") return 999999;
@@ -30,7 +31,6 @@ export const useMonitoringSPB = () => {
         supabaseClient.from("po").select(`
           id, no_po, tanggal_po, id_spb, material_datang_tgl, material_datang_qty, nama_barang_po
         `),
-        // ✅ Tarik data dari surat_jalan beserta relasinya
         supabaseClient.from("surat_jalan").select(`
           id, no_surat_jalan, id_spb, id_po, nama_barang, 
           material_datang_tgl, material_datang_qty,
@@ -86,21 +86,10 @@ export const useMonitoringSPB = () => {
         if (!groups.has(key)) {
           groups.set(key, {
             data: {
-              id: key,
-              spbNo,
-              spbTitle: row.judul_spb || null,
-              poNo: null,
-              date: "-",
-              itemsCount: 0,
-              sortNumber: getSortNumber(spbNo),
-              status: "Belum PO",
+              id: key, spbNo, spbTitle: row.judul_spb || null, poNo: null,
+              date: "-", itemsCount: 0, sortNumber: getSortNumber(spbNo), status: "Belum PO",
             },
-            hasAnyPO: false,
-            hasAnyArrival: false,
-            latestTimestamp: 0,
-            poSet: new Set<string>(),
-            completedItems: 0,
-            itemNames: new Set<string>(),
+            hasAnyPO: false, hasAnyArrival: false, latestTimestamp: 0, poSet: new Set<string>(), completedItems: 0, itemNames: new Set<string>(),
           });
         }
 
@@ -123,16 +112,16 @@ export const useMonitoringSPB = () => {
         }
 
         const joinedPo = Array.isArray(row.po) ? row.po[0] : row.po;
-        if (joinedPo && joinedPo.no_po) {
-          group.poSet.add(joinedPo.no_po);
+        if (joinedPo && cleanDocNo(joinedPo.no_po)) {
+          group.poSet.add(String(cleanDocNo(joinedPo.no_po)));
           group.hasAnyPO = true;
           updateLatestDate(group, joinedPo.tanggal_po);
         }
 
         const linkedPos = poBySpbId.get(String(row.id)) || [];
         linkedPos.forEach((p: any) => {
-          if (p.no_po) {
-            group.poSet.add(p.no_po);
+          if (cleanDocNo(p.no_po)) {
+            group.poSet.add(String(cleanDocNo(p.no_po)));
             group.hasAnyPO = true;
             updateLatestDate(group, p.tanggal_po);
           }
@@ -143,32 +132,19 @@ export const useMonitoringSPB = () => {
       const existingSpbIds = new Set(spbData.map((s: any) => String(s.id)));
 
       poData.forEach((p: any) => {
-        const isLinked =
-          (p.id_spb && existingSpbIds.has(String(p.id_spb))) ||
-          spbData.some((s: any) => s.id_po === p.id);
+        const isLinked = (p.id_spb && existingSpbIds.has(String(p.id_spb))) || spbData.some((s: any) => s.id_po === p.id);
 
         if (!isLinked) {
-          const poNo = toStrOrNull(p.no_po);
+          const poNo = cleanDocNo(p.no_po);
           const key = poNo ? `PO_${poNo}` : `PO_ID_${p.id}`;
 
           if (!groups.has(key)) {
             groups.set(key, {
               data: {
-                id: key,
-                spbNo: null,
-                spbTitle: null,
-                poNo: poNo,
-                date: p.tanggal_po || "-",
-                itemsCount: 0,
-                sortNumber: getSortNumber(poNo),
-                status: "Sudah PO",
+                id: key, spbNo: null, spbTitle: null, poNo: poNo,
+                date: p.tanggal_po || "-", itemsCount: 0, sortNumber: getSortNumber(poNo), status: "Sudah PO",
               },
-              hasAnyPO: true,
-              hasAnyArrival: false,
-              latestTimestamp: 0,
-              poSet: new Set([poNo || ""]),
-              completedItems: 0,
-              itemNames: new Set<string>(),
+              hasAnyPO: true, hasAnyArrival: false, latestTimestamp: 0, poSet: new Set([poNo || ""]), completedItems: 0, itemNames: new Set<string>(),
             });
           }
 
@@ -183,63 +159,57 @@ export const useMonitoringSPB = () => {
           if (p.material_datang_tgl) {
             group.hasAnyArrival = true;
             updateLatestDate(group, p.material_datang_tgl);
-            if ((p.material_datang_qty || 0) > 0) {
-              group.completedItems += 1;
-            }
+            if ((p.material_datang_qty || 0) > 0) group.completedItems += 1;
           }
         }
       });
 
-      // PROSES 3: Kelompokkan data dari Surat Jalan
+      // PROSES 3: Kelompokkan data dari Surat Jalan (no 3 dan seterusnya)
       sjData.forEach((sj: any) => {
-        let targetKey: string | null = null;
+        // Surat Jalan no 1 dan 2 diabaikan
+        if (isIgnoredSuratJalan(sj.no_surat_jalan)) return;
 
-        if (sj.id_spb) {
-          // Punya id_spb -> Masukkan ke grup SPB
-          const spb = spbData.find(
-            (s: any) => String(s.id) === String(sj.id_spb),
-          );
-          if (spb) targetKey = toStrOrNull(spb.no_spb) || `SPB_${spb.id}`;
-        } else if (sj.id_po) {
-          // Punya id_po tapi tidak punya id_spb
-          const po = poData.find((p: any) => String(p.id) === String(sj.id_po));
-          if (po) {
-            if (po.id_spb) {
-              // Jika PO-nya ternyata terikat ke SPB, masukkan ke SPB
-              const spb = spbData.find(
-                (s: any) => String(s.id) === String(po.id_spb),
-              );
-              if (spb) targetKey = toStrOrNull(spb.no_spb) || `SPB_${spb.id}`;
-            } else {
-              // Jika PO murni, masukkan ke PO
-              targetKey = `PO_${toStrOrNull(po.no_po) || po.id}`;
-            }
-          }
+        const spbRel = Array.isArray(sj.spb) ? sj.spb[0] : sj.spb;
+        const poRel = Array.isArray(sj.po) ? sj.po[0] : sj.po;
+        const sjNo = toStrOrNull(sj.no_surat_jalan);
+        const target = getSjTarget(sj);
+
+        let targetKey: string;
+        let spbNo: string | null = null;
+        let spbTitle: string | null = null;
+        let poNo: string | null = null;
+
+        if (target === "spb") {
+          // Punya id_spb -> card SPB
+          spbNo = cleanDocNo(spbRel?.no_spb);
+          spbTitle = toStrOrNull(spbRel?.judul_spb);
+          targetKey = spbNo ? spbNo : `SPB_${sj.id_spb}`;
+        } else if (target === "po") {
+          // Tanpa id_spb, punya id_po -> card PO
+          poNo = cleanDocNo(poRel?.no_po);
+          targetKey = poNo ? `PO_${poNo}` : `PO_ID_${sj.id_po}`;
         } else {
-          // Tidak punya keduanya -> Masukkan ke Surat Jalan
-          targetKey = `SJ_${sj.no_surat_jalan}`;
+          // Tanpa id_spb dan id_po -> card Surat Jalan
+          targetKey = `SJ_${sjNo}`;
         }
 
-        if (!targetKey) return;
-
-        // Jika grup belum ada (misal kasus Surat Jalan murni), buat baru
         if (!groups.has(targetKey)) {
           groups.set(targetKey, {
             data: {
               id: targetKey,
-              spbNo: null,
-              spbTitle: null,
-              poNo: null,
-              suratJalanNo: sj.no_surat_jalan,
+              spbNo,
+              spbTitle,
+              poNo,
+              suratJalanNo: target === "sj" ? sjNo : null,
               date: "-",
               itemsCount: 0,
-              sortNumber: getSortNumber(sj.no_surat_jalan),
-              status: "Sudah PO", // Default
+              sortNumber: getSortNumber(spbNo ?? poNo ?? sjNo),
+              status: "Sudah PO",
             },
             hasAnyPO: true,
             hasAnyArrival: false,
             latestTimestamp: 0,
-            poSet: new Set<string>(),
+            poSet: new Set<string>(poNo ? [poNo] : []),
             completedItems: 0,
             itemNames: new Set<string>(),
           });
@@ -253,16 +223,13 @@ export const useMonitoringSPB = () => {
         if (sj.material_datang_tgl) {
           group.hasAnyArrival = true;
           updateLatestDate(group, sj.material_datang_tgl);
-          if ((sj.material_datang_qty || 0) > 0) {
-            group.completedItems += 1;
-          }
+          if ((sj.material_datang_qty || 0) > 0) group.completedItems += 1;
         }
       });
 
       // Finalisasi Status & Sorting
       const result = Array.from(groups.values()).map((g) => {
-        const isSelesai =
-          g.data.itemsCount > 0 && g.completedItems >= g.data.itemsCount;
+        const isSelesai = g.data.itemsCount > 0 && g.completedItems >= g.data.itemsCount;
         let status = "Belum PO";
         if (isSelesai) status = "Selesai";
         else if (g.hasAnyArrival) status = "Datang";
@@ -273,13 +240,30 @@ export const useMonitoringSPB = () => {
           ...g.data,
           poNo: combinedPo || null,
           status,
-          sortNumber:
-            getSortNumber(g.data.spbNo) + getSortNumber(combinedPo) * 0.01,
+          sortNumber: getSortNumber(g.data.spbNo) + getSortNumber(combinedPo) * 0.01,
           itemNames: Array.from(g.itemNames),
         };
       });
 
-      return result; // Sorting utama akan dilakukan di komponen Page
+      // ✅ URUTAN: Sudah PO & Belum PO (1) -> Datang (2) -> Selesai (3)
+      const getStatusWeight = (status: string) => {
+        if (status === "Sudah PO") return 1;
+        if (status === "Belum PO") return 1;
+        if (status === "Datang") return 2;
+        if (status === "Selesai") return 3;
+        return 4;
+      };
+
+      return result.sort((a, b) => {
+        const weightA = getStatusWeight(a.status || "");
+        const weightB = getStatusWeight(b.status || "");
+        if (weightA !== weightB) return weightA - weightB;
+
+        const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
+        const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
+        if (dateA === dateB) return a.sortNumber - b.sortNumber;
+        return dateB - dateA;
+      });
     },
   });
 

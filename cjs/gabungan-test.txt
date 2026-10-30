@@ -1,6 +1,6 @@
 ================================================================================
 FILE: test/diagnostics/01-imports.test.ts
-PATH: /workspaces/admin-gudang/tests/diagnostics/01-imports.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/01-imports.test.ts
 ================================================================================
 
 import { describe, it, expect, vi } from "vitest";
@@ -228,7 +228,7 @@ describe("DIAGNOSTIC 01 — Module Imports", () => {
 
 ================================================================================
 FILE: test/diagnostics/02-exports.test.ts
-PATH: /workspaces/admin-gudang/tests/diagnostics/02-exports.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/02-exports.test.ts
 ================================================================================
 
 import { describe, it, expect } from "vitest";
@@ -459,7 +459,7 @@ describe("DIAGNOSTIC 02 — Named Exports", () => {
 
 ================================================================================
 FILE: test/diagnostics/03-components.test.tsx
-PATH: /workspaces/admin-gudang/tests/diagnostics/03-components.test.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/03-components.test.tsx
 ================================================================================
 
 import { describe, it, expect, vi } from "vitest";
@@ -645,7 +645,7 @@ describe("DIAGNOSTIC 03 — Component Renders", () => {
 
 ================================================================================
 FILE: test/diagnostics/04-app-render.test.ts
-PATH: /workspaces/admin-gudang/tests/diagnostics/04-app-render.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/04-app-render.test.ts
 ================================================================================
 
 import { describe, it, expect, vi } from "vitest";
@@ -726,7 +726,7 @@ describe("DIAGNOSTIC 04 — Full App Render", () => {
 
 ================================================================================
 FILE: test/diagnostics/05-supabase-config.test.ts
-PATH: /workspaces/admin-gudang/tests/diagnostics/05-supabase-config.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/05-supabase-config.test.ts
 ================================================================================
 
 import { describe, it, expect } from "vitest";
@@ -780,7 +780,7 @@ describe("FOCUS: Supabase Config", () => {
 
 ================================================================================
 FILE: test/diagnostics/06-supabase-connection.test.ts
-PATH: /workspaces/admin-gudang/tests/diagnostics/06-supabase-connection.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/06-supabase-connection.test.ts
 ================================================================================
 
 import { describe, it, expect } from "vitest";
@@ -843,7 +843,7 @@ describe("FOCUS: Supabase Connection", () => {
 
 ================================================================================
 FILE: test/diagnostics/07-mappers.test.ts
-PATH: /workspaces/admin-gudang/tests/diagnostics/07-mappers.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/07-mappers.test.ts
 ================================================================================
 
 import { describe, it, expect } from "vitest";
@@ -924,7 +924,7 @@ describe("FOCUS: Product Mapper", () => {
 
 ================================================================================
 FILE: test/diagnostics/08-hooks-supabase.test.tsx
-PATH: /workspaces/admin-gudang/tests/diagnostics/08-hooks-supabase.test.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/diagnostics/08-hooks-supabase.test.tsx
 ================================================================================
 
 import { describe, it, expect } from "vitest";
@@ -1006,7 +1006,7 @@ describe("FOCUS: Hooks dengan Supabase", () => {
 
 ================================================================================
 FILE: test/integration/01-master-data.test.ts
-PATH: /workspaces/admin-gudang/tests/integration/01-master-data.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/integration/01-master-data.test.ts
 ================================================================================
 
 import { describe, it, expect } from "vitest";
@@ -1033,7 +1033,7 @@ describe.skip("Integration: Master Data (Tabel Barang)", () => {
 
 ================================================================================
 FILE: test/integration/02-movemnet.test.ts
-PATH: /workspaces/admin-gudang/tests/integration/02-movemnet.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/integration/02-movemnet.test.ts
 ================================================================================
 
 import { describe, it, expect } from "vitest";
@@ -1063,7 +1063,7 @@ describe.skip("Integration: Transaksi Barang Masuk & Keluar", () => {
 
 ================================================================================
 FILE: test/integration/03-spb-po-relation.test.ts
-PATH: /workspaces/admin-gudang/tests/integration/03-spb-po-relation.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/integration/03-spb-po-relation.test.ts
 ================================================================================
 
 import { describe, it, expect, vi } from "vitest";
@@ -1121,7 +1121,7 @@ describe("Smoke: App module", () => {
 
 ================================================================================
 FILE: test/integration/04-spb-monitoring.test.ts
-PATH: /workspaces/admin-gudang/tests/integration/04-spb-monitoring.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/integration/04-spb-monitoring.test.ts
 ================================================================================
 
 import { describe, it, expect } from "vitest";
@@ -1315,7 +1315,7 @@ describe.skip("Integration: SPB Monitoring — data & grouping", () => {
 
 ================================================================================
 FILE: test/setup.ts
-PATH: /workspaces/admin-gudang/tests/setup.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/setup.ts
 ================================================================================
 
 import "@testing-library/jest-dom/vitest";
@@ -1362,7 +1362,7 @@ afterEach(() => {
 
 ================================================================================
 FILE: test/smoke/app.test.tsx
-PATH: /workspaces/admin-gudang/tests/smoke/app.test.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/smoke/app.test.tsx
 ================================================================================
 
 import { describe, it, expect, vi } from "vitest";
@@ -1421,7 +1421,7 @@ describe("Smoke: App module", () => {
 
 ================================================================================
 FILE: test/unit/hooks/useKeyboardShortcut.test.ts
-PATH: /workspaces/admin-gudang/tests/unit/hooks/useKeyboardShortcut.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/hooks/useKeyboardShortcut.test.ts
 ================================================================================
 
 import { describe, it, expect, vi } from "vitest";
@@ -1488,7 +1488,7 @@ describe("useKeyboardShortcut", () => {
 
 ================================================================================
 FILE: test/unit/hooks/useMonitoringSPB-grouping.test.tsx
-PATH: /workspaces/admin-gudang/tests/unit/hooks/useMonitoringSPB-grouping.test.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/hooks/useMonitoringSPB-grouping.test.tsx
 ================================================================================
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -1499,15 +1499,20 @@ import { useMonitoringSPB } from "@/features/spb/useMonitoringSPB";
 
 let mockSpbData: any[] = [];
 let mockPoData: any[] = [];
+let mockSjData: any[] = []; // ✅ Tambahkan mock untuk surat_jalan
 
 vi.mock("@/shared/lib/supabaseClient", () => ({
   supabaseClient: {
-    from: vi.fn((table) => ({
-      select: vi.fn().mockResolvedValue({
-        data: table === "spb" ? mockSpbData : mockPoData,
-        error: null,
-      }),
-    })),
+    from: vi.fn((table) => {
+      let data: any[] = [];
+      if (table === "spb") data = mockSpbData;
+      else if (table === "po") data = mockPoData;
+      else if (table === "surat_jalan") data = mockSjData;
+
+      return {
+        select: vi.fn().mockResolvedValue({ data, error: null }),
+      };
+    }),
   },
 }));
 
@@ -1521,15 +1526,15 @@ describe("useMonitoringSPB - Grouping PO Tanpa SPB", () => {
     vi.clearAllMocks();
     mockSpbData = [];
     mockPoData = [];
+    mockSjData = [];
   });
 
   it("harus menggabungkan 42 barang dengan No PO 34 menjadi 1 card", async () => {
-    // Simulasi data PO 34 dengan 42 baris barang
     mockPoData = Array.from({ length: 42 }, (_, i) => ({
-      id: 100 + i, // ID unik per baris
-      no_po: "34", // No PO sama
+      id: 100 + i,
+      no_po: "34",
       tanggal_po: "2026-08-21",
-      id_spb: null, // Tidak terikat SPB
+      id_spb: null,
       material_datang_tgl: null,
       material_datang_qty: 0,
     }));
@@ -1538,13 +1543,11 @@ describe("useMonitoringSPB - Grouping PO Tanpa SPB", () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     const data = result.current.data;
-
-    // Harusnya cuma ada 1 card (bukan 42)
     expect(data).toHaveLength(1);
 
     const group = data[0];
     expect(group.poNo).toBe("34");
-    expect(group.itemsCount).toBe(42); // Total barang harus 42
+    expect(group.itemsCount).toBe(42);
     expect(group.status).toBe("Sudah PO");
     expect(group.spbNo).toBeNull();
   });
@@ -1553,123 +1556,197 @@ describe("useMonitoringSPB - Grouping PO Tanpa SPB", () => {
 
 ================================================================================
 FILE: test/unit/hooks/useMonitoringSPB.test.tsx
-PATH: /workspaces/admin-gudang/tests/unit/hooks/useMonitoringSPB.test.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/hooks/useMonitoringSPB.test.tsx
 ================================================================================
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { useMonitoringSPB } from "@/features/spb/useMonitoringSPB";
 
-let mockSpbData: any[] = [];
-let mockPoData: any[] = [];
+const { mockData } = vi.hoisted(() => ({
+  mockData: { spb: [] as any[], sj: [] as any[] }
+}));
 
 vi.mock("@/shared/lib/supabaseClient", () => ({
   supabaseClient: {
-    from: vi.fn((table) => ({
-      select: vi.fn().mockResolvedValue({
-        data: table === "spb" ? mockSpbData : mockPoData,
-        error: null,
-      }),
-    })),
-  },
+    from: vi.fn().mockImplementation((table) => {
+      let data: any[] = [];
+      if (table === "spb") data = mockData.spb;
+      else if (table === "surat_jalan") data = mockData.sj;
+      else if (table === "po") data = [];
+
+      const builder: any = {
+        then: (resolve: any, reject: any) => {
+          return Promise.resolve({ data, error: null }).then(resolve, reject);
+        }
+      };
+      
+      builder.select = vi.fn(() => builder);
+      builder.eq = vi.fn(() => builder);
+      builder.is = vi.fn(() => builder);
+      builder.in = vi.fn(() => builder);
+      
+      return builder;
+    })
+  }
 }));
+
+import { useMonitoringSPBDetail } from "@/features/spb/useMonitoringSPBDetail";
 
 function wrapper({ children }: { children: ReactNode }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
 }
 
-describe("useMonitoringSPB - Status Selesai & Sorting", () => {
+describe("useMonitoringSPBDetail - Logika Filtering Kebal Peluru", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSpbData = [];
-    mockPoData = [];
+    mockData.spb = [];
+    mockData.sj = [];
   });
 
-  it("harus memberikan status 'Selesai' jika semua barang datang sesuai/lebih, dan menaruhnya paling bawah (setelah Datang)", async () => {
-    mockSpbData = [
-      // SPB 10: Selesai
-      {
-        id: 1,
-        no_spb: "10",
-        qty_permintaan: 5,
-        material_datang_qty: 5,
-        material_datang_tgl: "2026-08-01",
-        po: { no_po: "PO-10", tanggal_po: "2026-07-01" },
-      },
-      {
-        id: 2,
-        no_spb: "10",
-        qty_permintaan: 10,
-        material_datang_qty: 12,
-        material_datang_tgl: "2026-08-01",
-        po: { no_po: "PO-10", tanggal_po: "2026-07-01" },
-      },
-
-      // SPB 20: Datang
-      {
-        id: 3,
-        no_spb: "20",
-        qty_permintaan: 5,
-        material_datang_qty: 0,
-        material_datang_tgl: null,
-        po: { no_po: "PO-20", tanggal_po: "2026-07-01" },
-      },
-      {
-        id: 4,
-        no_spb: "20",
-        qty_permintaan: 10,
-        material_datang_qty: 10,
-        material_datang_tgl: "2026-08-01",
-        po: { no_po: "PO-20", tanggal_po: "2026-07-01" },
-      },
-
-      // SPB 30: Sudah PO
-      {
-        id: 5,
-        no_spb: "30",
-        qty_permintaan: 5,
-        material_datang_qty: 0,
-        material_datang_tgl: null,
-        po: { no_po: "PO-30", tanggal_po: "2026-07-01" },
-      },
-
-      // SPB 40: Belum PO
-      {
-        id: 6,
-        no_spb: "40",
-        qty_permintaan: 5,
-        material_datang_qty: 0,
-        material_datang_tgl: null,
-        po: null,
-      },
+  it("berhasil menampilkan SEMUA barang dalam SPB (termasuk yang punya PO)", async () => {
+    mockData.spb = [
+      { id: 1, no_spb: "63#R1", po: null, nama_barang: "Barang A", qty_permintaan: 1, material_datang_qty: 0 },
+      { id: 2, no_spb: "63#R1", po: { no_po: "PO-001", tanggal_po: "2026-01-01" }, nama_barang: "Barang B", qty_permintaan: 1, material_datang_qty: 0 },
     ];
 
-    const { result } = renderHook(() => useMonitoringSPB(), { wrapper });
+    const { result } = renderHook(() => useMonitoringSPBDetail("63#R1", null), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    const data = result.current.data;
+    expect(result.current.items).toHaveLength(2);
+    expect(result.current.items[0].no_po).toBe("-");
+    expect(result.current.items[1].no_po).toBe("PO-001");
+  });
 
-    // 1. Cek Status
-    expect(data.find((d) => d.spbNo === "10")?.status).toBe("Selesai");
-    expect(data.find((d) => d.spbNo === "20")?.status).toBe("Datang");
-    expect(data.find((d) => d.spbNo === "30")?.status).toBe("Sudah PO");
-    expect(data.find((d) => d.spbNo === "40")?.status).toBe("Belum PO");
+  it("menangani string kosong, '-', dan string 'null' dari DB sebagai tanpa PO", async () => {
+    mockData.spb = [
+      { id: 1, no_spb: "63#R1", po: { no_po: "", tanggal_po: "2026-01-01" }, nama_barang: "Barang A", qty_permintaan: 1, material_datang_qty: 0 },
+      { id: 2, no_spb: "63#R1", po: { no_po: "-", tanggal_po: "2026-01-01" }, nama_barang: "Barang B", qty_permintaan: 1, material_datang_qty: 0 },
+      { id: 3, no_spb: "63#R1", po: { no_po: "null", tanggal_po: "2026-01-01" }, nama_barang: "Barang C", qty_permintaan: 1, material_datang_qty: 0 },
+      { id: 4, no_spb: "63#R1", po: { no_po: "PO-123", tanggal_po: "2026-01-01" }, nama_barang: "Barang D", qty_permintaan: 1, material_datang_qty: 0 },
+    ];
 
-    // 2. Cek Urutan (Sudah PO -> Datang -> Selesai -> Belum PO)
-    expect(data[0].spbNo).toBe("30"); // Sudah PO
-    expect(data[1].spbNo).toBe("20"); // Datang
-    expect(data[2].spbNo).toBe("10"); // Selesai
-    expect(data[3].spbNo).toBe("40"); // Belum PO
+    const { result } = renderHook(() => useMonitoringSPBDetail("63#R1", null), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.items).toHaveLength(4);
   });
 });
 
+================================================================================
+FILE: test/unit/pages/monitoring-spb-item-detail-sj.test.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/pages/monitoring-spb-item-detail-sj.test.tsx
+================================================================================
+
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { App as AntdApp, ConfigProvider } from "antd";
+import type { ReactNode } from "react";
+
+vi.mock("@/shared/lib/supabaseClient", () => ({
+  supabaseClient: {
+    from: vi.fn().mockImplementation((table) => {
+      console.log(`\n[MOCK] from() dipanggil untuk tabel: ${table}`);
+      
+      const builder: any = {
+        then: (resolve: any, reject: any) => {
+          console.log(`[MOCK] .then() terpanggil untuk tabel ${table}. Meresolve data...`);
+          const data = table === "surat_jalan" ? [
+            {
+              id: 3,
+              no_surat_jalan: "3",
+              nama_barang: "Kabel Roll 100m",
+              material_datang_qty: 2,
+              material_datang_tgl: "2026-10-20",
+              spb: null,
+              po: null,
+            },
+            {
+              id: 4,
+              no_surat_jalan: "3",
+              nama_barang: "Lampu LED 15 Watt",
+              material_datang_qty: 10,
+              material_datang_tgl: "2026-10-20",
+              spb: null,
+              po: null,
+            }
+          ] : [];
+          
+          return Promise.resolve({ data, error: null }).then(resolve, reject);
+        }
+      };
+      
+      builder.select = vi.fn((cols) => {
+        console.log(`[MOCK] .select(${cols})`);
+        return builder;
+      });
+      builder.eq = vi.fn((col, val) => {
+        console.log(`[MOCK] .eq(${col}, ${val})`);
+        return builder;
+      });
+      builder.is = vi.fn((col, val) => {
+        console.log(`[MOCK] .is(${col}, ${val})`);
+        return builder;
+      });
+      builder.in = vi.fn((col, val) => {
+        console.log(`[MOCK] .in(${col}, ${val})`);
+        return builder;
+      });
+      
+      return builder;
+    })
+  }
+}));
+
+import { MonitoringSPBDetailPage } from "@/features/spb/pages/MonitoringSPBDetailPage";
+
+function Wrapper({ children, route }: { children: ReactNode; route: string }) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return (
+    <ConfigProvider>
+      <AntdApp>
+        <QueryClientProvider client={qc}>
+          <MemoryRouter initialEntries={[route]}>
+            <Routes>
+              <Route path="/monitoring-spb/detail" element={children} />
+            </Routes>
+          </MemoryRouter>
+        </QueryClientProvider>
+      </AntdApp>
+    </ConfigProvider>
+  );
+}
+
+describe("MonitoringSPBDetailPage - Rincian Barang Surat Jalan (SJ 3)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("harus menampilkan tabel barang dari Surat Jalan no 3 murni", async () => {
+    render(<MonitoringSPBDetailPage />, {
+      wrapper: ({ children }) => (
+        <Wrapper route="/monitoring-spb/detail?sj=3">{children}</Wrapper>
+      ),
+    });
+
+    // ✅ Gunakan findByText agar menunggu loading selesai
+    const sjHeader = await screen.findByText(/Surat Jalan:\s*3/i, {}, { timeout: 5000 });
+    expect(sjHeader).toBeInTheDocument();
+
+    // ✅ Cek tabel dan datanya
+    expect(screen.getByText("Daftar Barang (2)")).toBeInTheDocument();
+    expect(screen.getByText("Kabel Roll 100m")).toBeInTheDocument();
+    expect(screen.getByText("Lampu LED 15 Watt")).toBeInTheDocument();
+  });
+});
 
 ================================================================================
 FILE: test/unit/pages/monitoring-spb-item-detail.test.tsx
-PATH: /workspaces/admin-gudang/tests/unit/pages/monitoring-spb-item-detail.test.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/pages/monitoring-spb-item-detail.test.tsx
 ================================================================================
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -1783,8 +1860,154 @@ describe("MonitoringSPBItemDetailPage - Render Rincian", () => {
 
 
 ================================================================================
+FILE: test/unit/pages/monitoring-spb-page.test.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/pages/monitoring-spb-page.test.tsx
+================================================================================
+
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, within } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
+import { App as AntdApp, ConfigProvider } from "antd";
+import type { ReactNode } from "react";
+
+// Mock Hook
+vi.mock("@/features/spb/useMonitoringSPB", () => ({
+  useMonitoringSPB: vi.fn(),
+}));
+
+import { useMonitoringSPB } from "@/features/spb/useMonitoringSPB";
+import MonitoringSPBPage from "@/features/spb/pages/MonitoringSPBPage";
+
+const mockUseMonitoringSPB = vi.mocked(useMonitoringSPB);
+
+// Wrapper untuk Antd & React Query
+function Wrapper({ children }: { children: ReactNode }) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return (
+    <ConfigProvider>
+      <AntdApp>
+        <QueryClientProvider client={qc}>
+          <MemoryRouter>{children}</MemoryRouter>
+        </QueryClientProvider>
+      </AntdApp>
+    </ConfigProvider>
+  );
+}
+
+// Mock Data
+const mockData = [
+  {
+    id: "SPB_1",
+    spbNo: "SPB-01",
+    spbTitle: "Proyek A",
+    poNo: null,
+    suratJalanNo: null,
+    date: "2026-10-20",
+    itemsCount: 5,
+    sortNumber: 1,
+    status: "Belum PO",
+    itemNames: ["Semen", "Pasir"],
+  },
+  {
+    id: "PO_2",
+    spbNo: null,
+    spbTitle: null,
+    poNo: "PO-02",
+    suratJalanNo: null,
+    date: "2026-10-21",
+    itemsCount: 3,
+    sortNumber: 2,
+    status: "Sudah PO",
+    itemNames: ["Besi"],
+  },
+  {
+    id: "SJ_3",
+    spbNo: null,
+    spbTitle: null,
+    poNo: null,
+    suratJalanNo: 3 as any,
+    date: "2026-10-22",
+    itemsCount: 1,
+    sortNumber: 3,
+    status: "Selesai",
+    itemNames: ["Cat"],
+  },
+];
+
+describe("MonitoringSPBPage - Fitur Pencarian, Filter, dan Sorting", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseMonitoringSPB.mockReturnValue({
+      data: mockData as any,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+  });
+
+  it("tidak boleh crash saat mencari suratJalanNo yang bertipe Number", () => {
+    render(<MonitoringSPBPage />, { wrapper: Wrapper });
+    const searchInput = screen.getByPlaceholderText(/Cari No SPB/i);
+    fireEvent.change(searchInput, { target: { value: "3" } });
+
+    expect(screen.getByText("No. Surat Jalan")).toBeInTheDocument();
+  });
+
+  it("bisa mencari berdasarkan Nama Barang", () => {
+    render(<MonitoringSPBPage />, { wrapper: Wrapper });
+
+    // Buka dropdown Select
+    const modeSelect = document.querySelector('.ant-select[aria-label="Mode Pencarian"] .ant-select-selector')!;
+    fireEvent.mouseDown(modeSelect);
+
+    // Pilih opsi "Nama Barang"
+    fireEvent.click(screen.getByText("Nama Barang"));
+
+    const searchInput = screen.getByPlaceholderText(/Cari Nama Barang/i);
+    fireEvent.change(searchInput, { target: { value: "Semen" } });
+
+    const mainGrid = document.querySelector(".ant-row") as HTMLElement;
+
+    expect(within(mainGrid).getByText("SPB-01")).toBeInTheDocument();
+    expect(within(mainGrid).queryByText("PO-02")).not.toBeInTheDocument();
+  });
+
+  it("bisa memfilter status 'Sudah PO'", () => {
+    render(<MonitoringSPBPage />, { wrapper: Wrapper });
+
+    // ✅ PERBAIKAN: Label opsi Segmented di komponen adalah "Sudah di PO",
+    // bukan "Sudah PO".
+    const segmentedFilter = document.querySelector(".ant-segmented") as HTMLElement;
+    const filterOption = within(segmentedFilter).getByText("Sudah di PO");
+
+    // Klik tombol filter tersebut
+    fireEvent.click(filterOption);
+
+    const mainGrid = document.querySelector(".ant-row") as HTMLElement;
+
+    // Cek apakah PO-02 muncul, dan SPB-01 menghilang
+    expect(within(mainGrid).getByText("PO-02")).toBeInTheDocument();
+    expect(within(mainGrid).queryByText("SPB-01")).not.toBeInTheDocument();
+  });
+
+  it("bisa mengurutkan berdasarkan 'Paling Baru'", () => {
+    render(<MonitoringSPBPage />, { wrapper: Wrapper });
+
+    // Buka dropdown Sort
+    const sortSelect = document.querySelector('.ant-select[aria-label="Urutan Data"] .ant-select-selector')!;
+    fireEvent.mouseDown(sortSelect);
+    fireEvent.click(screen.getByText("Urut: Paling Baru"));
+
+    const bigCards = document.querySelectorAll(".ant-col .ant-card");
+    expect(bigCards[0]).toHaveTextContent("No. Surat Jalan");
+    expect(bigCards[0]).toHaveTextContent("3");
+  });
+});
+
+================================================================================
 FILE: test/unit/pages/monitoring-spb.test.tsx
-PATH: /workspaces/admin-gudang/tests/unit/pages/monitoring-spb.test.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/pages/monitoring-spb.test.tsx
 ================================================================================
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -1792,19 +2015,32 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 
-// Setup Mock untuk Supabase Client
-let mockData: any[] = [];
-const mockQuery = {
-  select: vi.fn().mockReturnThis(),
-  eq: vi.fn().mockReturnThis(),
-  is: vi.fn().mockReturnThis(),
-  then: vi.fn((resolve) => resolve({ data: mockData, error: null })),
-};
+// ✅ Wajib vi.hoisted agar aman dari hoisting Vitest
+const { mockData } = vi.hoisted(() => ({
+  mockData: { spb: [] as any[], sj: [] as any[] }
+}));
 
 vi.mock("@/shared/lib/supabaseClient", () => ({
   supabaseClient: {
-    from: vi.fn(() => mockQuery),
-  },
+    from: vi.fn().mockImplementation((table) => {
+      let data: any[] = [];
+      if (table === "spb") data = mockData.spb;
+      else if (table === "surat_jalan") data = mockData.sj;
+      else if (table === "po") data = [];
+
+      const builder = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
+        then: (resolve: any) => {
+          // ✅ Panggil resolve secara langsung agar React Query tidak menggantung
+          resolve({ data, error: null });
+        }
+      };
+      return builder;
+    })
+  }
 }));
 
 import { useMonitoringSPBDetail } from "@/features/spb/useMonitoringSPBDetail";
@@ -1817,12 +2053,12 @@ function wrapper({ children }: { children: ReactNode }) {
 describe("useMonitoringSPBDetail - Logika Filtering Kebal Peluru", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockData = [];
+    mockData.spb = [];
+    mockData.sj = [];
   });
 
   it("berhasil menampilkan SEMUA barang dalam SPB (termasuk yang punya PO)", async () => {
-    // Menggunakan format relasi Supabase yang benar (po: { no_po: ... })
-    mockData = [
+    mockData.spb = [
       { id: 1, no_spb: "63#R1", po: null, nama_barang: "Barang A", qty_permintaan: 1, material_datang_qty: 0 },
       { id: 2, no_spb: "63#R1", po: { no_po: "PO-001", tanggal_po: "2026-01-01" }, nama_barang: "Barang B", qty_permintaan: 1, material_datang_qty: 0 },
     ];
@@ -1830,14 +2066,13 @@ describe("useMonitoringSPBDetail - Logika Filtering Kebal Peluru", () => {
     const { result } = renderHook(() => useMonitoringSPBDetail("63#R1", null), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    // Harus mengembalikan KEDUANYA (sesuai perilaku aplikasi asli)
     expect(result.current.items).toHaveLength(2);
     expect(result.current.items[0].no_po).toBe("-");
     expect(result.current.items[1].no_po).toBe("PO-001");
   });
 
   it("menangani string kosong, '-', dan string 'null' dari DB sebagai tanpa PO", async () => {
-    mockData = [
+    mockData.spb = [
       { id: 1, no_spb: "63#R1", po: { no_po: "", tanggal_po: "2026-01-01" }, nama_barang: "Barang A", qty_permintaan: 1, material_datang_qty: 0 },
       { id: 2, no_spb: "63#R1", po: { no_po: "-", tanggal_po: "2026-01-01" }, nama_barang: "Barang B", qty_permintaan: 1, material_datang_qty: 0 },
       { id: 3, no_spb: "63#R1", po: { no_po: "null", tanggal_po: "2026-01-01" }, nama_barang: "Barang C", qty_permintaan: 1, material_datang_qty: 0 },
@@ -1847,14 +2082,13 @@ describe("useMonitoringSPBDetail - Logika Filtering Kebal Peluru", () => {
     const { result } = renderHook(() => useMonitoringSPBDetail("63#R1", null), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    // Harus mengembalikan keempatnya
     expect(result.current.items).toHaveLength(4);
   });
 });
 
 ================================================================================
 FILE: test/utils/mocks.ts
-PATH: /workspaces/admin-gudang/tests/utils/mocks.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/utils/mocks.ts
 ================================================================================
 
 import { vi } from "vitest";
@@ -1896,7 +2130,7 @@ export const mockNavigate = vi.fn();
 
 ================================================================================
 FILE: test/utils/render.tsx
-PATH: /workspaces/admin-gudang/tests/utils/render.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/utils/render.tsx
 ================================================================================
 
 import type { ReactNode } from "react";

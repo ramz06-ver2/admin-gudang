@@ -105,4 +105,35 @@ describe("MonitoringSPBItemDetailPage - Render Rincian", () => {
       expect(spbRow).toHaveTextContent("-");
     });
   });
+
+  it("harus menampilkan data dengan benar saat membuka item Surat Jalan (type=sj)", async () => {
+    mockSingle.mockResolvedValueOnce({
+      data: {
+        id: 4,
+        no_surat_jalan: "3",
+        nama_barang: "Lampu LED 15 Watt",
+        material_datang_qty: 10,
+        material_datang_tgl: "2026-10-20",
+        spb: null,
+        po: null,
+      },
+      error: null,
+    });
+
+    render(<MonitoringSPBItemDetailPage />, {
+      wrapper: ({ children }) => (
+        <Wrapper route="/monitoring-spb/item/4?type=sj">{children}</Wrapper>
+      ),
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Lampu LED 15 Watt")).toBeInTheDocument();
+      expect(screen.getByText("Datang")).toBeInTheDocument();
+      const sjRow = screen.getByText("No Surat Jalan").closest("tr");
+      expect(sjRow).toHaveTextContent("3");
+      // Surat Jalan murni: tidak punya SPB maupun PO
+      expect(screen.getByText("No SPB").closest("tr")).toHaveTextContent("-");
+      expect(screen.getByText("No PO").closest("tr")).toHaveTextContent("-");
+    });
+  });
 });
