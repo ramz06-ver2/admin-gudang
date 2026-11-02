@@ -35,6 +35,7 @@ const calcLamaProses = (
 };
 
 const getStatusColor = (status: string | null | undefined) => {
+  if (status === "Belum Diproses") return "purple"; // 🔧 Warna untuk Belum Diproses
   if (status === "Belum PO" || status === "Belum Datang") return "orange";
   if (status === "Sudah PO") return "blue";
   if (status === "Datang Sesuai" || status === "Datang" || status === "Selesai") return "green";
@@ -50,7 +51,6 @@ const useSPBItem = (id: string | undefined, type: string) => {
     queryFn: async () => {
       if (!id) return null;
 
-      // SKENARIO 1: Ambil dari tabel PO
       if (type === "po") {
         const { data, error } = await supabaseClient
           .from("po")
@@ -90,7 +90,6 @@ const useSPBItem = (id: string | undefined, type: string) => {
         } as SPBItemDetail;
       }
 
-      // SKENARIO 3: Ambil dari tabel Surat Jalan
       if (type === "sj") {
         const { data, error } = await supabaseClient
           .from("surat_jalan")
@@ -131,7 +130,6 @@ const useSPBItem = (id: string | undefined, type: string) => {
         } as SPBItemDetail;
       }
 
-      // SKENARIO 2: Ambil dari tabel SPB
       const { data, error } = await supabaseClient
         .from(TABLES.spb)
         .select(`*, po (no_po, tanggal_po, nama_supplier)`)
@@ -143,7 +141,6 @@ const useSPBItem = (id: string | undefined, type: string) => {
 
       let dataPo = Array.isArray(data.po) ? data.po[0] : data.po;
 
-      // Cadangan bila relasi terbalik lewat po.id_spb
       if (!dataPo && data.id) {
         try {
           const fallbackRes = await supabaseClient
@@ -155,7 +152,7 @@ const useSPBItem = (id: string | undefined, type: string) => {
             dataPo = fallbackRes.data;
           }
         } catch {
-          // Abaikan jika mock tidak menyediakan query kedua
+          //
         }
       }
 
@@ -164,6 +161,9 @@ const useSPBItem = (id: string | undefined, type: string) => {
       const tglDatang = data.material_datang_tgl || null;
       const tglSpb = data.tgl_spb || data.tanggal_pembuatan_spb || null;
       const tglPo = dataPo?.tanggal_po || null;
+      
+      // 🔧 Normalisasi status dari database
+      const rawStatus = String(data.status || "").toLowerCase().trim();
 
       let status = "Belum PO";
       if (tglDatang) {
@@ -173,6 +173,8 @@ const useSPBItem = (id: string | undefined, type: string) => {
         else status = "Datang";
       } else if (dataPo?.no_po && dataPo.no_po !== "-" && dataPo.no_po !== "null") {
         status = "Sudah PO";
+      } else if (rawStatus === "belum di proses") {
+        status = "Belum Diproses"; // 🔧 PERBAIKAN
       }
 
       const diffQty = arr - req;
@@ -221,7 +223,6 @@ export const MonitoringSPBItemDetailPage = () => {
 
   const { data: item, isLoading, error } = useSPBItem(id, type);
 
-  // 20 baris rincian barang sesuai tampilan web produksi
   const rows: DetailRow[] = item
     ? [
         { key: "1", field: "No SPB", value: item.no_spb || "-" },

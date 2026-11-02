@@ -1507,8 +1507,11 @@ describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Noti
     expect(screen.getByText("Menunggu Persetujuan")).toBeInTheDocument();
 
     // 4. Super User klik tombol "Izinkan"
+    // ✅ PERBAIKAN: gunakan exact match agar tidak ikut cocok dengan
+    // tombol "Tidak Izinkan budi@proyek.com" (yang juga mengandung substring
+    // "Izinkan budi@proyek.com").
     const approveBtn = screen.getByRole("button", {
-      name: /Izinkan budi@proyek.com/i,
+      name: "Izinkan budi@proyek.com",
     });
     fireEvent.click(approveBtn);
 
@@ -1547,8 +1550,9 @@ describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Noti
     expect(await screen.findByText("Andi Pratama")).toBeInTheDocument();
 
     // 3. Super User klik tombol "Tidak Izinkan"
+    // ✅ PERBAIKAN: exact match agar tidak ambigu dengan tombol lain.
     const rejectBtn = screen.getByRole("button", {
-      name: /Tidak Izinkan andi@proyek.com/i,
+      name: "Tidak Izinkan andi@proyek.com",
     });
     fireEvent.click(rejectBtn);
 
@@ -1581,7 +1585,6 @@ describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Noti
     expect(await screen.findByText("Akses Ditolak")).toBeInTheDocument();
   });
 });
-
 
 ================================================================================
 FILE: test/unit/hooks/suratJalanRules.test.ts

@@ -27,11 +27,19 @@ export const MonitoringSPBDetailPage = () => {
   const spbNo = searchParams.get("spb");
   const poNo = searchParams.get("po");
   const sjNo = searchParams.get("sj");
+  // 🔧 Judul SPB dipakai untuk memfilter detail ketika ada dua SPB bernomor
+  // sama tetapi judul berbeda (mis. SPB 56 "Ducting PU" vs SPB 56 "Kabel Feeder Utama").
+  const judulSpb = searchParams.get("judul");
 
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
 
-  const { items, isLoading, error } = useMonitoringSPBDetail(spbNo, poNo, sjNo);
+  const { items, isLoading, error } = useMonitoringSPBDetail(
+    spbNo,
+    poNo,
+    sjNo,
+    judulSpb,
+  );
 
   const spbTitle = items.length > 0 ? items[0].judul_spb : null;
 
@@ -156,7 +164,6 @@ export const MonitoringSPBDetailPage = () => {
     },
   ];
 
-  // ✅ Kolom "Sumber" dihapus dan lebar kolom diringkas agar muat dalam satu bagian tanpa scroll
   const desktopColumns = [
     {
       title: "No",

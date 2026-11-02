@@ -460,8 +460,8 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/app/router.tsx
 
 
 ================================================================================
-FILE: ../src/features/auth/accountRequest.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/auth/accountRequest.ts
+FILE: ../src/features/auth/accountRequests.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/auth/accountRequests.ts
 ================================================================================
 
 import { supabaseClient } from "../../shared/lib/supabaseClient";
@@ -681,7 +681,6 @@ export const findAccountRequestByEmail = (
   const normalized = email.trim().toLowerCase();
   return readLocalRequests().find((r) => r.email.toLowerCase() === normalized);
 };
-
 
 ================================================================================
 FILE: ../src/features/auth/pages/LoginPage.tsx
@@ -995,8 +994,8 @@ export default LoginPage;
 
 
 ================================================================================
-FILE: ../src/features/auth/pages/NotificationPage.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/auth/pages/NotificationPage.tsx
+FILE: ../src/features/auth/pages/NotificationsPage.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/auth/pages/NotificationsPage.tsx
 ================================================================================
 
 import { useEffect, useState } from "react";
@@ -1204,7 +1203,6 @@ export const NotificationsPage = () => {
 };
 
 export default NotificationsPage;
-
 
 ================================================================================
 FILE: ../src/features/dashboard/api.ts

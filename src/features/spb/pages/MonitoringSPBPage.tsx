@@ -31,8 +31,10 @@ import {
 
 const { Title, Text } = Typography;
 
+// 🔧 Tambahkan "Belum Diproses" pada FilterType
 type FilterType =
   | "Semua"
+  | "Belum Diproses"
   | "Belum di PO"
   | "Sudah di PO"
   | "Datang"
@@ -54,6 +56,15 @@ const getNumberFromStr = (spb: string | null, po: string | null) => {
   return match ? parseInt(match[0], 10) : 999999;
 };
 
+const buildLocalTitleKey = (
+  type: "spb" | "po",
+  docNo: string,
+  title: string | null | undefined,
+) =>
+  type === "spb"
+    ? `SPB_${docNo}::${title ?? ""}`
+    : `PO_${docNo}`;
+
 export default function MonitoringSPBPage() {
   const { data, isLoading, error, refetch } = useMonitoringSPB();
   const navigate = useNavigate();
@@ -63,7 +74,6 @@ export default function MonitoringSPBPage() {
   const [searchMode, setSearchMode] = useState<SearchMode>("no");
   const [sortBy, setSortBy] = useState<SortBy>("status");
 
-  // State untuk edit judul SPB / PO lewat ikon pensil kecil
   const [editingTitle, setEditingTitle] = useState<EditingTitleState | null>(null);
   const [titleInput, setTitleInput] = useState("");
   const [savingTitle, setSavingTitle] = useState(false);
@@ -76,9 +86,7 @@ export default function MonitoringSPBPage() {
     currentTitle?: string | null,
   ) => {
     e.stopPropagation();
-    const key = `${type.toUpperCase()}_${docNo}`;
-    const initial =
-      localTitles[key] !== undefined ? localTitles[key] : (currentTitle || "");
+    const initial = currentTitle || "";
     setEditingTitle({ type, docNo, currentTitle: initial });
     setTitleInput(initial);
   };
@@ -86,28 +94,26 @@ export default function MonitoringSPBPage() {
   const handleSaveTitle = async () => {
     if (!editingTitle) return;
     setSavingTitle(true);
-    const { type, docNo } = editingTitle;
-    const key = `${type.toUpperCase()}_${docNo}`;
+    const { type, docNo, currentTitle } = editingTitle;
     const trimmed = titleInput.trim();
+    const localKey = buildLocalTitleKey(type, docNo, currentTitle);
 
     try {
-      await updateDocumentTitle(type, docNo, trimmed);
-      setLocalTitles((prev) => ({ ...prev, [key]: trimmed }));
+      await updateDocumentTitle(type, docNo, trimmed, currentTitle);
+      setLocalTitles((prev) => ({ ...prev, [localKey]: trimmed }));
       setEditingTitle(null);
       message.success(
         `Judul ${type.toUpperCase()} ${docNo} berhasil diperbarui`,
       );
       refetch?.();
     } catch {
-      // Tetap simpan di local state jika kolom DB belum tersedia
-      setLocalTitles((prev) => ({ ...prev, [key]: trimmed }));
+      setLocalTitles((prev) => ({ ...prev, [localKey]: trimmed }));
       setEditingTitle(null);
     } finally {
       setSavingTitle(false);
     }
   };
 
-  // ✅ 1. Ambil 10 Data Terbaru (Campuran SPB, PO, dan Surat Jalan)
   const recentItems = useMemo(() => {
     return [...data]
       .sort((a, b) => {
@@ -118,70 +124,46 @@ export default function MonitoringSPBPage() {
       .slice(0, 10);
   }, [data]);
 
-  // ✅ 2. Filter, Pencarian, dan Sorting
   const filteredAndSortedData = useMemo(() => {
     const filtered = data.filter((item) => {
       const searchLower = searchTerm.toLowerCase();
       let matchesSearch = false;
 
+      const spbKey = item.spbNo
+        ? buildLocalTitleKey("spb", item.spbNo, item.spbTitle)
+        : null;
+      const poKey = item.poNo ? buildLocalTitleKey("po", item.poNo, item.poTitle) : null;
+
       const spbTitle =
-        (item.spbNo && localTitles[`SPB_${item.spbNo}`] !== undefined
-          ? localTitles[`SPB_${item.spbNo}`]
+        (spbKey && localTitles[spbKey] !== undefined
+          ? localTitles[spbKey]
           : item.spbTitle) || "";
       const poTitle =
-        (item.poNo && localTitles[`PO_${item.poNo}`] !== undefined
-          ? localTitles[`PO_${item.poNo}`]
+        (poKey && localTitles[poKey] !== undefined
+          ? localTitles[poKey]
           : item.poTitle) || "";
 
       if (searchMode === "no") {
-        const matchSpb = String(item.spbNo || "")
-          .toLowerCase()
-          .includes(searchLower);
-        const matchTitle = String(spbTitle)
-          .toLowerCase()
-          .includes(searchLower);
-        const matchPo = String(item.poNo || "")
-          .toLowerCase()
-          .includes(searchLower);
-        const matchPoTitle = String(poTitle)
-          .toLowerCase()
-          .includes(searchLower);
-        const matchSj = String(item.suratJalanNo || "")
-          .toLowerCase()
-          .includes(searchLower);
+        const matchSpb = String(item.spbNo || "").toLowerCase().includes(searchLower);
+        const matchTitle = String(spbTitle).toLowerCase().includes(searchLower);
+        const matchPo = String(item.poNo || "").toLowerCase().includes(searchLower);
+        const matchPoTitle = String(poTitle).toLowerCase().includes(searchLower);
+        const matchSj = String(item.suratJalanNo || "").toLowerCase().includes(searchLower);
 
-        matchesSearch =
-          !searchTerm ||
-          matchSpb ||
-          matchTitle ||
-          matchPo ||
-          matchPoTitle ||
-          matchSj;
+        matchesSearch = !searchTerm || matchSpb || matchTitle || matchPo || matchPoTitle || matchSj;
       } else {
-        matchesSearch =
-          !searchTerm ||
-          !!item.itemNames?.some((name) =>
-            String(name).toLowerCase().includes(searchLower),
-          );
+        matchesSearch = !searchTerm || !!item.itemNames?.some((name) => String(name).toLowerCase().includes(searchLower));
       }
 
       if (!matchesSearch) return false;
 
       switch (filter) {
+        case "Belum Diproses":
+          return item.status === "Belum Diproses"; // <--- Filter baru
         case "Belum di PO":
-          // ✅ PERBAIKAN BUG: Hanya tampilkan yang benar-benar berstatus "Belum PO",
-          // jangan pernah tampilkan status "Datang" atau "Selesai" di tab "Belum di PO"
-          return (
-            (!item.poNo || item.poNo === "-") &&
-            item.status === "Belum PO"
-          );
+          return (!item.poNo || item.poNo === "-") && item.status === "Belum PO";
         case "Sudah di PO":
-          return (
-            !!item.poNo &&
-            item.poNo !== "-" &&
-            item.status !== "Datang" &&
-            item.status !== "Selesai"
-          );
+          return !!item.poNo && item.poNo !== "-" && item.status !== "Datang" && item.status !== "Selesai";
         case "Datang":
           return item.status === "Datang" || item.status === "Selesai";
         case "Selesai":
@@ -191,8 +173,8 @@ export default function MonitoringSPBPage() {
       }
     });
 
-    // ✅ 3. Logika Sorting
     const getStatusWeight = (status?: string) => {
+      if (status === "Belum Diproses") return 0.5; // Taruh di atas sebelum PO
       if (status === "Sudah PO" || status === "Belum PO") return 1;
       if (status === "Datang") return 2;
       if (status === "Selesai") return 3;
@@ -204,9 +186,7 @@ export default function MonitoringSPBPage() {
         const wA = getStatusWeight(a.status);
         const wB = getStatusWeight(b.status);
         if (wA !== wB) return wA - wB;
-        return (
-          getNumberFromStr(a.spbNo, a.poNo) - getNumberFromStr(b.spbNo, b.poNo)
-        );
+        return getNumberFromStr(a.spbNo, a.poNo) - getNumberFromStr(b.spbNo, b.poNo);
       }
 
       if (sortBy === "number") {
@@ -232,6 +212,7 @@ export default function MonitoringSPBPage() {
     const params = new URLSearchParams();
     if (item.spbNo) {
       params.set("spb", String(item.spbNo));
+      if (item.spbTitle) params.set("judul", String(item.spbTitle));
     } else if (item.poNo && item.poNo !== "NO_PO" && item.poNo !== "-") {
       params.set("po", String(item.poNo));
     } else if (item.suratJalanNo) {
@@ -241,6 +222,7 @@ export default function MonitoringSPBPage() {
   };
 
   const getStatusColor = (status?: string) => {
+    if (status === "Belum Diproses") return "purple"; // <--- Warna baru
     if (status === "Belum PO") return "orange";
     if (status === "Sudah PO") return "blue";
     if (status === "Datang") return "green";
@@ -250,19 +232,14 @@ export default function MonitoringSPBPage() {
 
   const renderCardContent = (item: SPBDocumentGroup) => {
     const hasSPB = item.spbNo !== null && item.spbNo !== "NO_SPB";
-    const hasPO =
-      item.poNo !== null && item.poNo !== "NO_PO" && item.poNo !== "-";
+    const hasPO = item.poNo !== null && item.poNo !== "NO_PO" && item.poNo !== "-";
     const hasSJ = !hasSPB && !hasPO && item.suratJalanNo;
 
-    const resolvedSpbTitle =
-      hasSPB && item.spbNo && localTitles[`SPB_${item.spbNo}`] !== undefined
-        ? localTitles[`SPB_${item.spbNo}`]
-        : item.spbTitle;
+    const spbKey = hasSPB && item.spbNo ? buildLocalTitleKey("spb", item.spbNo, item.spbTitle) : null;
+    const poKey = hasPO && item.poNo ? buildLocalTitleKey("po", item.poNo, item.poTitle) : null;
 
-    const resolvedPoTitle =
-      hasPO && item.poNo && localTitles[`PO_${item.poNo}`] !== undefined
-        ? localTitles[`PO_${item.poNo}`]
-        : item.poTitle;
+    const resolvedSpbTitle = spbKey && localTitles[spbKey] !== undefined ? localTitles[spbKey] : item.spbTitle;
+    const resolvedPoTitle = poKey && localTitles[poKey] !== undefined ? localTitles[poKey] : item.poTitle;
 
     return (
       <Card
@@ -281,16 +258,8 @@ export default function MonitoringSPBPage() {
         <Space direction="vertical" style={{ width: "100%" }} size={2}>
           {hasSPB && (
             <div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <Text type="secondary" style={{ fontSize: 11 }}>
-                  No. SPB
-                </Text>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Text type="secondary" style={{ fontSize: 11 }}>No. SPB</Text>
                 <Button
                   type="text"
                   size="small"
@@ -298,34 +267,14 @@ export default function MonitoringSPBPage() {
                   aria-label={`Edit judul SPB ${item.spbNo}`}
                   data-testid={`edit-spb-title-${item.spbNo}`}
                   title="Edit judul SPB"
-                  style={{
-                    padding: "0 4px",
-                    height: 20,
-                    minWidth: 20,
-                    color: "#8c8c8c",
-                  }}
-                  onClick={(e) =>
-                    openEditModal(e, "spb", String(item.spbNo), resolvedSpbTitle)
-                  }
+                  style={{ padding: "0 4px", height: 20, minWidth: 20, color: "#8c8c8c" }}
+                  onClick={(e) => openEditModal(e, "spb", String(item.spbNo), resolvedSpbTitle)}
                 />
               </div>
-              <div
-                style={{
-                  fontWeight: 600,
-                  fontSize: 16,
-                  wordBreak: "break-word",
-                }}
-              >
+              <div style={{ fontWeight: 600, fontSize: 16, wordBreak: "break-word" }}>
                 {item.spbNo}
                 {resolvedSpbTitle && (
-                  <span
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 500,
-                      color: "#595959",
-                      marginLeft: 6,
-                    }}
-                  >
+                  <span style={{ fontSize: 14, fontWeight: 500, color: "#595959", marginLeft: 6 }}>
                     - {resolvedSpbTitle}
                   </span>
                 )}
@@ -337,16 +286,8 @@ export default function MonitoringSPBPage() {
 
           {hasPO && (
             <div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <Text type="secondary" style={{ fontSize: 11 }}>
-                  No. PO
-                </Text>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Text type="secondary" style={{ fontSize: 11 }}>No. PO</Text>
                 <Button
                   type="text"
                   size="small"
@@ -354,34 +295,14 @@ export default function MonitoringSPBPage() {
                   aria-label={`Edit judul PO ${item.poNo}`}
                   data-testid={`edit-po-title-${item.poNo}`}
                   title="Edit judul PO"
-                  style={{
-                    padding: "0 4px",
-                    height: 20,
-                    minWidth: 20,
-                    color: "#8c8c8c",
-                  }}
-                  onClick={(e) =>
-                    openEditModal(e, "po", String(item.poNo), resolvedPoTitle)
-                  }
+                  style={{ padding: "0 4px", height: 20, minWidth: 20, color: "#8c8c8c" }}
+                  onClick={(e) => openEditModal(e, "po", String(item.poNo), resolvedPoTitle)}
                 />
               </div>
-              <div
-                style={{
-                  fontWeight: 600,
-                  fontSize: 16,
-                  wordBreak: "break-word",
-                }}
-              >
+              <div style={{ fontWeight: 600, fontSize: 16, wordBreak: "break-word" }}>
                 {item.poNo}
                 {resolvedPoTitle && (
-                  <span
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 500,
-                      color: "#595959",
-                      marginLeft: 6,
-                    }}
-                  >
+                  <span style={{ fontSize: 14, fontWeight: 500, color: "#595959", marginLeft: 6 }}>
                     - {resolvedPoTitle}
                   </span>
                 )}
@@ -391,16 +312,8 @@ export default function MonitoringSPBPage() {
 
           {hasSJ && (
             <div>
-              <Text type="secondary" style={{ fontSize: 11 }}>
-                No. Surat Jalan
-              </Text>
-              <div
-                style={{
-                  fontWeight: 600,
-                  fontSize: 16,
-                  wordBreak: "break-word",
-                }}
-              >
+              <Text type="secondary" style={{ fontSize: 11 }}>No. Surat Jalan</Text>
+              <div style={{ fontWeight: 600, fontSize: 16, wordBreak: "break-word" }}>
                 {item.suratJalanNo}
               </div>
             </div>
@@ -418,14 +331,9 @@ export default function MonitoringSPBPage() {
           >
             <div>
               <div>Total: {item.itemsCount} Barang</div>
-              <div style={{ marginTop: 4 }}>
-                Tanggal: {item.date !== "-" ? formatDate(item.date) : "-"}
-              </div>
+              <div style={{ marginTop: 4 }}>Tanggal: {item.date !== "-" ? formatDate(item.date) : "-"}</div>
             </div>
-            <Tag
-              color={getStatusColor(item.status)}
-              style={{ margin: 0, fontWeight: 600 }}
-            >
+            <Tag color={getStatusColor(item.status)} style={{ margin: 0, fontWeight: 600 }}>
               {item.status || "Belum PO"}
             </Tag>
           </div>
@@ -502,16 +410,8 @@ export default function MonitoringSPBPage() {
   }
 
   return (
-    <div
-      style={{
-        width: "100%",
-        maxWidth: "100%",
-        overflowX: "hidden",
-        paddingBottom: 32,
-      }}
-    >
+    <div style={{ width: "100%", maxWidth: "100%", overflowX: "hidden", paddingBottom: 32 }}>
       <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-        {/* Header */}
         <div style={{ marginBottom: 24 }}>
           <Space align="center">
             <div
@@ -530,32 +430,23 @@ export default function MonitoringSPBPage() {
               <FileTextOutlined />
             </div>
             <div>
-              <Title level={3} style={{ margin: 0 }}>
-                Monitoring SPB
-              </Title>
+              <Title level={3} style={{ margin: 0 }}>Monitoring SPB</Title>
               <Text type="secondary">
-                {data.length} Dokumen Terdaftar · Diperbarui{" "}
-                {formatFullDate(new Date())}
+                {data.length} Dokumen Terdaftar · Diperbarui {formatFullDate(new Date())}
               </Text>
             </div>
           </Space>
         </div>
 
-        {/* Section Baru Ditambahkan (10 Data Terbaru) */}
         {recentItems.length > 0 && (
           <div style={{ marginBottom: 32 }}>
-            <Text
-              strong
-              style={{ fontSize: 16, display: "block", marginBottom: 12 }}
-            >
+            <Text strong style={{ fontSize: 16, display: "block", marginBottom: 12 }}>
               Baru ditambahkan
             </Text>
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: screens.md
-                  ? "repeat(5, 1fr)"
-                  : "repeat(2, 1fr)",
+                gridTemplateColumns: screens.md ? "repeat(5, 1fr)" : "repeat(2, 1fr)",
                 gap: 12,
               }}
             >
@@ -564,7 +455,6 @@ export default function MonitoringSPBPage() {
           </div>
         )}
 
-        {/* Toolbar: Search, Filter, & Sort */}
         <div
           style={{
             display: "flex",
@@ -585,11 +475,7 @@ export default function MonitoringSPBPage() {
               <Select.Option value="barang">Nama Barang</Select.Option>
             </Select>
             <Input
-              placeholder={
-                searchMode === "no"
-                  ? "Cari No SPB/PO/SJ..."
-                  : "Cari Nama Barang..."
-              }
+              placeholder={searchMode === "no" ? "Cari No SPB/PO/SJ..." : "Cari Nama Barang..."}
               prefix={<SearchOutlined />}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -597,10 +483,12 @@ export default function MonitoringSPBPage() {
             />
           </Space.Compact>
 
+          {/* 🔧 Tambahkan opsi filter "Belum Diproses" */}
           <Segmented<FilterType>
             size="middle"
             options={[
               "Semua",
+              "Belum Diproses",
               "Belum di PO",
               "Sudah di PO",
               "Datang",
@@ -625,7 +513,6 @@ export default function MonitoringSPBPage() {
           />
         </div>
 
-        {/* Grid Kartu Utama */}
         <Row gutter={[16, 16]}>
           {filteredAndSortedData.map((item) => (
             <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
@@ -634,7 +521,6 @@ export default function MonitoringSPBPage() {
           ))}
         </Row>
 
-        {/* State Kosong */}
         {filteredAndSortedData.length === 0 && (
           <div style={{ textAlign: "center", padding: 40, width: "100%" }}>
             <Empty description="Tidak ada data yang cocok dengan pencarian/filter." />
@@ -642,7 +528,6 @@ export default function MonitoringSPBPage() {
         )}
       </div>
 
-      {/* Modal Edit Judul SPB / PO */}
       <Modal
         title={
           editingTitle

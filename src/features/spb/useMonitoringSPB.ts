@@ -25,22 +25,30 @@ export const saveTitleOverride = (key: string, title: string) => {
   }
 };
 
+const buildSpbOverrideKey = (docNo: string, originalTitle?: string | null) =>
+  `SPB_${docNo}::${originalTitle ?? ""}`;
+
+const buildPoOverrideKey = (docNo: string) => `PO_${docNo}`;
+
 export const updateDocumentTitle = async (
   type: "spb" | "po",
   docNo: string,
   newTitle: string,
+  originalTitle?: string | null,
 ) => {
   const trimmed = newTitle.trim();
-  const overrideKey = `${type.toUpperCase()}_${docNo}`;
-  saveTitleOverride(overrideKey, trimmed);
 
   if (type === "spb") {
-    const { error } = await supabaseClient
+    saveTitleOverride(buildSpbOverrideKey(docNo, originalTitle), trimmed);
+    let q = supabaseClient
       .from("spb")
       .update({ judul_spb: trimmed })
       .eq("no_spb", docNo);
+    if (originalTitle) q = q.eq("judul_spb", originalTitle);
+    const { error } = await q;
     if (error) throw error;
   } else {
+    saveTitleOverride(buildPoOverrideKey(docNo), trimmed);
     const { error } = await supabaseClient
       .from("po")
       .update({ judul_po: trimmed })
@@ -61,6 +69,15 @@ const toStrOrNull = (val: unknown): string | null => {
   return String(val);
 };
 
+const buildSpbGroupKey = (
+  spbNo: string | null,
+  spbTitle: string | null,
+  fallbackId: unknown,
+) =>
+  spbNo
+    ? `SPB_${spbNo}::${spbTitle ?? ""}`
+    : `SPB_ID_${fallbackId}`;
+
 export const useMonitoringSPB = () => {
   const { data, isLoading, error, refetch } = useQuery<SPBDocumentGroup[]>({
     queryKey: ["monitoring-spb"],
@@ -72,11 +89,11 @@ export const useMonitoringSPB = () => {
       const [spbRes, poRes, sjRes] = await Promise.all([
         supabaseClient.from("spb").select(`
           id, no_spb, judul_spb, tgl_spb, material_datang_tgl, id_po,
-          qty_permintaan, material_datang_qty, nama_barang_spb,
+          qty_permintaan, material_datang_qty, nama_barang_spb, status,
           po:po!id_po (no_po, tanggal_po)
         `),
         supabaseClient.from("po").select(`
-          id, no_po, tanggal_po, id_spb, material_datang_tgl, material_datang_qty, nama_barang_po
+          id, no_po, judul_po, tanggal_po, id_spb, material_datang_tgl, material_datang_qty, nama_barang_po
         `),
         supabaseClient.from("surat_jalan").select(`
           id, no_surat_jalan, id_spb, id_po, nama_barang, 
@@ -109,6 +126,8 @@ export const useMonitoringSPB = () => {
           data: SPBDocumentGroup;
           hasAnyPO: boolean;
           hasAnyArrival: boolean;
+          hasAnyBelumDiproses: boolean;
+          hasAnySudahDiproses: boolean;
           latestTimestamp: number;
           poSet: Set<string>;
           completedItems: number;
@@ -128,24 +147,31 @@ export const useMonitoringSPB = () => {
       // PROSES 1: Kelompokkan berdasarkan SPB
       spbData.forEach((row: any) => {
         const spbNo = toStrOrNull(row.no_spb);
-        const key = spbNo || `SPB_${row.id}`;
-        const spbOverride = spbNo ? overrides[`SPB_${spbNo}`] : undefined;
+        const spbTitleRaw = toStrOrNull(row.judul_spb);
+        const key = buildSpbGroupKey(spbNo, spbTitleRaw, row.id);
+        const overrideKey = spbNo
+          ? buildSpbOverrideKey(spbNo, spbTitleRaw)
+          : null;
+        const spbOverride = overrideKey ? overrides[overrideKey] : undefined;
 
         if (!groups.has(key)) {
           groups.set(key, {
             data: {
               id: key,
               spbNo,
-              spbTitle: spbOverride !== undefined ? spbOverride : (row.judul_spb || null),
+              spbTitle:
+                spbOverride !== undefined ? spbOverride : (spbTitleRaw || null),
               poNo: null,
               poTitle: null,
               date: "-",
               itemsCount: 0,
               sortNumber: getSortNumber(spbNo),
-              status: "Belum PO",
+              status: "Belum PO", // akan di-override di finalisasi
             },
             hasAnyPO: false,
             hasAnyArrival: false,
+            hasAnyBelumDiproses: false,
+            hasAnySudahDiproses: false,
             latestTimestamp: 0,
             poSet: new Set<string>(),
             completedItems: 0,
@@ -154,8 +180,9 @@ export const useMonitoringSPB = () => {
         }
 
         const group = groups.get(key)!;
-        if (!group.data.spbTitle && row.judul_spb) {
-          group.data.spbTitle = spbOverride !== undefined ? spbOverride : row.judul_spb;
+        if (!group.data.spbTitle && spbTitleRaw) {
+          group.data.spbTitle =
+            spbOverride !== undefined ? spbOverride : spbTitleRaw;
         }
         group.data.itemsCount += 1;
 
@@ -163,6 +190,14 @@ export const useMonitoringSPB = () => {
         if (itemName) group.itemNames.add(itemName);
 
         updateLatestDate(group, row.tgl_spb);
+
+        // Cek status "belum di proses" / "sudah di proses"
+        const rowStatus = toStrOrNull(row.status)?.toLowerCase() || "";
+        if (rowStatus === "belum di proses") {
+          group.hasAnyBelumDiproses = true;
+        } else if (rowStatus === "sudah di proses") {
+          group.hasAnySudahDiproses = true;
+        }
 
         const req = row.qty_permintaan || 0;
         const arr = row.material_datang_qty || 0;
@@ -202,7 +237,9 @@ export const useMonitoringSPB = () => {
         if (!isLinked) {
           const poNo = cleanDocNo(p.no_po);
           const key = poNo ? `PO_${poNo}` : `PO_ID_${p.id}`;
-          const poOverride = poNo ? overrides[`PO_${poNo}`] : undefined;
+          const poOverride = poNo
+            ? overrides[buildPoOverrideKey(poNo)]
+            : undefined;
 
           if (!groups.has(key)) {
             groups.set(key, {
@@ -211,7 +248,8 @@ export const useMonitoringSPB = () => {
                 spbNo: null,
                 spbTitle: null,
                 poNo: poNo,
-                poTitle: poOverride !== undefined ? poOverride : (p.judul_po || null),
+                poTitle:
+                  poOverride !== undefined ? poOverride : (p.judul_po || null),
                 date: p.tanggal_po || "-",
                 itemsCount: 0,
                 sortNumber: getSortNumber(poNo),
@@ -219,6 +257,8 @@ export const useMonitoringSPB = () => {
               },
               hasAnyPO: true,
               hasAnyArrival: false,
+              hasAnyBelumDiproses: false,
+              hasAnySudahDiproses: true, // PO otomatis dianggap sudah diproses
               latestTimestamp: 0,
               poSet: new Set([poNo || ""]),
               completedItems: 0,
@@ -228,7 +268,8 @@ export const useMonitoringSPB = () => {
 
           const group = groups.get(key)!;
           if (!group.data.poTitle && p.judul_po) {
-            group.data.poTitle = poOverride !== undefined ? poOverride : p.judul_po;
+            group.data.poTitle =
+              poOverride !== undefined ? poOverride : p.judul_po;
           }
           group.data.itemsCount += 1;
 
@@ -262,7 +303,7 @@ export const useMonitoringSPB = () => {
         if (target === "spb") {
           spbNo = cleanDocNo(spbRel?.no_spb);
           spbTitle = toStrOrNull(spbRel?.judul_spb);
-          targetKey = spbNo ? spbNo : `SPB_${sj.id_spb}`;
+          targetKey = buildSpbGroupKey(spbNo, spbTitle, sj.id_spb);
         } else if (target === "po") {
           poNo = cleanDocNo(poRel?.no_po);
           targetKey = poNo ? `PO_${poNo}` : `PO_ID_${sj.id_po}`;
@@ -277,7 +318,9 @@ export const useMonitoringSPB = () => {
               spbNo,
               spbTitle,
               poNo,
-              poTitle: poNo ? (overrides[`PO_${poNo}`] ?? null) : null,
+              poTitle: poNo
+                ? (overrides[buildPoOverrideKey(poNo)] ?? null)
+                : null,
               suratJalanNo: target === "sj" ? sjNo : null,
               date: "-",
               itemsCount: 0,
@@ -286,6 +329,8 @@ export const useMonitoringSPB = () => {
             },
             hasAnyPO: true,
             hasAnyArrival: false,
+            hasAnyBelumDiproses: false,
+            hasAnySudahDiproses: true, // SJ otomatis dianggap sudah diproses
             latestTimestamp: 0,
             poSet: new Set<string>(poNo ? [poNo] : []),
             completedItems: 0,
@@ -307,18 +352,27 @@ export const useMonitoringSPB = () => {
 
       // Finalisasi Status & Sorting
       const result = Array.from(groups.values()).map((g) => {
-        const isSelesai = g.data.itemsCount > 0 && g.completedItems >= g.data.itemsCount;
+        const isSelesai =
+          g.data.itemsCount > 0 && g.completedItems >= g.data.itemsCount;
+        
         let status = "Belum PO";
-        if (isSelesai) status = "Selesai";
-        else if (g.hasAnyArrival) status = "Datang";
-        else if (g.hasAnyPO) status = "Sudah PO";
+        
+        if (isSelesai) {
+          status = "Selesai";
+        } else if (g.hasAnyArrival) {
+          status = "Datang";
+        } else if (g.hasAnyPO) {
+          status = "Sudah PO";
+        } else if (g.hasAnyBelumDiproses && !g.hasAnySudahDiproses) {
+          status = "Belum Diproses"; // <--- ATURAN BARU DI SINI
+        }
 
         const combinedPo = Array.from(g.poSet).filter(Boolean).join(", ");
         const firstPo = Array.from(g.poSet).filter(Boolean)[0];
         const poTitle =
           g.data.poTitle ??
-          (firstPo && overrides[`PO_${firstPo}`] !== undefined
-            ? overrides[`PO_${firstPo}`]
+          (firstPo && overrides[buildPoOverrideKey(firstPo)] !== undefined
+            ? overrides[buildPoOverrideKey(firstPo)]
             : null);
 
         return {
@@ -326,13 +380,14 @@ export const useMonitoringSPB = () => {
           poNo: combinedPo || null,
           poTitle,
           status,
-          sortNumber: getSortNumber(g.data.spbNo) + getSortNumber(combinedPo) * 0.01,
+          sortNumber:
+            getSortNumber(g.data.spbNo) + getSortNumber(combinedPo) * 0.01,
           itemNames: Array.from(g.itemNames),
         };
       });
 
-      // ✅ URUTAN: Sudah PO & Belum PO (1) -> Datang (2) -> Selesai (3)
       const getStatusWeight = (status: string) => {
+        if (status === "Belum Diproses") return 0; // Paling atas (opsional)
         if (status === "Sudah PO") return 1;
         if (status === "Belum PO") return 1;
         if (status === "Datang") return 2;
