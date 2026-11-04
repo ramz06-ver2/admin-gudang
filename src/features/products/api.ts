@@ -1,6 +1,7 @@
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { mapProduct } from "../../shared/lib/mappers";
+import { requirePermission } from "../../shared/lib/authGuard";
 import type { Product } from "../../shared/types";
 
 export interface BarangInput {
@@ -14,6 +15,9 @@ export interface BarangInput {
 }
 
 export const createBarang = async (input: BarangInput): Promise<Product> => {
+  // 🔒 Verifikasi: user harus login dan punya izin edit_data
+  requirePermission("edit_data", "Tambah barang baru");
+
   const rowPayload = {
     kode:
       input.kode?.trim() ||
@@ -47,6 +51,9 @@ export const updateBarang = async (
   id: number,
   input: Partial<BarangInput>,
 ): Promise<Product> => {
+  // 🔒 Verifikasi: user harus login dan punya izin edit_data
+  requirePermission("edit_data", "Update barang");
+
   const patch: Record<string, unknown> = {};
   if (input.kode !== undefined) patch.kode = input.kode.trim();
   if (input.nama !== undefined) patch.nama = input.nama.trim();
@@ -82,6 +89,9 @@ export const updateBarang = async (
 };
 
 export const deleteBarang = async (id: number): Promise<void> => {
+  // 🔒 Verifikasi: user harus login dan punya izin edit_data
+  requirePermission("edit_data", "Hapus barang");
+
   const { error } = await supabaseClient
     .from(TABLES.products)
     .delete()

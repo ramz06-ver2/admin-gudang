@@ -16,6 +16,15 @@ import {
   setStoredUser,
 } from "@/app/providers/authProvider";
 import {
+  canApproveAccounts,
+  canEditData,
+  canManageBarang,
+  canManageRoles,
+  getRoleLevel,
+  registerCustomRole,
+  resetCustomRoles,
+} from "@/app/providers/accessControlProvider";
+import {
   resetAccountRequests,
   registerAccountRequest,
   getAccountRequests,
@@ -35,20 +44,63 @@ function Wrapper({ children }: { children: ReactNode }) {
   );
 }
 
-describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Notifikasi", () => {
+describe("Hierarki Role (Super User > Supervisor > Admin > Custom Role) & Persetujuan Akun", () => {
   beforeEach(() => {
     fakeDb.reset();
     resetAccountRequests();
+    resetCustomRoles();
     setStoredUser(null);
   });
 
-  it("User/unlogin memiliki role 'user' secara default", async () => {
+  it("User/unlogin memiliki role 'user' secara default dan tidak memiliki akses edit", async () => {
     const identity = (await authProvider.getIdentity?.()) as any;
     expect(identity.role).toBe("user");
+    expect(canEditData("user")).toBe(false);
+    expect(canManageBarang("user")).toBe(false);
+    expect(canApproveAccounts("user")).toBe(false);
+    expect(canManageRoles("user")).toBe(false);
+  });
+
+  it("Memastikan urutan hierarki level akses: superuser > supervisor > admin > custom role > user", () => {
+    expect(getRoleLevel("superuser")).toBeGreaterThan(getRoleLevel("supervisor"));
+    expect(getRoleLevel("supervisor")).toBeGreaterThan(getRoleLevel("admin"));
+    expect(getRoleLevel("admin")).toBeGreaterThan(getRoleLevel("user"));
+
+    expect(canApproveAccounts("superuser")).toBe(true);
+    expect(canManageRoles("superuser")).toBe(true);
+    expect(canApproveAccounts("supervisor")).toBe(false);
+    expect(canManageRoles("supervisor")).toBe(false);
+    expect(canApproveAccounts("admin")).toBe(false);
+    expect(canManageRoles("admin")).toBe(false);
+
+    expect(canEditData("superuser")).toBe(true);
+    expect(canEditData("supervisor")).toBe(true);
+    expect(canEditData("admin")).toBe(true);
+    expect(canManageBarang("superuser")).toBe(true);
+    expect(canManageBarang("supervisor")).toBe(true);
+    expect(canManageBarang("admin")).toBe(true);
+
+    const custom = registerCustomRole({ key: "kepala_gudang", label: "Kepala Gudang" });
+    expect(custom.key).toBe("kepala_gudang");
+    expect(canEditData("kepala_gudang")).toBe(true);
+    expect(canApproveAccounts("kepala_gudang")).toBe(false);
+    expect(canManageRoles("kepala_gudang")).toBe(false);
+  });
+
+  it("Akun bawaan Supervisor dapat login dan memiliki role 'supervisor'", async () => {
+    const loginRes = await authProvider.login({
+      email: "supervisor@admin.com",
+      password: "superv123",
+    });
+    expect(loginRes.success).toBe(true);
+
+    const identity = (await authProvider.getIdentity?.()) as any;
+    expect(identity.role).toBe("supervisor");
+    expect(canManageBarang(identity.role)).toBe(true);
+    expect(canApproveAccounts(identity.role)).toBe(false);
   });
 
   it("User buat akun -> masuk ke Notifikasi Super User -> Super User klik Izinkan -> Akun Admin jadi & bisa login", async () => {
-    // 1. User / unlogin membuat akun baru
     const req = await registerAccountRequest({
       name: "Budi Santoso",
       email: "budi@proyek.com",
@@ -56,7 +108,6 @@ describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Noti
     });
     expect(req.status).toBe("pending");
 
-    // 2. Sebelum diizinkan Super User, Budi belum bisa login sebagai Admin
     const loginBefore = await authProvider.login({
       email: "budi@proyek.com",
       password: "password123",
@@ -64,7 +115,6 @@ describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Noti
     expect(loginBefore.success).toBe(false);
     expect(loginBefore.error?.message).toMatch(/menunggu persetujuan Super User/i);
 
-    // 3. Super User login dan membuka halaman Notifikasi
     const superLogin = await authProvider.login({
       email: "superuser@admin.com",
       password: "super123",
@@ -75,15 +125,11 @@ describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Noti
 
     render(<NotificationsPage />, { wrapper: Wrapper });
 
-    // Pastikan permintaan akun Budi muncul di halaman Notifikasi Super User
     expect(await screen.findByText("Budi Santoso")).toBeInTheDocument();
     expect(screen.getByText("budi@proyek.com")).toBeInTheDocument();
     expect(screen.getByText("Menunggu Persetujuan")).toBeInTheDocument();
 
-    // 4. Super User klik tombol "Izinkan"
-    // ✅ PERBAIKAN: gunakan exact match agar tidak ikut cocok dengan
-    // tombol "Tidak Izinkan budi@proyek.com" (yang juga mengandung substring
-    // "Izinkan budi@proyek.com").
+    // 🔧 PERBAIKAN: Gunakan exact match string, bukan regex
     const approveBtn = screen.getByRole("button", {
       name: "Izinkan budi@proyek.com",
     });
@@ -93,7 +139,6 @@ describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Noti
       expect(screen.getByText("Diizinkan (Admin Aktif)")).toBeInTheDocument();
     });
 
-    // 5. Kini Budi login dan akunnya telah aktif menjadi Admin
     const loginAfter = await authProvider.login({
       email: "budi@proyek.com",
       password: "password123",
@@ -106,14 +151,12 @@ describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Noti
   });
 
   it("User buat akun -> masuk ke Notifikasi Super User -> Super User klik Tidak Izinkan -> Akun Admin batal jadi", async () => {
-    // 1. User / unlogin mendaftar akun
     await registerAccountRequest({
       name: "Andi Pratama",
       email: "andi@proyek.com",
       password: "password123",
     });
 
-    // 2. Super User login dan membuka halaman Notifikasi
     await authProvider.login({
       email: "superuser@admin.com",
       password: "super123",
@@ -123,8 +166,7 @@ describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Noti
 
     expect(await screen.findByText("Andi Pratama")).toBeInTheDocument();
 
-    // 3. Super User klik tombol "Tidak Izinkan"
-    // ✅ PERBAIKAN: exact match agar tidak ambigu dengan tombol lain.
+    // 🔧 PERBAIKAN: Gunakan exact match string
     const rejectBtn = screen.getByRole("button", {
       name: "Tidak Izinkan andi@proyek.com",
     });
@@ -134,7 +176,6 @@ describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Noti
       expect(screen.getByText("Tidak Diizinkan (Batal)")).toBeInTheDocument();
     });
 
-    // 4. Andi mencoba login -> ditolak karena pembuatan akun Admin dibatalkan
     const loginRejected = await authProvider.login({
       email: "andi@proyek.com",
       password: "password123",
@@ -146,12 +187,12 @@ describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Noti
     expect(list.find((r) => r.email === "andi@proyek.com")?.status).toBe("rejected");
   });
 
-  it("Halaman Notifikasi menolak akses jika dibuka oleh User/Unlogin atau Admin biasa", async () => {
+  it("Halaman Notifikasi menolak akses jika dibuka oleh User/Unlogin, Admin, maupun Supervisor", async () => {
     setStoredUser({
-      id: "admin-1",
-      email: "admin@admin.com",
-      name: "Administrator",
-      role: "admin",
+      id: "supervisor-1",
+      email: "supervisor@admin.com",
+      name: "Supervisor",
+      role: "supervisor",
     });
 
     render(<NotificationsPage />, { wrapper: Wrapper });

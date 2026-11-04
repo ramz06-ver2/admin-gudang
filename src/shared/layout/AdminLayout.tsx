@@ -1,4 +1,4 @@
-import { useState, type PropsWithChildren } from "react";
+import { useState, useEffect, type PropsWithChildren } from "react";
 import { ThemedLayoutV2, ThemedSiderV2 } from "@refinedev/antd";
 import { useGetIdentity, useLogout } from "@refinedev/core";
 import { useNavigate } from "react-router-dom";
@@ -14,9 +14,19 @@ import {
   CrownOutlined,
 } from "@ant-design/icons";
 import { GlobalSearch } from "../components/GlobalSearch";
+import { ChatbotWidget } from "../../features/chatbot/ChatbotWidget";
 import type { UserRole } from "../types";
 import { getPendingRequestsCount } from "../../features/auth/accountRequests";
-import { getStoredUser } from "../../app/providers/authProvider";
+import {
+  AUTH_CHANGED_EVENT,
+  getStoredUser,
+} from "../../app/providers/authProvider";
+import {
+  canApproveAccounts,
+  getRoleDefinition,
+  isAuthenticatedRole,
+  isSuperUser,
+} from "../../app/providers/accessControlProvider";
 
 const { Text } = Typography;
 
@@ -33,18 +43,33 @@ const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
   const { mutate: logout } = useLogout();
   const navigate = useNavigate();
 
-  const stored = getStoredUser();
-  const role: UserRole = identity?.role ?? stored?.role ?? "user";
-  const isSuperUser = role === "superuser";
-  const isAdmin = role === "admin" || isSuperUser;
-  const pendingCount = isSuperUser ? getPendingRequestsCount() : 0;
+  const [stored, setStored] = useState(() => getStoredUser());
 
-  const badgeText = isSuperUser ? "SU" : isAdmin ? "AS" : "US";
-  const roleLabel = isSuperUser
-    ? "Mode Super User"
-    : isAdmin
-      ? "Mode Admin"
-      : "User (Public)";
+  useEffect(() => {
+    const syncAuth = () => setStored(getStoredUser());
+    window.addEventListener(AUTH_CHANGED_EVENT, syncAuth);
+    window.addEventListener("storage", syncAuth);
+    return () => {
+      window.removeEventListener(AUTH_CHANGED_EVENT, syncAuth);
+      window.removeEventListener("storage", syncAuth);
+    };
+  }, []);
+
+  const role: UserRole = identity?.role ?? stored?.role ?? "user";
+  const roleDef = getRoleDefinition(role);
+  const isSuper = isSuperUser(role);
+  const isLoggedIn = isAuthenticatedRole(role);
+  const pendingCount = canApproveAccounts(role) ? getPendingRequestsCount() : 0;
+
+  const badgeText = roleDef.badge;
+  const roleLabel = isLoggedIn ? `Mode ${roleDef.label}` : "User (Public)";
+
+  const getBadgeGradient = () => {
+    if (isSuper) return "linear-gradient(135deg, #722ed1, #531dab)";
+    if (roleDef.key === "supervisor") return "linear-gradient(135deg, #13c2c2, #006d75)";
+    if (isLoggedIn) return "linear-gradient(135deg, #1677ff, #0e4fb8)";
+    return "linear-gradient(135deg, #52c41a, #389e0d)";
+  };
 
   return (
     <div style={{ width: "100%", userSelect: "none" }}>
@@ -66,11 +91,7 @@ const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
               width: 32,
               height: 32,
               borderRadius: 8,
-              background: isSuperUser
-                ? "linear-gradient(135deg, #722ed1, #531dab)"
-                : isAdmin
-                  ? "linear-gradient(135deg, #1677ff, #0e4fb8)"
-                  : "linear-gradient(135deg, #52c41a, #389e0d)",
+              background: getBadgeGradient(),
               color: "#fff",
               display: "flex",
               alignItems: "center",
@@ -121,11 +142,11 @@ const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
               {identity?.name ?? stored?.name ?? "User"}
             </Text>
             <Tag
-              color={isSuperUser ? "purple" : isAdmin ? "blue" : "green"}
+              color={roleDef.color}
               icon={
-                isSuperUser ? (
+                isSuper ? (
                   <CrownOutlined />
-                ) : isAdmin ? (
+                ) : isLoggedIn ? (
                   <SafetyCertificateOutlined />
                 ) : (
                   <UserOutlined />
@@ -133,12 +154,12 @@ const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
               }
               style={{ margin: 0, fontSize: 11 }}
             >
-              {isSuperUser ? "Super User" : isAdmin ? "Admin" : "Public"}
+              {isLoggedIn ? roleDef.label : "Public"}
             </Tag>
           </div>
 
           <Space direction="vertical" size={6} style={{ width: "100%" }}>
-            {isSuperUser && (
+            {canApproveAccounts(role) && (
               <Badge count={pendingCount} size="small" style={{ width: "100%" }}>
                 <Button
                   size="small"
@@ -154,7 +175,7 @@ const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
               </Badge>
             )}
 
-            {isAdmin ? (
+            {isLoggedIn ? (
               <Button
                 danger
                 type="primary"
@@ -201,5 +222,6 @@ export const AdminLayout = ({ children }: PropsWithChildren) => (
   >
     <GlobalSearch />
     {children}
+    <ChatbotWidget />
   </ThemedLayoutV2>
 );

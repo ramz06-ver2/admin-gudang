@@ -119,16 +119,18 @@ function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-                {/* Rute Publik */}
+                {/* Rute Publik (Bisa diakses tanpa login) */}
                 <Route element={<AdminLayout><Outlet /></AdminLayout>}>
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/inventory" element={<InventoryPage />} />
+                  
+                  {/* 🔧 Monitoring SPB dikembalikan ke publik agar bisa dilihat, fitur edit akan dibatasi di dalam UI */}
                   <Route path="/monitoring-spb" element={<MonitoringSPBPage />} />
                   <Route path="/monitoring-spb/detail" element={<MonitoringSPBDetailPage />} />
                   <Route path="/monitoring-spb/item/:id" element={<MonitoringSPBItemDetailPage />} />
                 </Route>
 
-                {/* Rute Admin & Super User */}
+                {/* Rute Admin & Super User (Wajib Login) */}
                 <Route element={
                   <Authenticated key="admin-routes" fallback={<Navigate to="/login" replace />}>
                     <AdminLayout><Outlet /></AdminLayout>
@@ -153,31 +155,246 @@ function App() {
 
 export default App;
 
-
 ================================================================================
 FILE: ../src/app/providers/accessControlProvider.ts
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/app/providers/accessControlProvider.ts
 ================================================================================
 
 import type { AccessControlProvider } from "@refinedev/core";
-import type { UserRole } from "../../shared/types";
+import type { PermissionKey, RoleDefinition, UserRole } from "../../shared/types";
 import { getStoredUser } from "./authProvider";
 
-export const canManageBarang = (role?: UserRole | string | null): boolean =>
-  role === "admin" || role === "superuser";
+export const CUSTOM_ROLES_STORAGE_KEY = "custom-system-roles";
+
+/**
+ * Daftar role bawaan sistem berdasarkan urutan hierarki tertinggi ke terendah:
+ * 1. superuser (Level 100) - Hak akses login tertinggi (Point 1, Point 2, & Edit)
+ * 2. supervisor (Level 70) - Di bawah Super User (Hak akses Edit)
+ * 3. admin (Level 50)      - Di bawah Supervisor (Hak akses Edit)
+ * 4. user (Level 0)        - Pengunjung publik / belum login (Hanya baca)
+ */
+export const BUILT_IN_ROLES: Record<string, RoleDefinition> = {
+  superuser: {
+    key: "superuser",
+    label: "Super User",
+    badge: "SU",
+    color: "purple",
+    level: 100,
+    isAuthenticated: true,
+    permissions: ["approve_accounts", "manage_roles", "edit_data"],
+  },
+  supervisor: {
+    key: "supervisor",
+    label: "Supervisor",
+    badge: "SV",
+    color: "cyan",
+    level: 70,
+    isAuthenticated: true,
+    permissions: ["edit_data"],
+  },
+  admin: {
+    key: "admin",
+    label: "Admin",
+    badge: "AS",
+    color: "blue",
+    level: 50,
+    isAuthenticated: true,
+    permissions: ["edit_data"],
+  },
+  user: {
+    key: "user",
+    label: "User (Public)",
+    badge: "US",
+    color: "green",
+    level: 0,
+    isAuthenticated: false,
+    permissions: [],
+  },
+};
+
+export const normalizeRoleKey = (role?: UserRole | string | null): string => {
+  const cleaned = String(role ?? "").trim().toLowerCase();
+  return cleaned || "user";
+};
+
+export const getCustomRoles = (): RoleDefinition[] => {
+  try {
+    const raw = localStorage.getItem(CUSTOM_ROLES_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+export const saveCustomRoles = (roles: RoleDefinition[]) => {
+  try {
+    localStorage.setItem(CUSTOM_ROLES_STORAGE_KEY, JSON.stringify(roles));
+  } catch {
+    // ignore storage error
+  }
+};
+
+export const resetCustomRoles = () => {
+  try {
+    localStorage.removeItem(CUSTOM_ROLES_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+};
+
+/**
+ * Menambahkan role login baru secara dinamis (hanya dapat dilakukan oleh Super User di UI,
+ * atau dipanggil saat inisialisasi). Role baru otomatis memiliki izin 'edit_data'
+ * dan berada di bawah Super User.
+ */
+export const registerCustomRole = (input: {
+  key: string;
+  label?: string;
+  badge?: string;
+  color?: string;
+  level?: number;
+  permissions?: PermissionKey[];
+}): RoleDefinition => {
+  const key = normalizeRoleKey(input.key).replace(/\s+/g, "_");
+  if (!key || key === "user" || key === "superuser") {
+    throw new Error("Nama role tidak valid atau sudah digunakan sistem");
+  }
+
+  const label =
+    input.label?.trim() ||
+    key
+      .split("_")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+
+  const badge =
+    input.badge?.trim().toUpperCase().slice(0, 2) ||
+    label
+      .split(" ")
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) ||
+    "RL";
+
+  // Pastikan hanya superuser yang memiliki approve_accounts & manage_roles
+  const safePermissions: PermissionKey[] = (
+    input.permissions ?? ["edit_data"]
+  ).filter((p) => p === "edit_data");
+
+  const definition: RoleDefinition = {
+    key,
+    label,
+    badge,
+    color: input.color || "geekblue",
+    level: typeof input.level === "number" ? Math.min(90, Math.max(10, input.level)) : 40,
+    isAuthenticated: true,
+    permissions: safePermissions.length > 0 ? safePermissions : ["edit_data"],
+  };
+
+  const existing = getCustomRoles().filter((r) => normalizeRoleKey(r.key) !== key);
+  saveCustomRoles([...existing, definition]);
+  return definition;
+};
+
+export const getAllRoleDefinitions = (): RoleDefinition[] => {
+  const custom = getCustomRoles();
+  const builtInList = [
+    BUILT_IN_ROLES.superuser,
+    BUILT_IN_ROLES.supervisor,
+    BUILT_IN_ROLES.admin,
+    ...custom.filter(
+      (c) => !BUILT_IN_ROLES[normalizeRoleKey(c.key)],
+    ),
+    BUILT_IN_ROLES.user,
+  ];
+  return builtInList.sort((a, b) => b.level - a.level);
+};
+
+export const getAssignableRoles = (): RoleDefinition[] => {
+  return getAllRoleDefinitions().filter(
+    (r) => r.isAuthenticated && r.key !== "superuser",
+  );
+};
+
+export const getRoleDefinition = (role?: UserRole | string | null): RoleDefinition => {
+  const key = normalizeRoleKey(role);
+  if (BUILT_IN_ROLES[key]) {
+    return BUILT_IN_ROLES[key];
+  }
+  const foundCustom = getCustomRoles().find((r) => normalizeRoleKey(r.key) === key);
+  if (foundCustom) {
+    return foundCustom;
+  }
+  // Fallback dinamis: jika ada role login baru yang belum terdaftar eksplisit,
+  // anggap sebagai role login di bawah admin yang memiliki hak edit data.
+  const fallbackLabel = key
+    .split(/[_-\s]+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+  return {
+    key,
+    label: fallbackLabel || "Staff",
+    badge: (fallbackLabel.slice(0, 2) || "ST").toUpperCase(),
+    color: "geekblue",
+    level: 30,
+    isAuthenticated: true,
+    permissions: ["edit_data"],
+  };
+};
+
+export const getRoleLevel = (role?: UserRole | string | null): number =>
+  getRoleDefinition(role).level;
+
+export const isAuthenticatedRole = (role?: UserRole | string | null): boolean =>
+  getRoleDefinition(role).isAuthenticated;
+
+export const isSuperUser = (role?: UserRole | string | null): boolean =>
+  normalizeRoleKey(role) === "superuser";
+
+/**
+ * Point 1: Hanya Super User yang dapat menyetujui / menolak pendaftaran akun baru
+ */
+export const canApproveAccounts = (role?: UserRole | string | null): boolean =>
+  isSuperUser(role);
+
+/**
+ * Point 2: Hanya Super User yang dapat mengelola role & mengubah level akses akun
+ */
+export const canManageRoles = (role?: UserRole | string | null): boolean =>
+  isSuperUser(role);
 
 export const canAccessNotifications = (role?: UserRole | string | null): boolean =>
-  role === "superuser";
+  isSuperUser(role);
+
+/**
+ * Mengedit data (CRUD barang, edit judul SPB/PO, barang masuk/keluar):
+ * Super User, Supervisor, Admin, serta role login tambahan semuanya dapat mengedit.
+ */
+export const canEditData = (role?: UserRole | string | null): boolean => {
+  const def = getRoleDefinition(role);
+  return def.isAuthenticated && def.permissions.includes("edit_data");
+};
+
+export const canManageBarang = (role?: UserRole | string | null): boolean =>
+  canEditData(role);
 
 export const accessControlProvider: AccessControlProvider = {
   can: async ({ resource, action }) => {
     const user = getStoredUser();
     const role: UserRole = user?.role ?? "user";
 
-    if (resource === "notifications" || resource === "notifikasi") {
+    if (
+      resource === "notifications" ||
+      resource === "notifikasi" ||
+      resource === "account_requests" ||
+      resource === "roles"
+    ) {
       return {
         can: canAccessNotifications(role),
-        reason: "Hanya Super User yang memiliki akses ke halaman Notifikasi",
+        reason: "Hanya Super User yang memiliki akses ke halaman Notifikasi & Manajemen Role",
       };
     }
 
@@ -186,22 +403,21 @@ export const accessControlProvider: AccessControlProvider = {
       (action === "create" || action === "edit" || action === "delete")
     ) {
       return {
-        can: canManageBarang(role),
-        reason: "Hanya Admin dan Super User yang dapat mengelola data barang",
+        can: canEditData(role),
+        reason: "Hanya pengguna yang sudah login (Super User, Supervisor, Admin) yang dapat mengelola data barang",
       };
     }
 
     if (resource === "barang_masuk" || resource === "pengeluaran") {
       return {
-        can: canManageBarang(role),
-        reason: "Silakan masuk sebagai Admin atau Super User",
+        can: canEditData(role),
+        reason: "Silakan masuk terlebih dahulu untuk mengakses fitur ini",
       };
     }
 
     return { can: true };
   },
 };
-
 
 ================================================================================
 FILE: ../src/app/providers/authProvider.ts
@@ -216,8 +432,14 @@ import {
   findAccountRequestByEmail,
   registerAccountRequest,
 } from "../../features/auth/accountRequests";
+import {
+  getRoleDefinition,
+  isAuthenticatedRole,
+  normalizeRoleKey,
+} from "./accessControlProvider";
 
 export const STORAGE_KEY = "mock-auth-user";
+export const AUTH_CHANGED_EVENT = "auth-user-changed";
 
 export interface StoredAuthUser {
   id?: string;
@@ -242,16 +464,29 @@ export const setStoredUser = (user: StoredAuthUser | null) => {
     } else {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
     }
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
+    }
   } catch {
     // ignore
   }
+};
+
+const resolveRoleFromSupabaseUser = (user: any, fallbackEmail: string): UserRole => {
+  const metaRole = user?.user_metadata?.role as string | undefined;
+  if (metaRole && normalizeRoleKey(metaRole) !== "user") {
+    return normalizeRoleKey(metaRole);
+  }
+  const lower = fallbackEmail.toLowerCase();
+  if (lower.startsWith("superuser@")) return "superuser";
+  if (lower.startsWith("supervisor@")) return "supervisor";
+  return "admin";
 };
 
 export const authProvider: AuthProvider = {
   login: async ({ email, password }): Promise<AuthActionResponse> => {
     const normalizedEmail = String(email || "").trim().toLowerCase();
 
-    // 1. Cek apakah akun berasal dari alur pendaftaran user -> notifikasi super user
     const accountReq = findAccountRequestByEmail(normalizedEmail);
     if (accountReq) {
       if (accountReq.status === "pending") {
@@ -274,11 +509,15 @@ export const authProvider: AuthProvider = {
       }
       if (accountReq.status === "approved") {
         if (!accountReq.password || accountReq.password === password) {
+          const assignedRole: UserRole =
+            accountReq.role && normalizeRoleKey(accountReq.role) !== "user"
+              ? normalizeRoleKey(accountReq.role)
+              : "admin";
           setStoredUser({
             id: accountReq.id,
             email: accountReq.email,
             name: accountReq.name,
-            role: "admin",
+            role: assignedRole,
           });
           return { success: true, redirectTo: "/dashboard" };
         }
@@ -289,13 +528,25 @@ export const authProvider: AuthProvider = {
       }
     }
 
-    // 2. Akun bawaan Super User & Admin
     if (normalizedEmail === "superuser@admin.com" && password === "super123") {
       setStoredUser({
         id: "superuser-1",
         email: normalizedEmail,
         name: "Super User",
         role: "superuser",
+      });
+      return { success: true, redirectTo: "/dashboard" };
+    }
+
+    if (
+      normalizedEmail === "supervisor@admin.com" &&
+      (password === "superv123" || password === "supervisor123")
+    ) {
+      setStoredUser({
+        id: "supervisor-1",
+        email: normalizedEmail,
+        name: "Supervisor",
+        role: "supervisor",
       });
       return { success: true, redirectTo: "/dashboard" };
     }
@@ -331,28 +582,26 @@ export const authProvider: AuthProvider = {
       };
     }
 
-    const metaRole = (data.user as any)?.user_metadata?.role as UserRole | undefined;
-    const resolvedRole: UserRole =
-      metaRole === "superuser" || normalizedEmail.startsWith("superuser@")
-        ? "superuser"
-        : "admin";
+    const resolvedRole = resolveRoleFromSupabaseUser(data.user, normalizedEmail);
+    const roleDef = getRoleDefinition(resolvedRole);
 
     setStoredUser({
       id: data.user.id,
       email: data.user.email || normalizedEmail,
-      name: data.user.email?.split("@")[0] ?? "Admin",
+      name: data.user.email?.split("@")[0] ?? roleDef.label,
       role: resolvedRole,
     });
 
     return { success: true, redirectTo: "/dashboard" };
   },
 
-  register: async ({ name, email, password }): Promise<AuthActionResponse> => {
+  register: async ({ name, email, password, role }: any): Promise<AuthActionResponse> => {
     try {
       await registerAccountRequest({
-        name: name || String(email || "").split("@")[0] || "Calon Admin",
+        name: name || String(email || "").split("@")[0] || "Calon Pengguna",
         email,
         password,
+        role: role || "admin",
       });
       return {
         success: true,
@@ -370,6 +619,12 @@ export const authProvider: AuthProvider = {
   },
 
   logout: async (): Promise<AuthActionResponse> => {
+    // 🔧 PERBAIKAN: Hapus state filter & urutan SPB dari localStorage saat logout
+    localStorage.removeItem("spb_filter");
+    localStorage.removeItem("spb_searchTerm");
+    localStorage.removeItem("spb_searchMode");
+    localStorage.removeItem("spb_sortBy");
+
     setStoredUser(null);
     if (!USE_MOCK) {
       try {
@@ -383,7 +638,7 @@ export const authProvider: AuthProvider = {
 
   check: async (): Promise<CheckResponse> => {
     const stored = getStoredUser();
-    if (stored && (stored.role === "admin" || stored.role === "superuser")) {
+    if (stored && isAuthenticatedRole(stored.role)) {
       return { authenticated: true };
     }
     if (USE_MOCK) {
@@ -399,8 +654,9 @@ export const authProvider: AuthProvider = {
   getIdentity: async () => {
     const stored = getStoredUser();
     if (stored) {
+      const def = getRoleDefinition(stored.role);
       return {
-        id: stored.id || (stored.role === "superuser" ? "superuser-1" : "admin-1"),
+        id: stored.id || `${def.key}-1`,
         name: stored.name,
         email: stored.email,
         role: stored.role,
@@ -410,14 +666,11 @@ export const authProvider: AuthProvider = {
       const { data } = await supabaseClient.auth.getUser();
       if (data?.user) {
         const email = data.user.email || "";
-        const metaRole = (data.user as any)?.user_metadata?.role as UserRole | undefined;
-        const role: UserRole =
-          metaRole === "superuser" || email.toLowerCase().startsWith("superuser@")
-            ? "superuser"
-            : "admin";
+        const role = resolveRoleFromSupabaseUser(data.user, email);
+        const def = getRoleDefinition(role);
         return {
           id: data.user.id,
-          name: email.split("@")[0] || (role === "superuser" ? "Super User" : "Admin"),
+          name: email.split("@")[0] || def.label,
           email,
           role,
         };
@@ -444,7 +697,6 @@ export const authProvider: AuthProvider = {
   onError: async (error) => ({ error }),
 };
 
-
 ================================================================================
 FILE: ../src/app/providers/dataProvider.ts
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/app/providers/dataProvider.ts
@@ -466,7 +718,13 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/auth/accountRequests
 
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
-import type { AccountRequest } from "../../shared/types";
+import type { AccountRequest, UserRole } from "../../shared/types";
+import { requirePermission } from "../../shared/lib/authGuard";
+import {
+  canApproveAccounts,
+  canManageRoles,
+  normalizeRoleKey,
+} from "../../app/providers/accessControlProvider";
 
 const REQUESTS_STORAGE_KEY = "account-registration-requests";
 
@@ -499,6 +757,14 @@ export const getPendingRequestsCount = (): number => {
   return readLocalRequests().filter((r) => r.status === "pending").length;
 };
 
+const sanitizeAssignableRole = (role?: UserRole | string | null): UserRole => {
+  const key = normalizeRoleKey(role);
+  if (!key || key === "user" || key === "superuser") {
+    return "admin";
+  }
+  return key;
+};
+
 export const getAccountRequests = async (): Promise<AccountRequest[]> => {
   const local = readLocalRequests();
   try {
@@ -514,13 +780,18 @@ export const getAccountRequests = async (): Promise<AccountRequest[]> => {
         const existing = mergedMap.get(emailKey);
         mergedMap.set(emailKey, {
           id: String(row.id ?? existing?.id ?? Date.now()),
-          name: row.name || existing?.name || "Calon Admin",
+          name: row.name || existing?.name || "Calon Pengguna",
           email: row.email,
           password: row.password ?? existing?.password,
-          role: "admin",
+          role: sanitizeAssignableRole(row.role ?? existing?.role ?? "admin"),
           status: row.status || existing?.status || "pending",
-          createdAt: row.created_at || row.createdAt || existing?.createdAt || new Date().toISOString(),
-          decidedAt: row.decided_at || row.decidedAt || existing?.decidedAt || null,
+          createdAt:
+            row.created_at ||
+            row.createdAt ||
+            existing?.createdAt ||
+            new Date().toISOString(),
+          decidedAt:
+            row.decided_at || row.decidedAt || existing?.decidedAt || null,
         });
       });
       const merged = Array.from(mergedMap.values());
@@ -537,10 +808,12 @@ export const registerAccountRequest = async (input: {
   name: string;
   email: string;
   password: string;
+  role?: UserRole;
 }): Promise<AccountRequest> => {
   const name = input.name.trim();
   const email = input.email.trim().toLowerCase();
   const password = input.password;
+  const requestedRole = sanitizeAssignableRole(input.role ?? "admin");
 
   if (!name || !email || !password) {
     throw new Error("Nama, email, dan password wajib diisi");
@@ -554,7 +827,7 @@ export const registerAccountRequest = async (input: {
     throw new Error(
       duplicate.status === "pending"
         ? "Email ini sudah terdaftar dan masih menunggu persetujuan Super User"
-        : "Email ini sudah terdaftar sebagai Admin",
+        : "Email ini sudah terdaftar dan aktif di sistem",
     );
   }
 
@@ -563,7 +836,7 @@ export const registerAccountRequest = async (input: {
     name,
     email,
     password,
-    role: "admin",
+    role: requestedRole,
     status: "pending",
     createdAt: new Date().toISOString(),
     decidedAt: null,
@@ -582,7 +855,7 @@ export const registerAccountRequest = async (input: {
         name: newRequest.name,
         email: newRequest.email,
         password: newRequest.password,
-        role: "admin",
+        role: newRequest.role,
         status: "pending",
         created_at: newRequest.createdAt,
       },
@@ -594,29 +867,44 @@ export const registerAccountRequest = async (input: {
   return newRequest;
 };
 
+/**
+ * Point 1: Menyetujui permintaan akun baru (hanya Super User).
+ * Mendukung pemilihan role saat disetujui (misal: 'admin', 'supervisor', atau role tambahan).
+ */
 export const approveAccountRequest = async (
   requestId: string,
+  assignedRole?: UserRole,
+  actorRole: UserRole = "superuser",
 ): Promise<AccountRequest> => {
+  // 🔒 Verifikasi: user harus login terlebih dahulu
+  requirePermission("approve_accounts", "Setujui pendaftaran akun");
+
+  if (!canApproveAccounts(actorRole)) {
+    throw new Error("Hanya Super User yang dapat menyetujui pendaftaran akun");
+  }
+
   const list = readLocalRequests();
   const idx = list.findIndex((r) => String(r.id) === String(requestId));
   const decidedAt = new Date().toISOString();
 
   let updatedItem: AccountRequest;
   if (idx >= 0) {
+    const targetRole = sanitizeAssignableRole(assignedRole ?? list[idx].role ?? "admin");
     updatedItem = {
       ...list[idx],
       status: "approved",
-      role: "admin",
+      role: targetRole,
       decidedAt,
     };
     list[idx] = updatedItem;
     writeLocalRequests(list);
   } else {
+    const targetRole = sanitizeAssignableRole(assignedRole ?? "admin");
     updatedItem = {
       id: requestId,
-      name: "Admin Baru",
+      name: "Pengguna Baru",
       email: "",
-      role: "admin",
+      role: targetRole,
       status: "approved",
       createdAt: decidedAt,
       decidedAt,
@@ -626,7 +914,11 @@ export const approveAccountRequest = async (
   try {
     await supabaseClient
       .from(TABLES.accountRequests)
-      .update({ status: "approved", decided_at: decidedAt })
+      .update({
+        status: "approved",
+        role: updatedItem.role,
+        decided_at: decidedAt,
+      })
       .eq("id", requestId);
   } catch {
     // fallback ke localStorage
@@ -635,9 +927,20 @@ export const approveAccountRequest = async (
   return updatedItem;
 };
 
+/**
+ * Point 1: Menolak permintaan akun baru (hanya Super User).
+ */
 export const rejectAccountRequest = async (
   requestId: string,
+  actorRole: UserRole = "superuser",
 ): Promise<AccountRequest> => {
+  // 🔒 Verifikasi: user harus login terlebih dahulu
+  requirePermission("approve_accounts", "Tolak pendaftaran akun");
+
+  if (!canApproveAccounts(actorRole)) {
+    throw new Error("Hanya Super User yang dapat menolak pendaftaran akun");
+  }
+
   const list = readLocalRequests();
   const idx = list.findIndex((r) => String(r.id) === String(requestId));
   const decidedAt = new Date().toISOString();
@@ -654,7 +957,7 @@ export const rejectAccountRequest = async (
   } else {
     updatedItem = {
       id: requestId,
-      name: "Calon Admin",
+      name: "Calon Pengguna",
       email: "",
       role: "admin",
       status: "rejected",
@@ -667,6 +970,47 @@ export const rejectAccountRequest = async (
     await supabaseClient
       .from(TABLES.accountRequests)
       .update({ status: "rejected", decided_at: decidedAt })
+      .eq("id", requestId);
+  } catch {
+    // fallback ke localStorage
+  }
+
+  return updatedItem;
+};
+
+/**
+ * Point 2: Mengubah role akun pengguna (hanya Super User).
+ */
+export const updateAccountRole = async (
+  requestId: string,
+  newRole: UserRole,
+  actorRole: UserRole = "superuser",
+): Promise<AccountRequest> => {
+  // 🔒 Verifikasi: user harus login terlebih dahulu
+  requirePermission("manage_roles", "Ubah role akun");
+
+  if (!canManageRoles(actorRole)) {
+    throw new Error("Hanya Super User yang dapat mengubah role akun");
+  }
+
+  const targetRole = sanitizeAssignableRole(newRole);
+  const list = readLocalRequests();
+  const idx = list.findIndex((r) => String(r.id) === String(requestId));
+  if (idx < 0) {
+    throw new Error("Data akun tidak ditemukan");
+  }
+
+  const updatedItem: AccountRequest = {
+    ...list[idx],
+    role: targetRole,
+  };
+  list[idx] = updatedItem;
+  writeLocalRequests(list);
+
+  try {
+    await supabaseClient
+      .from(TABLES.accountRequests)
+      .update({ role: targetRole })
       .eq("id", requestId);
   } catch {
     // fallback ke localStorage
@@ -698,6 +1042,7 @@ import {
   Alert,
   Space,
   Segmented,
+  Select,
 } from "antd";
 import {
   UserOutlined,
@@ -708,6 +1053,8 @@ import {
 
 import { USE_MOCK } from "../../../shared/lib/config";
 import { registerAccountRequest } from "../accountRequests";
+import { getAssignableRoles } from "../../../app/providers/accessControlProvider";
+import type { UserRole } from "../../../shared/types";
 
 const { Title, Text } = Typography;
 
@@ -720,6 +1067,7 @@ interface RegisterForm {
   name: string;
   email: string;
   password: string;
+  role?: UserRole;
 }
 
 export const LoginPage = () => {
@@ -730,7 +1078,11 @@ export const LoginPage = () => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [registerForm] = Form.useForm<RegisterForm>();
 
-  const handleSubmitLogin = (values: LoginForm) => {
+  const assignableRoles = getAssignableRoles();
+
+  // 🔧 PERBAIKAN: Tambahkan e.preventDefault() untuk mencegah browser me-refresh halaman
+  const handleSubmitLogin = (values: LoginForm, e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
     login(values, {
@@ -740,12 +1092,18 @@ export const LoginPage = () => {
     });
   };
 
-  const handleSubmitRegister = async (values: RegisterForm) => {
+  const handleSubmitRegister = async (values: RegisterForm, e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
     setIsRegistering(true);
     try {
-      await registerAccountRequest(values);
+      await registerAccountRequest({
+        name: values.name,
+        email: values.email,
+        password: values.password,
+        role: values.role || "admin",
+      });
       setSuccessMsg(
         "Permintaan pembuatan akun berhasil dikirim! Akun Anda telah masuk ke halaman Notifikasi Super User dan menunggu persetujuan.",
       );
@@ -803,7 +1161,7 @@ export const LoginPage = () => {
           <Text type="secondary">
             {mode === "login"
               ? "Masuk untuk mengelola inventaris"
-              : "Daftar akun Admin baru (perlu persetujuan Super User)"}
+              : "Daftar akun baru (perlu persetujuan Super User)"}
           </Text>
         </div>
 
@@ -907,6 +1265,7 @@ export const LoginPage = () => {
             onFinish={handleSubmitRegister}
             autoComplete="off"
             requiredMark={false}
+            initialValues={{ role: "admin" }}
           >
             <Form.Item
               name="name"
@@ -916,7 +1275,7 @@ export const LoginPage = () => {
               <Input
                 size="large"
                 prefix={<IdcardOutlined />}
-                placeholder="Nama calon admin"
+                placeholder="Nama lengkap pengguna"
               />
             </Form.Item>
 
@@ -931,7 +1290,7 @@ export const LoginPage = () => {
               <Input
                 size="large"
                 prefix={<MailOutlined />}
-                placeholder="calonadmin@email.com"
+                placeholder="pengguna@email.com"
               />
             </Form.Item>
 
@@ -947,6 +1306,17 @@ export const LoginPage = () => {
                 size="large"
                 prefix={<LockOutlined />}
                 placeholder="Minimal 6 karakter"
+              />
+            </Form.Item>
+
+            <Form.Item name="role" label="Role yang Diajukan">
+              <Select
+                size="large"
+                aria-label="Role yang Diajukan"
+                options={assignableRoles.map((r) => ({
+                  value: r.key,
+                  label: r.label,
+                }))}
               />
             </Form.Item>
 
@@ -974,12 +1344,16 @@ export const LoginPage = () => {
             description={
               <Space direction="vertical" size={2}>
                 <Text style={{ fontSize: 12 }}>
-                  Admin: <Text code>admin@admin.com</Text> /{" "}
-                  <Text code>admin123</Text>
-                </Text>
-                <Text style={{ fontSize: 12 }}>
                   Super User: <Text code>superuser@admin.com</Text> /{" "}
                   <Text code>super123</Text>
+                </Text>
+                <Text style={{ fontSize: 12 }}>
+                  Supervisor: <Text code>supervisor@admin.com</Text> /{" "}
+                  <Text code>superv123</Text>
+                </Text>
+                <Text style={{ fontSize: 12 }}>
+                  Admin: <Text code>admin@admin.com</Text> /{" "}
+                  <Text code>admin123</Text>
                 </Text>
               </Space>
             }
@@ -991,7 +1365,6 @@ export const LoginPage = () => {
 };
 
 export default LoginPage;
-
 
 ================================================================================
 FILE: ../src/features/auth/pages/NotificationsPage.tsx
@@ -1009,6 +1382,8 @@ import {
   Space,
   Empty,
   Result,
+  Select,
+  Input,
   message,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
@@ -1016,14 +1391,25 @@ import {
   BellOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
+  PlusOutlined,
+  SafetyCertificateOutlined,
 } from "@ant-design/icons";
-import type { AccountRequest, UserRole } from "../../../shared/types";
+import type { AccountRequest, RoleDefinition, UserRole } from "../../../shared/types";
 import {
   getAccountRequests,
   approveAccountRequest,
   rejectAccountRequest,
+  updateAccountRole,
 } from "../accountRequests";
 import { getStoredUser } from "../../../app/providers/authProvider";
+import {
+  canApproveAccounts,
+  canManageRoles,
+  getAllRoleDefinitions,
+  getAssignableRoles,
+  getRoleDefinition,
+  registerCustomRole,
+} from "../../../app/providers/accessControlProvider";
 import { formatDate } from "../../../shared/lib/format";
 
 const { Title, Text } = Typography;
@@ -1043,12 +1429,22 @@ export const NotificationsPage = () => {
 
   const [requests, setRequests] = useState<AccountRequest[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [selectedRoles, setSelectedRoles] = useState<Record<string, UserRole>>({});
+  const [roleDefinitions, setRoleDefinitions] = useState<RoleDefinition[]>(() =>
+    getAllRoleDefinitions(),
+  );
+  const [newRoleInput, setNewRoleInput] = useState("");
 
   const loadRequests = async () => {
     setLoading(true);
     try {
       const data = await getAccountRequests();
       setRequests(data);
+      const initialRoles: Record<string, UserRole> = {};
+      data.forEach((item) => {
+        initialRoles[item.id] = item.role || "admin";
+      });
+      setSelectedRoles(initialRoles);
     } finally {
       setLoading(false);
     }
@@ -1058,45 +1454,86 @@ export const NotificationsPage = () => {
     loadRequests();
   }, []);
 
-  if (effectiveRole !== "superuser") {
+  // Point 1 & Point 2 hanya bisa diakses oleh Super User
+  if (!canApproveAccounts(effectiveRole) || !canManageRoles(effectiveRole)) {
     return (
       <Result
         status="403"
         title="Akses Ditolak"
-        subTitle="Hanya Super User yang dapat mengakses halaman Notifikasi persetujuan akun."
+        subTitle="Hanya Super User yang dapat mengakses halaman Notifikasi persetujuan akun dan manajemen role."
       />
     );
   }
 
+  const assignableRoles = getAssignableRoles();
+
+  const handleRoleSelectChange = async (req: AccountRequest, nextRole: UserRole) => {
+    setSelectedRoles((prev) => ({ ...prev, [req.id]: nextRole }));
+    if (req.status === "approved") {
+      try {
+        const updated = await updateAccountRole(req.id, nextRole, effectiveRole);
+        setRequests((prev) =>
+          prev.map((item) => (item.id === req.id ? updated : item)),
+        );
+        const def = getRoleDefinition(nextRole);
+        message.success(`Role akun ${req.email} diperbarui menjadi ${def.label}.`);
+      } catch (err) {
+        message.error((err as Error)?.message ?? "Gagal mengubah role akun");
+      }
+    }
+  };
+
   const handleApprove = async (req: AccountRequest) => {
-    const updated = await approveAccountRequest(req.id);
+    const roleToAssign = selectedRoles[req.id] || req.role || "admin";
+    const updated = await approveAccountRequest(req.id, roleToAssign, effectiveRole);
     setRequests((prev) =>
       prev.map((item) => (item.id === req.id ? updated : item)),
     );
-    message.success(`Akun ${req.email} diizinkan dan aktif sebagai Admin.`);
+    const def = getRoleDefinition(updated.role);
+    message.success(`Akun ${req.email} diizinkan dan aktif sebagai ${def.label}.`);
   };
 
   const handleReject = async (req: AccountRequest) => {
-    const updated = await rejectAccountRequest(req.id);
+    const updated = await rejectAccountRequest(req.id, effectiveRole);
     setRequests((prev) =>
       prev.map((item) => (item.id === req.id ? updated : item)),
     );
     message.info(`Permintaan akun ${req.email} tidak diizinkan (dibatalkan).`);
   };
 
-  const getStatusTag = (status: AccountRequest["status"]) => {
-    if (status === "pending") {
+  const handleAddCustomRole = () => {
+    const trimmed = newRoleInput.trim();
+    if (!trimmed) {
+      message.warning("Masukkan nama role baru terlebih dahulu");
+      return;
+    }
+    try {
+      const created = registerCustomRole({
+        key: trimmed,
+        label: trimmed,
+      });
+      setRoleDefinitions(getAllRoleDefinitions());
+      setNewRoleInput("");
+      message.success(`Role baru "${created.label}" berhasil ditambahkan.`);
+    } catch (err) {
+      message.error((err as Error)?.message ?? "Gagal menambahkan role baru");
+    }
+  };
+
+  const getStatusTag = (record: AccountRequest) => {
+    if (record.status === "pending") {
       return <Tag color="orange">Menunggu Persetujuan</Tag>;
     }
-    if (status === "approved") {
-      return <Tag color="green">Diizinkan (Admin Aktif)</Tag>;
+    if (record.status === "approved") {
+      const def = getRoleDefinition(record.role || "admin");
+      return <Tag color="green">{`Diizinkan (${def.label} Aktif)`}</Tag>;
     }
     return <Tag color="red">Tidak Diizinkan (Batal)</Tag>;
   };
 
   const columns: ColumnsType<AccountRequest> = [
     {
-      title: "Nama Calon Admin",
+      title: "Nama Pengguna",
       dataIndex: "name",
       key: "name",
       render: (v: string) => <Text strong>{v}</Text>,
@@ -1105,6 +1542,28 @@ export const NotificationsPage = () => {
       title: "Email",
       dataIndex: "email",
       key: "email",
+    },
+    {
+      title: "Role Hak Akses",
+      dataIndex: "role",
+      key: "role",
+      render: (_: unknown, record: AccountRequest) => {
+        const currentRole = selectedRoles[record.id] || record.role || "admin";
+        return (
+          <Select
+            size="small"
+            value={currentRole}
+            style={{ minWidth: 140 }}
+            disabled={record.status === "rejected"}
+            aria-label={`Pilih role ${record.email}`}
+            onChange={(val) => handleRoleSelectChange(record, val)}
+            options={assignableRoles.map((r) => ({
+              value: r.key,
+              label: r.label,
+            }))}
+          />
+        );
+      },
     },
     {
       title: "Tanggal Pengajuan",
@@ -1116,17 +1575,18 @@ export const NotificationsPage = () => {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (status: AccountRequest["status"]) => getStatusTag(status),
+      render: (_: unknown, record: AccountRequest) => getStatusTag(record),
     },
     {
       title: "Aksi Persetujuan",
       key: "actions",
       render: (_: unknown, record: AccountRequest) => {
         if (record.status !== "pending") {
+          const def = getRoleDefinition(record.role || "admin");
           return (
             <Text type="secondary" style={{ fontSize: 12 }}>
               {record.status === "approved"
-                ? "Akun Admin telah aktif"
+                ? `Akun ${def.label} telah aktif`
                 : "Pembuatan akun dibatalkan"}
             </Text>
           );
@@ -1180,11 +1640,57 @@ export const NotificationsPage = () => {
             Notifikasi Super User
           </Title>
           <Text type="secondary">
-            Kelola permintaan pembuatan akun Admin baru
+            Kelola persetujuan akun baru dan struktur hierarki role pengguna
           </Text>
         </div>
       </Space>
 
+      {/* Panel Hierarki & Tambah Role Dinamis (Point 2 - Khusus Super User) */}
+      <Card
+        variant="borderless"
+        style={{ borderRadius: 12 }}
+        title={
+          <Space>
+            <SafetyCertificateOutlined style={{ color: "#722ed1" }} />
+            <span>Hierarki Role & Manajemen Hak Akses</span>
+          </Space>
+        }
+      >
+        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+            <Text type="secondary" style={{ marginRight: 4 }}>
+              Urutan Hak Akses:
+            </Text>
+            {roleDefinitions
+              .filter((r) => r.isAuthenticated)
+              .map((r) => (
+                <Tag key={r.key} color={r.color} style={{ margin: 0 }}>
+                  {r.label} ({r.key === "superuser" ? "Tertinggi - Kelola Akun & Edit" : "Akses Edit Data"})
+                </Tag>
+              ))}
+          </div>
+
+          <Space.Compact style={{ maxWidth: 420, width: "100%" }}>
+            <Input
+              placeholder="Tambah role login baru (contoh: Kepala Gudang)"
+              value={newRoleInput}
+              onChange={(e) => setNewRoleInput(e.target.value)}
+              onPressEnter={handleAddCustomRole}
+              aria-label="Nama Role Baru"
+            />
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleAddCustomRole}
+              aria-label="Tambah Role"
+            >
+              Tambah Role
+            </Button>
+          </Space.Compact>
+        </Space>
+      </Card>
+
+      {/* Tabel Persetujuan Akun Baru (Point 1 - Khusus Super User) */}
       <Card variant="borderless" style={{ borderRadius: 12 }}>
         {requests.length === 0 ? (
           <Empty description="Belum ada permintaan pendaftaran akun baru" />
@@ -1203,6 +1709,745 @@ export const NotificationsPage = () => {
 };
 
 export default NotificationsPage;
+
+================================================================================
+FILE: ../src/features/chatbot/ChatbotEngine.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/chatbot/ChatbotEngine.ts
+================================================================================
+
+import { supabaseClient } from "../../shared/lib/supabaseClient";
+import { TABLES } from "../../shared/lib/constants";
+import { USE_MOCK } from "../../shared/lib/config";
+import { mockProducts } from "../../mocks/products";
+import { mapProduct } from "../../shared/lib/mappers";
+import { formatNumber } from "../../shared/lib/format";
+import {
+  cleanSpbTitle,
+  isKeteranganBarang,
+  resolveSpbItemStatus,
+} from "../spb/suratJalanRules";
+import {
+  canApproveAccounts,
+  canEditData,
+  getAllRoleDefinitions,
+  getRoleDefinition,
+} from "../../app/providers/accessControlProvider";
+import type { Product, UserRole } from "../../shared/types";
+
+export interface ChatbotReply {
+  text: string;
+  suggestions: string[];
+  actionLinks?: { label: string; path: string }[];
+}
+
+export const DEFAULT_CHAT_SUGGESTIONS: string[] = [
+  "Ringkasan stok gudang",
+  "Barang stok menipis",
+  "Status monitoring SPB",
+  "Info hak akses role",
+];
+
+const fetchProductsSnapshot = async (): Promise<Product[]> => {
+  try {
+    const res = await supabaseClient.from(TABLES.products).select("*");
+    if (!res.error && Array.isArray(res.data) && res.data.length > 0) {
+      return res.data.map(mapProduct);
+    }
+  } catch {
+    // fallback ke mock
+  }
+  if (USE_MOCK || mockProducts.length > 0) {
+    return mockProducts;
+  }
+  return [];
+};
+
+const fetchSpbRowsSnapshot = async (): Promise<any[]> => {
+  try {
+    const res = await supabaseClient.from(TABLES.spb).select("*");
+    if (!res.error && Array.isArray(res.data)) {
+      return res.data;
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+};
+
+const fetchPoRowsSnapshot = async (): Promise<any[]> => {
+  try {
+    const res = await supabaseClient.from(TABLES.po).select("*");
+    if (!res.error && Array.isArray(res.data)) {
+      return res.data;
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+};
+
+const fetchSjRowsSnapshot = async (): Promise<any[]> => {
+  try {
+    const res = await supabaseClient.from(TABLES.suratJalan).select("*");
+    if (!res.error && Array.isArray(res.data)) {
+      return res.data;
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+};
+
+export const generateChatbotResponse = async (
+  rawInput: string,
+  currentRole: UserRole = "user",
+): Promise<ChatbotReply> => {
+  const query = rawInput.trim().toLowerCase();
+  const roleDef = getRoleDefinition(currentRole);
+
+  if (!query) {
+    return {
+      text: "Silakan ketik pertanyaan Anda mengenai stok barang, status SPB/PO/Surat Jalan, atau hak akses sistem.",
+      suggestions: DEFAULT_CHAT_SUGGESTIONS,
+    };
+  }
+
+  // 1. Pertanyaan seputar Role / Hak Akses / Login
+  if (
+    query.includes("hak akses") ||
+    query.includes("role") ||
+    query.includes("login") ||
+    query.includes("superuser") ||
+    query.includes("super user") ||
+    query.includes("supervisor") ||
+    query.includes("admin")
+  ) {
+    const rolesList = getAllRoleDefinitions()
+      .filter((r) => r.isAuthenticated)
+      .map((r) => r.label)
+      .join(" > ");
+
+    const canEdit = canEditData(currentRole);
+    const isSuper = canApproveAccounts(currentRole);
+
+    return {
+      text: [
+        `Status Anda saat ini: **${roleDef.label}**`,
+        `• Urutan hierarki login: **${rolesList}**`,
+        `• Persetujuan akun baru & kelola role (Point 1 & 2): **Hanya Super User** (${isSuper ? "Anda memiliki akses" : "Khusus Super User"})`,
+        `• Mengedit data barang & judul SPB/PO: **Super User, Supervisor, Admin, & role login lainnya** (${canEdit ? "Anda dapat mengedit" : "Silakan login terlebih dahulu"})`,
+      ].join("\n"),
+      suggestions: DEFAULT_CHAT_SUGGESTIONS,
+      actionLinks: isSuper
+        ? [
+            { label: "Buka Notifikasi Super User", path: "/notifications" },
+            { label: "Buka Inventory", path: "/inventory" },
+          ]
+        : [{ label: "Buka Halaman Login", path: "/login" }],
+    };
+  }
+
+  // 2. Pertanyaan seputar SPB / PO / Surat Jalan
+  if (
+    query.includes("spb") ||
+    query.includes("po") ||
+    query.includes("surat jalan") ||
+    query.includes("monitoring")
+  ) {
+    const [spbRows, poRows, sjRows] = await Promise.all([
+      fetchSpbRowsSnapshot(),
+      fetchPoRowsSnapshot(),
+      fetchSjRowsSnapshot(),
+    ]);
+
+    const realItems = spbRows.filter((r) => !isKeteranganBarang(r));
+    if (realItems.length === 0 && poRows.length === 0 && sjRows.length === 0) {
+      return {
+        text: "Saat ini belum ada data SPB, PO, atau Surat Jalan yang tercatat di database. Anda dapat memantau dokumen melalui halaman Monitoring SPB.",
+        suggestions: DEFAULT_CHAT_SUGGESTIONS,
+        actionLinks: [{ label: "Buka Monitoring SPB", path: "/monitoring-spb" }],
+      };
+    }
+
+    // Cek apakah pengguna menanyakan nomor SPB spesifik (misal: "spb 10" atau "spb 12")
+    const numberMatch = query.match(/(?:spb|po|sj|nomor|no)\s*[-:#]?\s*([0-9a-zA-Z/-]+)/i);
+    if (numberMatch && numberMatch[1] && !["status", "monitoring", "belum", "sudah", "semua"].includes(numberMatch[1].toLowerCase())) {
+      const targetNo = numberMatch[1].toLowerCase();
+      const matchedSpb = realItems.filter(
+        (r) =>
+          String(r.no_spb ?? "").toLowerCase().includes(targetNo) ||
+          String(r.no_po ?? "").toLowerCase().includes(targetNo) ||
+          cleanSpbTitle(r.judul_spb).toLowerCase().includes(targetNo),
+      );
+
+      if (matchedSpb.length > 0) {
+        const sample = matchedSpb[0];
+        const titleText = cleanSpbTitle(sample.judul_spb) || "Tanpa Judul";
+        const itemPreview = matchedSpb
+          .slice(0, 5)
+          .map(
+            (item) =>
+              `• ${item.nama_barang || "-"} (${item.jumlah_permintaan ?? 0} ${item.satuan || "unit"}) — Status: ${resolveSpbItemStatus(item)}`,
+          )
+          .join("\n");
+
+        return {
+          text: [
+            `Ditemukan **${matchedSpb.length} item barang** untuk dokumen **SPB ${sample.no_spb || "-"}** (${titleText}):`,
+            itemPreview,
+          ].join("\n"),
+          suggestions: ["Status monitoring SPB", "Ringkasan stok gudang"],
+          actionLinks: [
+            {
+              label: `Lihat Detail SPB ${sample.no_spb || ""}`,
+              path: `/monitoring-spb/detail?spb=${encodeURIComponent(String(sample.no_spb || ""))}`,
+            },
+          ],
+        };
+      }
+    }
+
+    // Ringkasan status seluruh item SPB
+    const statusCounts: Record<string, number> = {
+      "Belum Diproses": 0,
+      "Belum PO": 0,
+      "Sudah PO": 0,
+      "Datang Sesuai": 0,
+      "Datang Kurang": 0,
+      "Datang Lebih": 0,
+    };
+
+    realItems.forEach((row) => {
+      const st = resolveSpbItemStatus(row);
+      statusCounts[st] = (statusCounts[st] ?? 0) + 1;
+    });
+
+    const uniqueSpb = new Set(
+      realItems.map((r) => `${r.no_spb ?? ""}__${cleanSpbTitle(r.judul_spb)}`),
+    ).size;
+
+    return {
+      text: [
+        `Ringkasan **Monitoring SPB & PO** saat ini:`,
+        `• Total Kartu SPB: **${uniqueSpb} kartu** (${realItems.length} item barang)`,
+        `• Belum Diproses: **${statusCounts["Belum Diproses"] || 0} item**`,
+        `• Belum PO: **${statusCounts["Belum PO"] || 0} item**`,
+        `• Sudah PO: **${statusCounts["Sudah PO"] || 0} item**`,
+        `• Datang (Sesuai/Kurang/Lebih): **${(statusCounts["Datang Sesuai"] || 0) + (statusCounts["Datang Kurang"] || 0) + (statusCounts["Datang Lebih"] || 0)} item**`,
+        `• Total Data PO: **${poRows.length} baris** | Surat Jalan: **${sjRows.length} baris**`,
+      ].join("\n"),
+      suggestions: ["Ringkasan stok gudang", "Barang stok menipis"],
+      actionLinks: [{ label: "Buka Monitoring SPB", path: "/monitoring-spb" }],
+    };
+  }
+
+  // 3. Pertanyaan seputar Stok Menipis / Habis
+  if (
+    query.includes("menipis") ||
+    query.includes("habis") ||
+    query.includes("low stock") ||
+    query.includes("kurang")
+  ) {
+    const products = await fetchProductsSnapshot();
+    const lowOrOut = products.filter(
+      (p) => p.stock <= 0 || p.stock <= (p.minStock || 5) || p.status === "low" || p.status === "out",
+    );
+
+    if (lowOrOut.length === 0) {
+      return {
+        text: `Seluruh **${products.length} item barang** di gudang saat ini memiliki stok dalam batas aman.`,
+        suggestions: DEFAULT_CHAT_SUGGESTIONS,
+        actionLinks: [{ label: "Buka Inventory", path: "/inventory" }],
+      };
+    }
+
+    const listText = lowOrOut
+      .slice(0, 6)
+      .map(
+        (p) =>
+          `• **${p.name}** (${p.code}) — Sisa stok: **${formatNumber(p.stock)} ${p.unit}**`,
+      )
+      .join("\n");
+
+    return {
+      text: [
+        `Terdapat **${lowOrOut.length} barang** dengan stok menipis atau habis:`,
+        listText,
+      ].join("\n"),
+      suggestions: ["Ringkasan stok gudang", "Status monitoring SPB"],
+      actionLinks: [{ label: "Kelola Stok di Inventory", path: "/inventory" }],
+    };
+  }
+
+  // 4. Pertanyaan seputar Ringkasan Stok / Gudang / Inventory
+  if (
+    query.includes("ringkasan") ||
+    query.includes("total") ||
+    query.includes("dashboard") ||
+    query.includes("inventory") ||
+    query.includes("gudang")
+  ) {
+    const products = await fetchProductsSnapshot();
+    const totalItems = products.length;
+    const totalUnits = products.reduce((acc, p) => acc + (Number(p.stock) || 0), 0);
+    const materialCount = products.filter((p) => p.category === "Material").length;
+    const toolsCount = products.filter((p) => p.category === "Alat Bantu").length;
+
+    return {
+      text: [
+        `Ringkasan **Inventaris Gudang** saat ini:`,
+        `• Total Jenis Barang: **${formatNumber(totalItems)} item**`,
+        `• Total Akumulasi Stok: **${formatNumber(totalUnits)} unit**`,
+        `• Kategori Material: **${formatNumber(materialCount)} item**`,
+        `• Kategori Alat Bantu: **${formatNumber(toolsCount)} item**`,
+      ].join("\n"),
+      suggestions: ["Barang stok menipis", "Status monitoring SPB", "Info hak akses role"],
+      actionLinks: [
+        { label: "Buka Dashboard", path: "/dashboard" },
+        { label: "Buka Inventory", path: "/inventory" },
+      ],
+    };
+  }
+
+  // 5. Pencarian spesifik nama/kode barang (misal: "stok kabel", "cari semen", atau nama barang langsung)
+  const products = await fetchProductsSnapshot();
+  const cleanKeyword = query
+    .replace(/^(cek|cari|berapa|info|lihat|stok|barang)\s+/gi, "")
+    .replace(/^stok\s+/gi, "")
+    .trim();
+
+  if (cleanKeyword) {
+    const matchedProducts = products.filter(
+      (p) =>
+        p.name.toLowerCase().includes(cleanKeyword) ||
+        p.code.toLowerCase().includes(cleanKeyword) ||
+        (p.size && p.size.toLowerCase().includes(cleanKeyword)) ||
+        (p.category && p.category.toLowerCase().includes(cleanKeyword)),
+    );
+
+    if (matchedProducts.length > 0) {
+      const topMatches = matchedProducts
+        .slice(0, 6)
+        .map(
+          (p) =>
+            `• **${p.name}** ${p.size ? `(${p.size})` : ""} [${p.code}] — Stok: **${formatNumber(p.stock)} ${p.unit}** (${p.category})`,
+        )
+        .join("\n");
+
+      return {
+        text: [
+          `Ditemukan **${matchedProducts.length} barang** yang cocok dengan pencarian **"${cleanKeyword}"**:`,
+          topMatches,
+        ].join("\n"),
+        suggestions: DEFAULT_CHAT_SUGGESTIONS,
+        actionLinks: [{ label: "Lihat di Inventory", path: "/inventory" }],
+      };
+    }
+  }
+
+  // 6. Fallback umum yang ramah dan mudah dipahami
+  return {
+    text: [
+      `Saya adalah **Asisten Chatbot Gudang**. Berikut hal yang dapat saya bantu:`,
+      `• **Cek Stok Barang**: ketik nama atau kode barang (contoh: *"cek stok kabel"*)`,
+      `• **Cek Stok Menipis/Habis**: ketik *"barang stok menipis"*`,
+      `• **Cek Monitoring SPB & PO**: ketik *"status monitoring SPB"* atau nomor SPB (contoh: *"SPB 10"*)`,
+      `• **Info Hak Akses & Role**: ketik *"info hak akses role"*`,
+    ].join("\n"),
+    suggestions: DEFAULT_CHAT_SUGGESTIONS,
+    actionLinks: [
+      { label: "Dashboard", path: "/dashboard" },
+      { label: "Inventory", path: "/inventory" },
+      { label: "Monitoring SPB", path: "/monitoring-spb" },
+    ],
+  };
+};
+
+================================================================================
+FILE: ../src/features/chatbot/ChatbotWidget.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/chatbot/ChatbotWidget.tsx
+================================================================================
+
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button, Input, Space, Tag, Typography } from "antd";
+import {
+  CloseOutlined,
+  RobotOutlined,
+  SendOutlined,
+  ReloadOutlined,
+  ArrowRightOutlined,
+} from "@ant-design/icons";
+import type { ChatMessage, UserRole } from "../../shared/types";
+import {
+  AUTH_CHANGED_EVENT,
+  getStoredUser,
+} from "../../app/providers/authProvider";
+import { getRoleDefinition } from "../../app/providers/accessControlProvider";
+import {
+  DEFAULT_CHAT_SUGGESTIONS,
+  generateChatbotResponse,
+} from "./ChatbotEngine"; // 🔧 PERBAIKAN: Huruf kapital C dan E
+
+const { Title, Text } = Typography;
+
+export interface ChatbotWidgetProps {
+  defaultOpen?: boolean;
+  role?: UserRole;
+}
+
+const createWelcomeMessage = (roleLabel: string): ChatMessage => ({
+  id: "welcome-msg",
+  sender: "bot",
+  text: `Halo! Saya Asisten Chatbot Gudang (Mode akses Anda: ${roleLabel}). Silakan tanyakan stok barang, stok menipis, status Monitoring SPB/PO, atau info hak akses.`,
+  timestamp: new Date().toLocaleTimeString("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }),
+  suggestions: DEFAULT_CHAT_SUGGESTIONS,
+});
+
+export const ChatbotWidget = ({
+  defaultOpen = false,
+  role,
+}: ChatbotWidgetProps) => {
+  const navigate = useNavigate();
+  const [open, setOpen] = useState<boolean>(defaultOpen);
+  const [inputValue, setInputValue] = useState<string>("");
+  const [isSending, setIsSending] = useState<boolean>(false);
+  const [storedUser, setStoredUserState] = useState(() => getStoredUser());
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const syncAuth = () => setStoredUserState(getStoredUser());
+    window.addEventListener(AUTH_CHANGED_EVENT, syncAuth);
+    window.addEventListener("storage", syncAuth);
+    return () => {
+      window.removeEventListener(AUTH_CHANGED_EVENT, syncAuth);
+      window.removeEventListener("storage", syncAuth);
+    };
+  }, []);
+
+  const effectiveRole: UserRole = role ?? storedUser?.role ?? "user";
+  const roleDef = getRoleDefinition(effectiveRole);
+
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [
+    createWelcomeMessage(roleDef.label),
+  ]);
+
+  useEffect(() => {
+    if (open && typeof messagesEndRef.current?.scrollIntoView === "function") {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, open]);
+
+  const handleSendMessage = async (customText?: string) => {
+    const textToSend = (customText ?? inputValue).trim();
+    if (!textToSend || isSending) return;
+
+    const nowTime = new Date().toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    const userMsg: ChatMessage = {
+      id: `user-${Date.now()}`,
+      sender: "user",
+      text: textToSend,
+      timestamp: nowTime,
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    if (!customText) {
+      setInputValue("");
+    }
+    setIsSending(true);
+
+    try {
+      const reply = await generateChatbotResponse(textToSend, effectiveRole);
+      const botMsg: ChatMessage = {
+        id: `bot-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+        sender: "bot",
+        text: reply.text,
+        timestamp: new Date().toLocaleTimeString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        suggestions: reply.suggestions,
+        actionLinks: reply.actionLinks,
+      };
+      setMessages((prev) => [...prev, botMsg]);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleResetChat = () => {
+    setMessages([createWelcomeMessage(roleDef.label)]);
+  };
+
+  if (!open) {
+    return (
+      <div
+        style={{
+          position: "fixed",
+          right: 24,
+          bottom: 24,
+          zIndex: 1500,
+        }}
+      >
+        <Button
+          type="primary"
+          size="large"
+          shape="round"
+          icon={<RobotOutlined />}
+          onClick={() => setOpen(true)}
+          aria-label="Buka Chatbot"
+          data-testid="chatbot-open-button"
+          style={{
+            height: 48,
+            paddingInline: 20,
+            fontWeight: 600,
+            boxShadow: "0 8px 24px rgba(22, 119, 255, 0.35)",
+          }}
+        >
+          Chatbot Gudang
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      role="dialog"
+      aria-label="Jendela Chatbot Gudang"
+      data-testid="chatbot-fullscreen-window"
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        zIndex: 2000,
+        background: "#f5f7fa",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {/* Header Layar Penuh dengan Tombol Silang (X) di Sebelah Kiri Atas */}
+      <div
+        style={{
+          height: 64,
+          padding: "0 20px",
+          background: "#ffffff",
+          borderBottom: "1px solid #e6ebf1",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexShrink: 0,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <Button
+            type="text"
+            size="large"
+            icon={<CloseOutlined style={{ fontSize: 18 }} />}
+            onClick={() => setOpen(false)}
+            aria-label="Tutup Chatbot"
+            data-testid="chatbot-close-button"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 40,
+              height: 40,
+              borderRadius: 8,
+              border: "1px solid #d9d9d9",
+            }}
+          />
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background: "linear-gradient(135deg, #1677ff, #0e4fb8)",
+                color: "#fff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 18,
+              }}
+            >
+              <RobotOutlined />
+            </div>
+            <div>
+              <Title level={5} style={{ margin: 0, lineHeight: 1.2 }}>
+                Chatbot Asisten Gudang
+              </Title>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                Cek Stok, Barang Menipis, & Status Monitoring SPB/PO
+              </Text>
+            </div>
+          </div>
+        </div>
+
+        <Space size={8}>
+          <Tag color={roleDef.color} style={{ margin: 0 }}>
+            {roleDef.label}
+          </Tag>
+          <Button
+            size="small"
+            icon={<ReloadOutlined />}
+            onClick={handleResetChat}
+            aria-label="Reset Percakapan"
+          >
+            Reset
+          </Button>
+        </Space>
+      </div>
+
+      {/* Area Pesan Chat */}
+      <div
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          padding: "24px 16px",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 880,
+            margin: "0 auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+          }}
+        >
+          {messages.map((msg) => {
+            const isUser = msg.sender === "user";
+            return (
+              <div
+                key={msg.id}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: isUser ? "flex-end" : "flex-start",
+                }}
+              >
+                <div
+                  style={{
+                    maxWidth: "85%",
+                    padding: "14px 18px",
+                    borderRadius: isUser
+                      ? "16px 16px 4px 16px"
+                      : "16px 16px 16px 4px",
+                    background: isUser ? "#1677ff" : "#ffffff",
+                    color: isUser ? "#ffffff" : "#1f1f1f",
+                    border: isUser ? "none" : "1px solid #e6ebf1",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                    whiteSpace: "pre-line",
+                    fontSize: 14,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {msg.text}
+                </div>
+
+                <Text
+                  type="secondary"
+                  style={{ fontSize: 11, marginTop: 4, paddingInline: 4 }}
+                >
+                  {isUser ? "Anda" : "Bot"} · {msg.timestamp}
+                </Text>
+
+                {/* Tombol Navigasi Cepat jika tersedia */}
+                {!isUser && msg.actionLinks && msg.actionLinks.length > 0 && (
+                  <Space wrap size={8} style={{ marginTop: 8 }}>
+                    {msg.actionLinks.map((link) => (
+                      <Button
+                        key={link.path + link.label}
+                        size="small"
+                        type="primary"
+                        ghost
+                        icon={<ArrowRightOutlined />}
+                        onClick={() => {
+                          setOpen(false);
+                          navigate(link.path);
+                        }}
+                      >
+                        {link.label}
+                      </Button>
+                    ))}
+                  </Space>
+                )}
+
+                {/* Saran Pertanyaan Cepat */}
+                {!isUser && msg.suggestions && msg.suggestions.length > 0 && (
+                  <Space wrap size={6} style={{ marginTop: 8 }}>
+                    {msg.suggestions.map((sug) => (
+                      <Button
+                        key={sug}
+                        size="small"
+                        onClick={() => handleSendMessage(sug)}
+                        style={{ borderRadius: 16, fontSize: 12 }}
+                      >
+                        {sug}
+                      </Button>
+                    ))}
+                  </Space>
+                )}
+              </div>
+            );
+          })}
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      {/* Input Chat di Bagian Bawah */}
+      <div
+        style={{
+          padding: "16px 20px",
+          background: "#ffffff",
+          borderTop: "1px solid #e6ebf1",
+          flexShrink: 0,
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 880,
+            margin: "0 auto",
+            display: "flex",
+            gap: 10,
+          }}
+        >
+          <Input
+            size="large"
+            placeholder="Ketik pertanyaan (contoh: Cek stok kabel, Status monitoring SPB, Barang stok menipis)..."
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onPressEnter={() => handleSendMessage()}
+            aria-label="Input Pesan Chatbot"
+            autoFocus
+          />
+          <Button
+            type="primary"
+            size="large"
+            icon={<SendOutlined />}
+            loading={isSending}
+            onClick={() => handleSendMessage()}
+            aria-label="Kirim Pesan Chatbot"
+          >
+            Kirim
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ChatbotWidget;
 
 ================================================================================
 FILE: ../src/features/dashboard/api.ts
@@ -1953,6 +3198,7 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/products/api.ts
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { mapProduct } from "../../shared/lib/mappers";
+import { requirePermission } from "../../shared/lib/authGuard";
 import type { Product } from "../../shared/types";
 
 export interface BarangInput {
@@ -1966,6 +3212,9 @@ export interface BarangInput {
 }
 
 export const createBarang = async (input: BarangInput): Promise<Product> => {
+  // 🔒 Verifikasi: user harus login dan punya izin edit_data
+  requirePermission("edit_data", "Tambah barang baru");
+
   const rowPayload = {
     kode:
       input.kode?.trim() ||
@@ -1999,6 +3248,9 @@ export const updateBarang = async (
   id: number,
   input: Partial<BarangInput>,
 ): Promise<Product> => {
+  // 🔒 Verifikasi: user harus login dan punya izin edit_data
+  requirePermission("edit_data", "Update barang");
+
   const patch: Record<string, unknown> = {};
   if (input.kode !== undefined) patch.kode = input.kode.trim();
   if (input.nama !== undefined) patch.nama = input.nama.trim();
@@ -2034,6 +3286,9 @@ export const updateBarang = async (
 };
 
 export const deleteBarang = async (id: number): Promise<void> => {
+  // 🔒 Verifikasi: user harus login dan punya izin edit_data
+  requirePermission("edit_data", "Hapus barang");
+
   const { error } = await supabaseClient
     .from(TABLES.products)
     .delete()
@@ -2756,6 +4011,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { supabaseClient } from "../../../shared/lib/supabaseClient";
 import { USE_MOCK } from "../../../shared/lib/config";
+import { requirePermission } from "../../../shared/lib/authGuard";
 import { useProductSearch } from "../useProductSearch";
 import { useDebounce } from "../../../shared/hooks/useDebounce";
 import { formatNumber, formatDate } from "../../../shared/lib/format";
@@ -2785,6 +4041,8 @@ export const ProductCreatePage = () => {
     setIsSubmitting(true);
     
     try {
+      // 🔒 Verifikasi: user harus login dan punya izin edit_data
+      requirePermission("edit_data", "Tambah barang masuk");
       if (!USE_MOCK) {
         // ✅ PERBAIKAN: Gunakan RPC Supabase untuk atomicity (stok masuk)
         const { error } = await supabaseClient.rpc("receive_stock", {
@@ -2999,11 +4257,19 @@ export const MonitoringSPBDetailPage = () => {
   const spbNo = searchParams.get("spb");
   const poNo = searchParams.get("po");
   const sjNo = searchParams.get("sj");
+  // 🔧 Judul SPB dipakai untuk memfilter detail ketika ada dua SPB bernomor
+  // sama tetapi judul berbeda (mis. SPB 56 "Ducting PU" vs SPB 56 "Kabel Feeder Utama").
+  const judulSpb = searchParams.get("judul");
 
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
 
-  const { items, isLoading, error } = useMonitoringSPBDetail(spbNo, poNo, sjNo);
+  const { items, isLoading, error } = useMonitoringSPBDetail(
+    spbNo,
+    poNo,
+    sjNo,
+    judulSpb,
+  );
 
   const spbTitle = items.length > 0 ? items[0].judul_spb : null;
 
@@ -3128,7 +4394,6 @@ export const MonitoringSPBDetailPage = () => {
     },
   ];
 
-  // ✅ Kolom "Sumber" dihapus dan lebar kolom diringkas agar muat dalam satu bagian tanpa scroll
   const desktopColumns = [
     {
       title: "No",
@@ -3300,7 +4565,6 @@ export const MonitoringSPBDetailPage = () => {
 
 export default MonitoringSPBDetailPage;
 
-
 ================================================================================
 FILE: ../src/features/spb/pages/MonitoringSPBItemDetailPage.tsx
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/pages/MonitoringSPBItemDetailPage.tsx
@@ -3343,6 +4607,7 @@ const calcLamaProses = (
 };
 
 const getStatusColor = (status: string | null | undefined) => {
+  if (status === "Belum Diproses") return "purple"; // 🔧 Warna untuk Belum Diproses
   if (status === "Belum PO" || status === "Belum Datang") return "orange";
   if (status === "Sudah PO") return "blue";
   if (status === "Datang Sesuai" || status === "Datang" || status === "Selesai") return "green";
@@ -3358,7 +4623,6 @@ const useSPBItem = (id: string | undefined, type: string) => {
     queryFn: async () => {
       if (!id) return null;
 
-      // SKENARIO 1: Ambil dari tabel PO
       if (type === "po") {
         const { data, error } = await supabaseClient
           .from("po")
@@ -3398,7 +4662,6 @@ const useSPBItem = (id: string | undefined, type: string) => {
         } as SPBItemDetail;
       }
 
-      // SKENARIO 3: Ambil dari tabel Surat Jalan
       if (type === "sj") {
         const { data, error } = await supabaseClient
           .from("surat_jalan")
@@ -3439,7 +4702,6 @@ const useSPBItem = (id: string | undefined, type: string) => {
         } as SPBItemDetail;
       }
 
-      // SKENARIO 2: Ambil dari tabel SPB
       const { data, error } = await supabaseClient
         .from(TABLES.spb)
         .select(`*, po (no_po, tanggal_po, nama_supplier)`)
@@ -3451,7 +4713,6 @@ const useSPBItem = (id: string | undefined, type: string) => {
 
       let dataPo = Array.isArray(data.po) ? data.po[0] : data.po;
 
-      // Cadangan bila relasi terbalik lewat po.id_spb
       if (!dataPo && data.id) {
         try {
           const fallbackRes = await supabaseClient
@@ -3463,7 +4724,7 @@ const useSPBItem = (id: string | undefined, type: string) => {
             dataPo = fallbackRes.data;
           }
         } catch {
-          // Abaikan jika mock tidak menyediakan query kedua
+          //
         }
       }
 
@@ -3472,6 +4733,9 @@ const useSPBItem = (id: string | undefined, type: string) => {
       const tglDatang = data.material_datang_tgl || null;
       const tglSpb = data.tgl_spb || data.tanggal_pembuatan_spb || null;
       const tglPo = dataPo?.tanggal_po || null;
+      
+      // 🔧 Normalisasi status dari database
+      const rawStatus = String(data.status || "").toLowerCase().trim();
 
       let status = "Belum PO";
       if (tglDatang) {
@@ -3481,6 +4745,8 @@ const useSPBItem = (id: string | undefined, type: string) => {
         else status = "Datang";
       } else if (dataPo?.no_po && dataPo.no_po !== "-" && dataPo.no_po !== "null") {
         status = "Sudah PO";
+      } else if (rawStatus === "belum di proses") {
+        status = "Belum Diproses"; // 🔧 PERBAIKAN
       }
 
       const diffQty = arr - req;
@@ -3529,7 +4795,6 @@ export const MonitoringSPBItemDetailPage = () => {
 
   const { data: item, isLoading, error } = useSPBItem(id, type);
 
-  // 20 baris rincian barang sesuai tampilan web produksi
   const rows: DetailRow[] = item
     ? [
         { key: "1", field: "No SPB", value: item.no_spb || "-" },
@@ -3678,13 +4943,12 @@ export const MonitoringSPBItemDetailPage = () => {
 
 export default MonitoringSPBItemDetailPage;
 
-
 ================================================================================
 FILE: ../src/features/spb/pages/MonitoringSPBPage.tsx
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/pages/MonitoringSPBPage.tsx
 ================================================================================
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Typography,
@@ -3705,9 +4969,11 @@ import {
   Button,
   message,
 } from "antd";
+import { useGetIdentity } from "@refinedev/core";
 import { useMonitoringSPB, updateDocumentTitle } from "../useMonitoringSPB";
-import type { SPBDocumentGroup } from "../../../shared/types";
+import type { SPBDocumentGroup, UserRole } from "../../../shared/types";
 import { formatFullDate, formatDate } from "../../../shared/lib/format";
+import { canEditData } from "../../../app/providers/accessControlProvider";
 import {
   FileTextOutlined,
   ArrowRightOutlined,
@@ -3719,6 +4985,7 @@ const { Title, Text } = Typography;
 
 type FilterType =
   | "Semua"
+  | "Belum Diproses"
   | "Belum di PO"
   | "Sudah di PO"
   | "Datang"
@@ -3740,16 +5007,46 @@ const getNumberFromStr = (spb: string | null, po: string | null) => {
   return match ? parseInt(match[0], 10) : 999999;
 };
 
+const buildLocalTitleKey = (
+  type: "spb" | "po",
+  docNo: string,
+  title: string | null | undefined,
+) =>
+  type === "spb"
+    ? `SPB_${docNo}::${title ?? ""}`
+    : `PO_${docNo}`;
+
 export default function MonitoringSPBPage() {
   const { data, isLoading, error, refetch } = useMonitoringSPB();
   const navigate = useNavigate();
   const screens = Grid.useBreakpoint();
-  const [filter, setFilter] = useState<FilterType>("Semua");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchMode, setSearchMode] = useState<SearchMode>("no");
-  const [sortBy, setSortBy] = useState<SortBy>("status");
+  
+  const { data: identity } = useGetIdentity<{ role: UserRole }>();
+  const userRole = identity?.role ?? "user";
+  const allowEdit = canEditData(userRole);
 
-  // State untuk edit judul SPB / PO lewat ikon pensil kecil
+  // 🔧 PERBAIKAN: Membaca state awal dari localStorage agar tidak hilang saat pindah halaman
+  const [filter, setFilter] = useState<FilterType>(() => {
+    return (localStorage.getItem("spb_filter") as FilterType) || "Semua";
+  });
+  const [searchTerm, setSearchTerm] = useState(() => {
+    return localStorage.getItem("spb_searchTerm") || "";
+  });
+  const [searchMode, setSearchMode] = useState<SearchMode>(() => {
+    return (localStorage.getItem("spb_searchMode") as SearchMode) || "no";
+  });
+  const [sortBy, setSortBy] = useState<SortBy>(() => {
+    return (localStorage.getItem("spb_sortBy") as SortBy) || "status";
+  });
+
+  // 🔧 PERBAIKAN: Menyimpan setiap perubahan state ke localStorage
+  useEffect(() => {
+    localStorage.setItem("spb_filter", filter);
+    localStorage.setItem("spb_searchTerm", searchTerm);
+    localStorage.setItem("spb_searchMode", searchMode);
+    localStorage.setItem("spb_sortBy", sortBy);
+  }, [filter, searchTerm, searchMode, sortBy]);
+
   const [editingTitle, setEditingTitle] = useState<EditingTitleState | null>(null);
   const [titleInput, setTitleInput] = useState("");
   const [savingTitle, setSavingTitle] = useState(false);
@@ -3761,10 +5058,9 @@ export default function MonitoringSPBPage() {
     docNo: string,
     currentTitle?: string | null,
   ) => {
+    if (!allowEdit) return;
     e.stopPropagation();
-    const key = `${type.toUpperCase()}_${docNo}`;
-    const initial =
-      localTitles[key] !== undefined ? localTitles[key] : (currentTitle || "");
+    const initial = currentTitle || "";
     setEditingTitle({ type, docNo, currentTitle: initial });
     setTitleInput(initial);
   };
@@ -3772,28 +5068,24 @@ export default function MonitoringSPBPage() {
   const handleSaveTitle = async () => {
     if (!editingTitle) return;
     setSavingTitle(true);
-    const { type, docNo } = editingTitle;
-    const key = `${type.toUpperCase()}_${docNo}`;
+    const { type, docNo, currentTitle } = editingTitle;
     const trimmed = titleInput.trim();
+    const localKey = buildLocalTitleKey(type, docNo, currentTitle);
 
     try {
-      await updateDocumentTitle(type, docNo, trimmed);
-      setLocalTitles((prev) => ({ ...prev, [key]: trimmed }));
+      await updateDocumentTitle(type, docNo, trimmed, currentTitle);
+      setLocalTitles((prev) => ({ ...prev, [localKey]: trimmed }));
       setEditingTitle(null);
-      message.success(
-        `Judul ${type.toUpperCase()} ${docNo} berhasil diperbarui`,
-      );
+      message.success(`Judul ${type.toUpperCase()} ${docNo} berhasil diperbarui`);
       refetch?.();
     } catch {
-      // Tetap simpan di local state jika kolom DB belum tersedia
-      setLocalTitles((prev) => ({ ...prev, [key]: trimmed }));
+      setLocalTitles((prev) => ({ ...prev, [localKey]: trimmed }));
       setEditingTitle(null);
     } finally {
       setSavingTitle(false);
     }
   };
 
-  // ✅ 1. Ambil 10 Data Terbaru (Campuran SPB, PO, dan Surat Jalan)
   const recentItems = useMemo(() => {
     return [...data]
       .sort((a, b) => {
@@ -3804,70 +5096,46 @@ export default function MonitoringSPBPage() {
       .slice(0, 10);
   }, [data]);
 
-  // ✅ 2. Filter, Pencarian, dan Sorting
   const filteredAndSortedData = useMemo(() => {
     const filtered = data.filter((item) => {
       const searchLower = searchTerm.toLowerCase();
       let matchesSearch = false;
 
+      const spbKey = item.spbNo
+        ? buildLocalTitleKey("spb", item.spbNo, item.spbTitle)
+        : null;
+      const poKey = item.poNo ? buildLocalTitleKey("po", item.poNo, item.poTitle) : null;
+
       const spbTitle =
-        (item.spbNo && localTitles[`SPB_${item.spbNo}`] !== undefined
-          ? localTitles[`SPB_${item.spbNo}`]
+        (spbKey && localTitles[spbKey] !== undefined
+          ? localTitles[spbKey]
           : item.spbTitle) || "";
       const poTitle =
-        (item.poNo && localTitles[`PO_${item.poNo}`] !== undefined
-          ? localTitles[`PO_${item.poNo}`]
+        (poKey && localTitles[poKey] !== undefined
+          ? localTitles[poKey]
           : item.poTitle) || "";
 
       if (searchMode === "no") {
-        const matchSpb = String(item.spbNo || "")
-          .toLowerCase()
-          .includes(searchLower);
-        const matchTitle = String(spbTitle)
-          .toLowerCase()
-          .includes(searchLower);
-        const matchPo = String(item.poNo || "")
-          .toLowerCase()
-          .includes(searchLower);
-        const matchPoTitle = String(poTitle)
-          .toLowerCase()
-          .includes(searchLower);
-        const matchSj = String(item.suratJalanNo || "")
-          .toLowerCase()
-          .includes(searchLower);
+        const matchSpb = String(item.spbNo || "").toLowerCase().includes(searchLower);
+        const matchTitle = String(spbTitle).toLowerCase().includes(searchLower);
+        const matchPo = String(item.poNo || "").toLowerCase().includes(searchLower);
+        const matchPoTitle = String(poTitle).toLowerCase().includes(searchLower);
+        const matchSj = String(item.suratJalanNo || "").toLowerCase().includes(searchLower);
 
-        matchesSearch =
-          !searchTerm ||
-          matchSpb ||
-          matchTitle ||
-          matchPo ||
-          matchPoTitle ||
-          matchSj;
+        matchesSearch = !searchTerm || matchSpb || matchTitle || matchPo || matchPoTitle || matchSj;
       } else {
-        matchesSearch =
-          !searchTerm ||
-          !!item.itemNames?.some((name) =>
-            String(name).toLowerCase().includes(searchLower),
-          );
+        matchesSearch = !searchTerm || !!item.itemNames?.some((name) => String(name).toLowerCase().includes(searchLower));
       }
 
       if (!matchesSearch) return false;
 
       switch (filter) {
+        case "Belum Diproses":
+          return item.status === "Belum Diproses";
         case "Belum di PO":
-          // ✅ PERBAIKAN BUG: Hanya tampilkan yang benar-benar berstatus "Belum PO",
-          // jangan pernah tampilkan status "Datang" atau "Selesai" di tab "Belum di PO"
-          return (
-            (!item.poNo || item.poNo === "-") &&
-            item.status === "Belum PO"
-          );
+          return (!item.poNo || item.poNo === "-") && item.status === "Belum PO";
         case "Sudah di PO":
-          return (
-            !!item.poNo &&
-            item.poNo !== "-" &&
-            item.status !== "Datang" &&
-            item.status !== "Selesai"
-          );
+          return !!item.poNo && item.poNo !== "-" && item.status !== "Datang" && item.status !== "Selesai";
         case "Datang":
           return item.status === "Datang" || item.status === "Selesai";
         case "Selesai":
@@ -3877,8 +5145,8 @@ export default function MonitoringSPBPage() {
       }
     });
 
-    // ✅ 3. Logika Sorting
     const getStatusWeight = (status?: string) => {
+      if (status === "Belum Diproses") return 0.5;
       if (status === "Sudah PO" || status === "Belum PO") return 1;
       if (status === "Datang") return 2;
       if (status === "Selesai") return 3;
@@ -3890,9 +5158,7 @@ export default function MonitoringSPBPage() {
         const wA = getStatusWeight(a.status);
         const wB = getStatusWeight(b.status);
         if (wA !== wB) return wA - wB;
-        return (
-          getNumberFromStr(a.spbNo, a.poNo) - getNumberFromStr(b.spbNo, b.poNo)
-        );
+        return getNumberFromStr(a.spbNo, a.poNo) - getNumberFromStr(b.spbNo, b.poNo);
       }
 
       if (sortBy === "number") {
@@ -3918,6 +5184,7 @@ export default function MonitoringSPBPage() {
     const params = new URLSearchParams();
     if (item.spbNo) {
       params.set("spb", String(item.spbNo));
+      if (item.spbTitle) params.set("judul", String(item.spbTitle));
     } else if (item.poNo && item.poNo !== "NO_PO" && item.poNo !== "-") {
       params.set("po", String(item.poNo));
     } else if (item.suratJalanNo) {
@@ -3927,6 +5194,7 @@ export default function MonitoringSPBPage() {
   };
 
   const getStatusColor = (status?: string) => {
+    if (status === "Belum Diproses") return "purple";
     if (status === "Belum PO") return "orange";
     if (status === "Sudah PO") return "blue";
     if (status === "Datang") return "green";
@@ -3936,19 +5204,14 @@ export default function MonitoringSPBPage() {
 
   const renderCardContent = (item: SPBDocumentGroup) => {
     const hasSPB = item.spbNo !== null && item.spbNo !== "NO_SPB";
-    const hasPO =
-      item.poNo !== null && item.poNo !== "NO_PO" && item.poNo !== "-";
+    const hasPO = item.poNo !== null && item.poNo !== "NO_PO" && item.poNo !== "-";
     const hasSJ = !hasSPB && !hasPO && item.suratJalanNo;
 
-    const resolvedSpbTitle =
-      hasSPB && item.spbNo && localTitles[`SPB_${item.spbNo}`] !== undefined
-        ? localTitles[`SPB_${item.spbNo}`]
-        : item.spbTitle;
+    const spbKey = hasSPB && item.spbNo ? buildLocalTitleKey("spb", item.spbNo, item.spbTitle) : null;
+    const poKey = hasPO && item.poNo ? buildLocalTitleKey("po", item.poNo, item.poTitle) : null;
 
-    const resolvedPoTitle =
-      hasPO && item.poNo && localTitles[`PO_${item.poNo}`] !== undefined
-        ? localTitles[`PO_${item.poNo}`]
-        : item.poTitle;
+    const resolvedSpbTitle = spbKey && localTitles[spbKey] !== undefined ? localTitles[spbKey] : item.spbTitle;
+    const resolvedPoTitle = poKey && localTitles[poKey] !== undefined ? localTitles[poKey] : item.poTitle;
 
     return (
       <Card
@@ -3967,51 +5230,25 @@ export default function MonitoringSPBPage() {
         <Space direction="vertical" style={{ width: "100%" }} size={2}>
           {hasSPB && (
             <div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <Text type="secondary" style={{ fontSize: 11 }}>
-                  No. SPB
-                </Text>
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<EditOutlined style={{ fontSize: 12 }} />}
-                  aria-label={`Edit judul SPB ${item.spbNo}`}
-                  data-testid={`edit-spb-title-${item.spbNo}`}
-                  title="Edit judul SPB"
-                  style={{
-                    padding: "0 4px",
-                    height: 20,
-                    minWidth: 20,
-                    color: "#8c8c8c",
-                  }}
-                  onClick={(e) =>
-                    openEditModal(e, "spb", String(item.spbNo), resolvedSpbTitle)
-                  }
-                />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Text type="secondary" style={{ fontSize: 11 }}>No. SPB</Text>
+                {allowEdit && (
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<EditOutlined style={{ fontSize: 12 }} />}
+                    aria-label={`Edit judul SPB ${item.spbNo}`}
+                    data-testid={`edit-spb-title-${item.spbNo}`}
+                    title="Edit judul SPB"
+                    style={{ padding: "0 4px", height: 20, minWidth: 20, color: "#8c8c8c" }}
+                    onClick={(e) => openEditModal(e, "spb", String(item.spbNo), resolvedSpbTitle)}
+                  />
+                )}
               </div>
-              <div
-                style={{
-                  fontWeight: 600,
-                  fontSize: 16,
-                  wordBreak: "break-word",
-                }}
-              >
+              <div style={{ fontWeight: 600, fontSize: 16, wordBreak: "break-word" }}>
                 {item.spbNo}
                 {resolvedSpbTitle && (
-                  <span
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 500,
-                      color: "#595959",
-                      marginLeft: 6,
-                    }}
-                  >
+                  <span style={{ fontSize: 14, fontWeight: 500, color: "#595959", marginLeft: 6 }}>
                     - {resolvedSpbTitle}
                   </span>
                 )}
@@ -4023,51 +5260,25 @@ export default function MonitoringSPBPage() {
 
           {hasPO && (
             <div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <Text type="secondary" style={{ fontSize: 11 }}>
-                  No. PO
-                </Text>
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<EditOutlined style={{ fontSize: 12 }} />}
-                  aria-label={`Edit judul PO ${item.poNo}`}
-                  data-testid={`edit-po-title-${item.poNo}`}
-                  title="Edit judul PO"
-                  style={{
-                    padding: "0 4px",
-                    height: 20,
-                    minWidth: 20,
-                    color: "#8c8c8c",
-                  }}
-                  onClick={(e) =>
-                    openEditModal(e, "po", String(item.poNo), resolvedPoTitle)
-                  }
-                />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Text type="secondary" style={{ fontSize: 11 }}>No. PO</Text>
+                {allowEdit && (
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<EditOutlined style={{ fontSize: 12 }} />}
+                    aria-label={`Edit judul PO ${item.poNo}`}
+                    data-testid={`edit-po-title-${item.poNo}`}
+                    title="Edit judul PO"
+                    style={{ padding: "0 4px", height: 20, minWidth: 20, color: "#8c8c8c" }}
+                    onClick={(e) => openEditModal(e, "po", String(item.poNo), resolvedPoTitle)}
+                  />
+                )}
               </div>
-              <div
-                style={{
-                  fontWeight: 600,
-                  fontSize: 16,
-                  wordBreak: "break-word",
-                }}
-              >
+              <div style={{ fontWeight: 600, fontSize: 16, wordBreak: "break-word" }}>
                 {item.poNo}
                 {resolvedPoTitle && (
-                  <span
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 500,
-                      color: "#595959",
-                      marginLeft: 6,
-                    }}
-                  >
+                  <span style={{ fontSize: 14, fontWeight: 500, color: "#595959", marginLeft: 6 }}>
                     - {resolvedPoTitle}
                   </span>
                 )}
@@ -4077,16 +5288,8 @@ export default function MonitoringSPBPage() {
 
           {hasSJ && (
             <div>
-              <Text type="secondary" style={{ fontSize: 11 }}>
-                No. Surat Jalan
-              </Text>
-              <div
-                style={{
-                  fontWeight: 600,
-                  fontSize: 16,
-                  wordBreak: "break-word",
-                }}
-              >
+              <Text type="secondary" style={{ fontSize: 11 }}>No. Surat Jalan</Text>
+              <div style={{ fontWeight: 600, fontSize: 16, wordBreak: "break-word" }}>
                 {item.suratJalanNo}
               </div>
             </div>
@@ -4104,14 +5307,9 @@ export default function MonitoringSPBPage() {
           >
             <div>
               <div>Total: {item.itemsCount} Barang</div>
-              <div style={{ marginTop: 4 }}>
-                Tanggal: {item.date !== "-" ? formatDate(item.date) : "-"}
-              </div>
+              <div style={{ marginTop: 4 }}>Tanggal: {item.date !== "-" ? formatDate(item.date) : "-"}</div>
             </div>
-            <Tag
-              color={getStatusColor(item.status)}
-              style={{ margin: 0, fontWeight: 600 }}
-            >
+            <Tag color={getStatusColor(item.status)} style={{ margin: 0, fontWeight: 600 }}>
               {item.status || "Belum PO"}
             </Tag>
           </div>
@@ -4188,16 +5386,8 @@ export default function MonitoringSPBPage() {
   }
 
   return (
-    <div
-      style={{
-        width: "100%",
-        maxWidth: "100%",
-        overflowX: "hidden",
-        paddingBottom: 32,
-      }}
-    >
+    <div style={{ width: "100%", maxWidth: "100%", overflowX: "hidden", paddingBottom: 32 }}>
       <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-        {/* Header */}
         <div style={{ marginBottom: 24 }}>
           <Space align="center">
             <div
@@ -4216,32 +5406,23 @@ export default function MonitoringSPBPage() {
               <FileTextOutlined />
             </div>
             <div>
-              <Title level={3} style={{ margin: 0 }}>
-                Monitoring SPB
-              </Title>
+              <Title level={3} style={{ margin: 0 }}>Monitoring SPB</Title>
               <Text type="secondary">
-                {data.length} Dokumen Terdaftar · Diperbarui{" "}
-                {formatFullDate(new Date())}
+                {data.length} Dokumen Terdaftar · Diperbarui {formatFullDate(new Date())}
               </Text>
             </div>
           </Space>
         </div>
 
-        {/* Section Baru Ditambahkan (10 Data Terbaru) */}
         {recentItems.length > 0 && (
           <div style={{ marginBottom: 32 }}>
-            <Text
-              strong
-              style={{ fontSize: 16, display: "block", marginBottom: 12 }}
-            >
+            <Text strong style={{ fontSize: 16, display: "block", marginBottom: 12 }}>
               Baru ditambahkan
             </Text>
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: screens.md
-                  ? "repeat(5, 1fr)"
-                  : "repeat(2, 1fr)",
+                gridTemplateColumns: screens.md ? "repeat(5, 1fr)" : "repeat(2, 1fr)",
                 gap: 12,
               }}
             >
@@ -4250,7 +5431,6 @@ export default function MonitoringSPBPage() {
           </div>
         )}
 
-        {/* Toolbar: Search, Filter, & Sort */}
         <div
           style={{
             display: "flex",
@@ -4271,11 +5451,7 @@ export default function MonitoringSPBPage() {
               <Select.Option value="barang">Nama Barang</Select.Option>
             </Select>
             <Input
-              placeholder={
-                searchMode === "no"
-                  ? "Cari No SPB/PO/SJ..."
-                  : "Cari Nama Barang..."
-              }
+              placeholder={searchMode === "no" ? "Cari No SPB/PO/SJ..." : "Cari Nama Barang..."}
               prefix={<SearchOutlined />}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -4287,6 +5463,7 @@ export default function MonitoringSPBPage() {
             size="middle"
             options={[
               "Semua",
+              "Belum Diproses",
               "Belum di PO",
               "Sudah di PO",
               "Datang",
@@ -4311,7 +5488,6 @@ export default function MonitoringSPBPage() {
           />
         </div>
 
-        {/* Grid Kartu Utama */}
         <Row gutter={[16, 16]}>
           {filteredAndSortedData.map((item) => (
             <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
@@ -4320,7 +5496,6 @@ export default function MonitoringSPBPage() {
           ))}
         </Row>
 
-        {/* State Kosong */}
         {filteredAndSortedData.length === 0 && (
           <div style={{ textAlign: "center", padding: 40, width: "100%" }}>
             <Empty description="Tidak ada data yang cocok dengan pencarian/filter." />
@@ -4328,34 +5503,34 @@ export default function MonitoringSPBPage() {
         )}
       </div>
 
-      {/* Modal Edit Judul SPB / PO */}
-      <Modal
-        title={
-          editingTitle
-            ? `Edit Judul ${editingTitle.type.toUpperCase()} ${editingTitle.docNo}`
-            : "Edit Judul"
-        }
-        open={!!editingTitle}
-        onCancel={() => setEditingTitle(null)}
-        onOk={handleSaveTitle}
-        okText="Simpan"
-        cancelText="Batal"
-        confirmLoading={savingTitle}
-        destroyOnHidden
-      >
-        <Input
-          placeholder="Masukkan judul baru..."
-          value={titleInput}
-          onChange={(e) => setTitleInput(e.target.value)}
-          onPressEnter={handleSaveTitle}
-          aria-label="Input Judul Dokumen"
-          autoFocus
-        />
-      </Modal>
+      {allowEdit && (
+        <Modal
+          title={
+            editingTitle
+              ? `Edit Judul ${editingTitle.type.toUpperCase()} ${editingTitle.docNo}`
+              : "Edit Judul"
+          }
+          open={!!editingTitle}
+          onCancel={() => setEditingTitle(null)}
+          onOk={handleSaveTitle}
+          okText="Simpan"
+          cancelText="Batal"
+          confirmLoading={savingTitle}
+          destroyOnHidden
+        >
+          <Input
+            placeholder="Masukkan judul baru..."
+            value={titleInput}
+            onChange={(e) => setTitleInput(e.target.value)}
+            onPressEnter={handleSaveTitle}
+            aria-label="Input Judul Dokumen"
+            autoFocus
+          />
+        </Modal>
+      )}
     </div>
   );
 }
-
 
 ================================================================================
 FILE: ../src/features/spb/suratJalanRules.ts
@@ -4406,6 +5581,56 @@ export const getSjTarget = (sj: { id_spb?: unknown; id_po?: unknown }): SjTarget
   return "sj";
 };
 
+// ============================================================================
+// FUNGSI TAMBAHAN UNTUK CHATBOT & UI MAPPING
+// ============================================================================
+
+/**
+ * Membersihkan judul SPB dari teks "null", "undefined", atau tanda strip.
+ */
+export const cleanSpbTitle = (title: unknown): string => {
+  if (!title) return "";
+  const s = String(title).trim();
+  const lower = s.toLowerCase();
+  if (lower === "null" || lower === "undefined" || s === "-") return "";
+  return s;
+};
+
+/**
+ * Memeriksa apakah sebuah baris data SPB hanyalah catatan/keterangan kosong
+ * (tidak dihitung sebagai barang riil).
+ */
+export const isKeteranganBarang = (row: any): boolean => {
+  if (!row) return true;
+  const name = String(row.nama_barang_spb || row.nama_barang || "").toLowerCase();
+  if (!name.trim()) return true;
+  return name.includes("keterangan") || name.includes("catatan");
+};
+
+/**
+ * Menentukan status dari satu baris item SPB (untuk konsumsi Chatbot).
+ */
+export const resolveSpbItemStatus = (row: any): string => {
+  if (!row) return "Belum PO";
+  
+  const tgl = row.material_datang_tgl;
+  const req = Number(row.qty_permintaan || 0);
+  const arr = Number(row.material_datang_qty || 0);
+  const hasPo = !!(row.no_po || row.id_po);
+
+  if (tgl) {
+    if (req === arr) return "Datang Sesuai";
+    if (req < arr) return "Datang Lebih";
+    return "Datang Kurang";
+  }
+  if (hasPo) return "Sudah PO";
+  
+  const raw = String(row.status || "").toLowerCase().trim();
+  if (raw === "belum di proses") return "Belum Diproses";
+  
+  return "Belum PO";
+};
+
 ================================================================================
 FILE: ../src/features/spb/useMonitoringSPB.ts
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/useMonitoringSPB.ts
@@ -4414,6 +5639,7 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/useMonitoringSPB
 import { useQuery } from "@tanstack/react-query";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { USE_MOCK } from "../../shared/lib/config";
+import { requirePermission } from "../../shared/lib/authGuard";
 import type { SPBDocumentGroup } from "../../shared/types";
 import { cleanDocNo, getSjTarget, isIgnoredSuratJalan } from "./suratJalanRules";
 
@@ -4438,22 +5664,32 @@ export const saveTitleOverride = (key: string, title: string) => {
   }
 };
 
+const buildSpbOverrideKey = (docNo: string, originalTitle?: string | null) =>
+  `SPB_${docNo}::${originalTitle ?? ""}`;
+
+const buildPoOverrideKey = (docNo: string) => `PO_${docNo}`;
+
 export const updateDocumentTitle = async (
   type: "spb" | "po",
   docNo: string,
   newTitle: string,
+  originalTitle?: string | null,
 ) => {
+  // 🔒 Verifikasi: user harus login dan punya izin edit_data
+  requirePermission("edit_data", `Edit judul ${type.toUpperCase()}`);
   const trimmed = newTitle.trim();
-  const overrideKey = `${type.toUpperCase()}_${docNo}`;
-  saveTitleOverride(overrideKey, trimmed);
 
   if (type === "spb") {
-    const { error } = await supabaseClient
+    saveTitleOverride(buildSpbOverrideKey(docNo, originalTitle), trimmed);
+    let q = supabaseClient
       .from("spb")
       .update({ judul_spb: trimmed })
       .eq("no_spb", docNo);
+    if (originalTitle) q = q.eq("judul_spb", originalTitle);
+    const { error } = await q;
     if (error) throw error;
   } else {
+    saveTitleOverride(buildPoOverrideKey(docNo), trimmed);
     const { error } = await supabaseClient
       .from("po")
       .update({ judul_po: trimmed })
@@ -4474,6 +5710,15 @@ const toStrOrNull = (val: unknown): string | null => {
   return String(val);
 };
 
+const buildSpbGroupKey = (
+  spbNo: string | null,
+  spbTitle: string | null,
+  fallbackId: unknown,
+) =>
+  spbNo
+    ? `SPB_${spbNo}::${spbTitle ?? ""}`
+    : `SPB_ID_${fallbackId}`;
+
 export const useMonitoringSPB = () => {
   const { data, isLoading, error, refetch } = useQuery<SPBDocumentGroup[]>({
     queryKey: ["monitoring-spb"],
@@ -4485,11 +5730,11 @@ export const useMonitoringSPB = () => {
       const [spbRes, poRes, sjRes] = await Promise.all([
         supabaseClient.from("spb").select(`
           id, no_spb, judul_spb, tgl_spb, material_datang_tgl, id_po,
-          qty_permintaan, material_datang_qty, nama_barang_spb,
+          qty_permintaan, material_datang_qty, nama_barang_spb, status,
           po:po!id_po (no_po, tanggal_po)
         `),
         supabaseClient.from("po").select(`
-          id, no_po, tanggal_po, id_spb, material_datang_tgl, material_datang_qty, nama_barang_po
+          id, no_po, judul_po, tanggal_po, id_spb, material_datang_tgl, material_datang_qty, nama_barang_po
         `),
         supabaseClient.from("surat_jalan").select(`
           id, no_surat_jalan, id_spb, id_po, nama_barang, 
@@ -4522,6 +5767,8 @@ export const useMonitoringSPB = () => {
           data: SPBDocumentGroup;
           hasAnyPO: boolean;
           hasAnyArrival: boolean;
+          hasAnyBelumDiproses: boolean;
+          hasAnySudahDiproses: boolean;
           latestTimestamp: number;
           poSet: Set<string>;
           completedItems: number;
@@ -4541,24 +5788,31 @@ export const useMonitoringSPB = () => {
       // PROSES 1: Kelompokkan berdasarkan SPB
       spbData.forEach((row: any) => {
         const spbNo = toStrOrNull(row.no_spb);
-        const key = spbNo || `SPB_${row.id}`;
-        const spbOverride = spbNo ? overrides[`SPB_${spbNo}`] : undefined;
+        const spbTitleRaw = toStrOrNull(row.judul_spb);
+        const key = buildSpbGroupKey(spbNo, spbTitleRaw, row.id);
+        const overrideKey = spbNo
+          ? buildSpbOverrideKey(spbNo, spbTitleRaw)
+          : null;
+        const spbOverride = overrideKey ? overrides[overrideKey] : undefined;
 
         if (!groups.has(key)) {
           groups.set(key, {
             data: {
               id: key,
               spbNo,
-              spbTitle: spbOverride !== undefined ? spbOverride : (row.judul_spb || null),
+              spbTitle:
+                spbOverride !== undefined ? spbOverride : (spbTitleRaw || null),
               poNo: null,
               poTitle: null,
               date: "-",
               itemsCount: 0,
               sortNumber: getSortNumber(spbNo),
-              status: "Belum PO",
+              status: "Belum PO", // akan di-override di finalisasi
             },
             hasAnyPO: false,
             hasAnyArrival: false,
+            hasAnyBelumDiproses: false,
+            hasAnySudahDiproses: false,
             latestTimestamp: 0,
             poSet: new Set<string>(),
             completedItems: 0,
@@ -4567,8 +5821,9 @@ export const useMonitoringSPB = () => {
         }
 
         const group = groups.get(key)!;
-        if (!group.data.spbTitle && row.judul_spb) {
-          group.data.spbTitle = spbOverride !== undefined ? spbOverride : row.judul_spb;
+        if (!group.data.spbTitle && spbTitleRaw) {
+          group.data.spbTitle =
+            spbOverride !== undefined ? spbOverride : spbTitleRaw;
         }
         group.data.itemsCount += 1;
 
@@ -4576,6 +5831,14 @@ export const useMonitoringSPB = () => {
         if (itemName) group.itemNames.add(itemName);
 
         updateLatestDate(group, row.tgl_spb);
+
+        // Cek status "belum di proses" / "sudah di proses"
+        const rowStatus = toStrOrNull(row.status)?.toLowerCase() || "";
+        if (rowStatus === "belum di proses") {
+          group.hasAnyBelumDiproses = true;
+        } else if (rowStatus === "sudah di proses") {
+          group.hasAnySudahDiproses = true;
+        }
 
         const req = row.qty_permintaan || 0;
         const arr = row.material_datang_qty || 0;
@@ -4615,7 +5878,9 @@ export const useMonitoringSPB = () => {
         if (!isLinked) {
           const poNo = cleanDocNo(p.no_po);
           const key = poNo ? `PO_${poNo}` : `PO_ID_${p.id}`;
-          const poOverride = poNo ? overrides[`PO_${poNo}`] : undefined;
+          const poOverride = poNo
+            ? overrides[buildPoOverrideKey(poNo)]
+            : undefined;
 
           if (!groups.has(key)) {
             groups.set(key, {
@@ -4624,7 +5889,8 @@ export const useMonitoringSPB = () => {
                 spbNo: null,
                 spbTitle: null,
                 poNo: poNo,
-                poTitle: poOverride !== undefined ? poOverride : (p.judul_po || null),
+                poTitle:
+                  poOverride !== undefined ? poOverride : (p.judul_po || null),
                 date: p.tanggal_po || "-",
                 itemsCount: 0,
                 sortNumber: getSortNumber(poNo),
@@ -4632,6 +5898,8 @@ export const useMonitoringSPB = () => {
               },
               hasAnyPO: true,
               hasAnyArrival: false,
+              hasAnyBelumDiproses: false,
+              hasAnySudahDiproses: true, // PO otomatis dianggap sudah diproses
               latestTimestamp: 0,
               poSet: new Set([poNo || ""]),
               completedItems: 0,
@@ -4641,7 +5909,8 @@ export const useMonitoringSPB = () => {
 
           const group = groups.get(key)!;
           if (!group.data.poTitle && p.judul_po) {
-            group.data.poTitle = poOverride !== undefined ? poOverride : p.judul_po;
+            group.data.poTitle =
+              poOverride !== undefined ? poOverride : p.judul_po;
           }
           group.data.itemsCount += 1;
 
@@ -4675,7 +5944,7 @@ export const useMonitoringSPB = () => {
         if (target === "spb") {
           spbNo = cleanDocNo(spbRel?.no_spb);
           spbTitle = toStrOrNull(spbRel?.judul_spb);
-          targetKey = spbNo ? spbNo : `SPB_${sj.id_spb}`;
+          targetKey = buildSpbGroupKey(spbNo, spbTitle, sj.id_spb);
         } else if (target === "po") {
           poNo = cleanDocNo(poRel?.no_po);
           targetKey = poNo ? `PO_${poNo}` : `PO_ID_${sj.id_po}`;
@@ -4690,7 +5959,9 @@ export const useMonitoringSPB = () => {
               spbNo,
               spbTitle,
               poNo,
-              poTitle: poNo ? (overrides[`PO_${poNo}`] ?? null) : null,
+              poTitle: poNo
+                ? (overrides[buildPoOverrideKey(poNo)] ?? null)
+                : null,
               suratJalanNo: target === "sj" ? sjNo : null,
               date: "-",
               itemsCount: 0,
@@ -4699,6 +5970,8 @@ export const useMonitoringSPB = () => {
             },
             hasAnyPO: true,
             hasAnyArrival: false,
+            hasAnyBelumDiproses: false,
+            hasAnySudahDiproses: true, // SJ otomatis dianggap sudah diproses
             latestTimestamp: 0,
             poSet: new Set<string>(poNo ? [poNo] : []),
             completedItems: 0,
@@ -4720,18 +5993,27 @@ export const useMonitoringSPB = () => {
 
       // Finalisasi Status & Sorting
       const result = Array.from(groups.values()).map((g) => {
-        const isSelesai = g.data.itemsCount > 0 && g.completedItems >= g.data.itemsCount;
+        const isSelesai =
+          g.data.itemsCount > 0 && g.completedItems >= g.data.itemsCount;
+        
         let status = "Belum PO";
-        if (isSelesai) status = "Selesai";
-        else if (g.hasAnyArrival) status = "Datang";
-        else if (g.hasAnyPO) status = "Sudah PO";
+        
+        if (isSelesai) {
+          status = "Selesai";
+        } else if (g.hasAnyArrival) {
+          status = "Datang";
+        } else if (g.hasAnyPO) {
+          status = "Sudah PO";
+        } else if (g.hasAnyBelumDiproses && !g.hasAnySudahDiproses) {
+          status = "Belum Diproses"; // <--- ATURAN BARU DI SINI
+        }
 
         const combinedPo = Array.from(g.poSet).filter(Boolean).join(", ");
         const firstPo = Array.from(g.poSet).filter(Boolean)[0];
         const poTitle =
           g.data.poTitle ??
-          (firstPo && overrides[`PO_${firstPo}`] !== undefined
-            ? overrides[`PO_${firstPo}`]
+          (firstPo && overrides[buildPoOverrideKey(firstPo)] !== undefined
+            ? overrides[buildPoOverrideKey(firstPo)]
             : null);
 
         return {
@@ -4739,13 +6021,14 @@ export const useMonitoringSPB = () => {
           poNo: combinedPo || null,
           poTitle,
           status,
-          sortNumber: getSortNumber(g.data.spbNo) + getSortNumber(combinedPo) * 0.01,
+          sortNumber:
+            getSortNumber(g.data.spbNo) + getSortNumber(combinedPo) * 0.01,
           itemNames: Array.from(g.itemNames),
         };
       });
 
-      // ✅ URUTAN: Sudah PO & Belum PO (1) -> Datang (2) -> Selesai (3)
       const getStatusWeight = (status: string) => {
+        if (status === "Belum Diproses") return 0; // Paling atas (opsional)
         if (status === "Sudah PO") return 1;
         if (status === "Belum PO") return 1;
         if (status === "Datang") return 2;
@@ -4769,7 +6052,6 @@ export const useMonitoringSPB = () => {
   return { data: data ?? [], isLoading, error: error as Error | null, refetch };
 };
 
-
 ================================================================================
 FILE: ../src/features/spb/useMonitoringSPBDetail.ts
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/useMonitoringSPBDetail.ts
@@ -4781,26 +6063,10 @@ import { supabaseClient } from "../../shared/lib/supabaseClient";
 import type { SPBItemDetail } from "../../shared/types";
 import { cleanDocNo, hasValue, isIgnoredSuratJalan } from "./suratJalanRules";
 
-/**
- * Isi tabel detail sebuah card:
- *
- *  Card SPB          -> baris tabel `spb` (no_spb = ?)
- *                       + baris `surat_jalan` (no >= 3) yang id_spb-nya milik SPB itu
- *  Card PO           -> baris tabel `po` (no_po = ?) yang TIDAK terhubung ke SPB
- *                       + baris `surat_jalan` (no >= 3) yang id_po-nya milik PO itu, id_spb kosong
- *  Card Surat Jalan  -> baris `surat_jalan` (no_surat_jalan = ?) yang id_spb DAN id_po kosong
- *
- * Surat Jalan no 1 dan 2 selalu diabaikan.
- * Aturannya sama dengan pengelompokan di useMonitoringSPB, jadi jumlah barang
- * di card = jumlah baris di tabel ini.
- */
-
 export type ItemSource = "spb" | "po" | "sj";
 
 export type MonitoringDetailItem = SPBItemDetail & {
-  /** Unik lintas tabel (id SPB / PO / SJ bisa sama), dipakai sebagai rowKey. */
   key: string;
-  /** Tabel asal baris ini; dipakai untuk navigasi ke halaman rincian barang. */
   sumber: ItemSource;
   no_surat_jalan?: string | null;
 };
@@ -4809,8 +6075,6 @@ type Row = Record<string, any>;
 
 const SPB_SELECT = `*, po:po!id_po (no_po, tanggal_po)`;
 const SJ_SELECT = `*, spb:spb!id_spb (no_spb, judul_spb), po:po!id_po (no_po)`;
-
-// ───────────────────────── helper kecil ─────────────────────────
 
 const first = (v: unknown): Row | null => {
   const x = Array.isArray(v) ? v[0] : v;
@@ -4841,14 +6105,22 @@ const spbStatus = (req: number, arr: number, tglDatang: string | null, hasPo: bo
   return hasPo ? "Sudah PO" : "Belum PO";
 };
 
-// ───────────────────────── mapper baris -> item ─────────────────────────
-
 const mapSpbRow = (row: Row, fallbackPo: Row | null): MonitoringDetailItem => {
   const joinedPo = first(row.po);
   const poNo = cleanDocNo(joinedPo?.no_po) ?? cleanDocNo(fallbackPo?.no_po);
   const req = numOrZero(row.qty_permintaan);
   const arr = numOrZero(row.material_datang_qty);
   const tgl: string | null = row.material_datang_tgl || null;
+
+  // 🔧 Normalisasi status dari database (jaga-jaga ada spasi atau beda kapital)
+  const rawStatus = String(row.status || "").toLowerCase().trim();
+
+  let status = spbStatus(req, arr, tgl, !!poNo);
+  
+  // 🔧 PERBAIKAN: Jika belum PO tapi dari DB statusnya "belum di proses"
+  if (status === "Belum PO" && rawStatus === "belum di proses") {
+    status = "Belum Diproses";
+  }
 
   return {
     key: `spb-${row.id}`,
@@ -4866,7 +6138,7 @@ const mapSpbRow = (row: Row, fallbackPo: Row | null): MonitoringDetailItem => {
     tanggal_po: joinedPo?.tanggal_po ?? fallbackPo?.tanggal_po ?? null,
     tanggal_datang: tgl,
     qty_datang: arr,
-    status: spbStatus(req, arr, tgl, !!poNo),
+    status,
   };
 };
 
@@ -4910,19 +6182,22 @@ const mapSjRow = (row: Row): MonitoringDetailItem => {
   };
 };
 
-// ───────────────────────── skenario fetch ─────────────────────────
+const fetchBySpb = async (
+  spbNo: string,
+  judulSpb: string | null = null,
+): Promise<MonitoringDetailItem[]> => {
+  let spbQuery = supabaseClient
+    .from("spb")
+    .select(SPB_SELECT)
+    .eq("no_spb", spbNo);
+  if (judulSpb) spbQuery = spbQuery.eq("judul_spb", judulSpb);
 
-/** Card SPB */
-const fetchBySpb = async (spbNo: string): Promise<MonitoringDetailItem[]> => {
-  const spbRows = sortById(
-    unwrap(await supabaseClient.from("spb").select(SPB_SELECT).eq("no_spb", spbNo)),
-  );
+  const spbRows = sortById(unwrap(await spbQuery));
   if (spbRows.length === 0) return [];
 
   const spbIds = spbRows.map((r) => r.id);
 
   const [poRes, sjRes] = await Promise.all([
-    // PO yang menunjuk SPB lewat po.id_spb (cadangan jika spb.id_po kosong)
     supabaseClient.from("po").select("id, no_po, tanggal_po, id_spb").in("id_spb", spbIds),
     supabaseClient.from("surat_jalan").select(SJ_SELECT).in("id_spb", spbIds),
   ]);
@@ -4941,7 +6216,6 @@ const fetchBySpb = async (spbNo: string): Promise<MonitoringDetailItem[]> => {
   return [...spbItems, ...sjItems];
 };
 
-/** Card PO (tanpa SPB) */
 const fetchByPo = async (poNo: string): Promise<MonitoringDetailItem[]> => {
   const poRows = sortById(
     unwrap(await supabaseClient.from("po").select("*").eq("no_po", poNo)),
@@ -4956,14 +6230,12 @@ const fetchByPo = async (poNo: string): Promise<MonitoringDetailItem[]> => {
       ? supabaseClient.from("spb").select("id").in("id", parentSpbIds)
       : Promise.resolve({ data: [], error: null }),
     supabaseClient.from("spb").select("id, id_po").in("id_po", poIds),
-    // Surat Jalan yang punya id_po tapi TIDAK punya id_spb
     supabaseClient.from("surat_jalan").select(SJ_SELECT).in("id_po", poIds).is("id_spb", null),
   ]);
 
   const existingParentSpb = new Set(unwrap(parentSpbRes).map((s) => String(s.id)));
   const poIdsUsedBySpb = new Set(unwrap(spbPointingRes).map((s) => String(s.id_po)));
 
-  // PO yang sudah terhubung ke SPB tampil di card SPB, bukan di sini.
   const isLinkedToSpb = (p: Row) =>
     (hasValue(p.id_spb) && existingParentSpb.has(String(p.id_spb))) ||
     poIdsUsedBySpb.has(String(p.id));
@@ -4976,7 +6248,6 @@ const fetchByPo = async (poNo: string): Promise<MonitoringDetailItem[]> => {
   return [...poItems, ...sjItems];
 };
 
-/** Card Surat Jalan murni (tanpa id_spb dan id_po) */
 const fetchBySuratJalan = async (sjNo: string): Promise<MonitoringDetailItem[]> => {
   if (isIgnoredSuratJalan(sjNo)) return [];
 
@@ -4992,20 +6263,18 @@ const fetchBySuratJalan = async (sjNo: string): Promise<MonitoringDetailItem[]> 
   return sortById(rows).map(mapSjRow);
 };
 
-// ───────────────────────── hook ─────────────────────────
-
 export const useMonitoringSPBDetail = (
   spbNo: string | null,
   poNo: string | null,
   sjNo: string | null = null,
+  judulSpb: string | null = null,
 ) => {
   const enabled = !!(spbNo || poNo || sjNo);
 
   const { data, isLoading, error } = useQuery<MonitoringDetailItem[]>({
-    queryKey: ["monitoring-spb-detail", spbNo, poNo, sjNo],
+    queryKey: ["monitoring-spb-detail", spbNo, poNo, sjNo, judulSpb],
     queryFn: async () => {
-      // Urutan prioritas sama dengan navigasi di MonitoringSPBPage: SPB -> PO -> SJ
-      if (spbNo) return fetchBySpb(spbNo);
+      if (spbNo) return fetchBySpb(spbNo, judulSpb);
       if (poNo) return fetchByPo(poNo);
       if (sjNo) return fetchBySuratJalan(sjNo);
       return [];
@@ -5021,7 +6290,6 @@ export const useMonitoringSPBDetail = (
     error: error as Error | null,
   };
 };
-
 
 ================================================================================
 FILE: ../src/features/spb/useSPBItemDetail.ts
@@ -5117,6 +6385,7 @@ import { App } from "antd";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { USE_MOCK } from "../../shared/lib/config";
+import { requirePermission } from "../../shared/lib/authGuard";
 import type { StockEntry } from "../../shared/types";
 
 export interface CreateStockEntryInput {
@@ -5133,6 +6402,8 @@ export const useCreateStockEntry = () => {
 
   return useMutation({
     mutationFn: async (input: CreateStockEntryInput) => {
+      // 🔒 Verifikasi: user harus login dan punya izin edit_data
+      requirePermission("edit_data", "Tambah barang masuk");
       // === MODE MOCK ===
       if (USE_MOCK) {
         await new Promise((r) => setTimeout(r, 500));
@@ -5542,6 +6813,7 @@ import { SetupWizard } from "../components/SetupWizard";
 import { mockWorkplaces } from "../../../mocks/entry";
 import { supabaseClient } from "../../../shared/lib/supabaseClient";
 import { USE_MOCK } from "../../../shared/lib/config";
+import { requirePermission } from "../../../shared/lib/authGuard";
 import { formatNumber } from "../../../shared/lib/format";
 import type { Product, Person, Workplace, OutboundLine } from "../../../shared/types"; // Menggunakan OutboundLine dari types/index
 
@@ -5632,6 +6904,8 @@ export const EntryPage = () => {
 
     setIsSubmitting(true);
     try {
+      // 🔒 Verifikasi: user harus login dan punya izin edit_data
+      requirePermission("edit_data", "Pengeluaran barang");
       if (!USE_MOCK) {
         // ✅ PERBAIKAN: Gunakan RPC untuk transaksi atomik
         const { error } = await supabaseClient.rpc("issue_stock", {
@@ -6426,6 +7700,250 @@ export const StatusBadge = ({ status }: Props) => {
 };
 
 ================================================================================
+FILE: ../src/shared/hooks/useAuthGuard.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/hooks/useAuthGuard.ts
+================================================================================
+
+/**
+ * @file useAuthGuard.ts
+ * @description React hook untuk memverifikasi autentikasi sebelum operasi mutasi.
+ *
+ * Hook ini menyediakan:
+ * 1. Status auth real-time (reactive via event listener)
+ * 2. Fungsi guard untuk membungkus mutation callbacks
+ * 3. Integrasi dengan Ant Design message untuk feedback UX
+ *
+ * @example
+ * function MyComponent() {
+ *   const { isAuthenticated, canEdit, guardMutation } = useAuthGuard();
+ *
+ *   const handleSave = guardMutation(async (data) => {
+ *     await supabaseClient.from('barang').insert(data);
+ *   }, { action: 'Simpan barang', permission: 'edit_data' });
+ *
+ *   return (
+ *     <Button onClick={() => handleSave(data)} disabled={!canEdit}>
+ *       Simpan
+ *     </Button>
+ *   );
+ * }
+ */
+
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { App } from "antd";
+import {
+  getVerifiedUser,
+  AuthenticationError,
+  AuthorizationError,
+  SessionExpiredError,
+  type AuthStatus,
+} from "../lib/authGuard";
+import { AUTH_CHANGED_EVENT, type StoredAuthUser } from "../../app/providers/authProvider";
+import { canEditData } from "../../app/providers/accessControlProvider";
+import type { PermissionKey } from "../types";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface GuardMutationOptions {
+  /** Deskripsi aksi untuk audit log dan pesan error */
+  action?: string;
+  /** Permission yang diperlukan (default: cukup login saja) */
+  permission?: PermissionKey;
+  /** Pesan error kustom jika auth gagal */
+  errorMessage?: string;
+  /** Redirect ke login jika belum auth (default: true) */
+  redirectOnFail?: boolean;
+  /** Callback tambahan ketika auth gagal */
+  onAuthFailure?: (error: Error) => void;
+}
+
+interface UseAuthGuardReturn {
+  /** Apakah user sudah login dengan role terautentikasi */
+  isAuthenticated: boolean;
+  /** Data user saat ini (null jika belum login) */
+  user: StoredAuthUser | null;
+  /** Apakah user punya izin edit data */
+  canEdit: boolean;
+  /** Apakah user adalah Super User */
+  isSuperUser: boolean;
+  /** Status auth lengkap */
+  authStatus: AuthStatus;
+  /**
+   * Membungkus fungsi mutation dengan verifikasi auth.
+   * Jika auth gagal, menampilkan pesan error dan tidak menjalankan mutation.
+   */
+  guardMutation: <TArgs extends unknown[], TReturn>(
+    fn: (...args: TArgs) => Promise<TReturn>,
+    options?: GuardMutationOptions,
+  ) => (...args: TArgs) => Promise<TReturn | undefined>;
+  /**
+   * Mengecek auth secara manual dan mengembalikan true/false.
+   * Menampilkan pesan error jika gagal.
+   */
+  checkAuth: (options?: GuardMutationOptions) => boolean;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Hook Implementation
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const useAuthGuard = (): UseAuthGuardReturn => {
+  const { message: antdMessage } = App.useApp();
+  const navigate = useNavigate();
+
+  // State yang reactive terhadap perubahan auth
+  const [authStatus, setAuthStatus] = useState<AuthStatus>(() => {
+    const user = getVerifiedUser();
+    return {
+      isAuthenticated: !!user,
+      user,
+      canEdit: user ? canEditData(user.role) : false,
+      isSuperUser: user?.role === "superuser",
+    };
+  });
+
+  // Ref untuk menghindari stale closure di dalam callbacks
+  const authStatusRef = useRef(authStatus);
+  authStatusRef.current = authStatus;
+
+  // Listen ke perubahan auth (login/logout)
+  useEffect(() => {
+    const handleAuthChange = () => {
+      const user = getVerifiedUser();
+      const newStatus: AuthStatus = {
+        isAuthenticated: !!user,
+        user,
+        canEdit: user ? canEditData(user.role) : false,
+        isSuperUser: user?.role === "superuser",
+      };
+      setAuthStatus(newStatus);
+    };
+
+    window.addEventListener(AUTH_CHANGED_EVENT, handleAuthChange);
+    window.addEventListener("storage", handleAuthChange);
+
+    return () => {
+      window.removeEventListener(AUTH_CHANGED_EVENT, handleAuthChange);
+      window.removeEventListener("storage", handleAuthChange);
+    };
+  }, []);
+
+  /**
+   * Handle error auth dengan UX yang baik
+   */
+  const handleAuthError = useCallback(
+    (error: Error, options: GuardMutationOptions = {}) => {
+      const { redirectOnFail = true, onAuthFailure } = options;
+
+      if (error instanceof AuthenticationError || error instanceof SessionExpiredError) {
+        antdMessage.error(
+          options.errorMessage ??
+            error.message ??
+            "Anda harus login terlebih dahulu",
+        );
+
+        if (redirectOnFail) {
+          // Delay sedikit agar user bisa membaca pesan error
+          setTimeout(() => navigate("/login", { replace: true }), 1500);
+        }
+      } else if (error instanceof AuthorizationError) {
+        antdMessage.warning(
+          options.errorMessage ??
+            error.message ??
+            "Anda tidak memiliki izin untuk aksi ini",
+        );
+      }
+
+      onAuthFailure?.(error);
+    },
+    [antdMessage, navigate],
+  );
+
+  /**
+   * Manual auth check dengan feedback UI
+   */
+  const checkAuth = useCallback(
+    (options: GuardMutationOptions = {}): boolean => {
+      const user = getVerifiedUser();
+
+      if (!user) {
+        handleAuthError(new AuthenticationError(), options);
+        return false;
+      }
+
+      if (options.permission) {
+        const permissionCheckers: Record<string, (role: string) => boolean> = {
+          edit_data: canEditData,
+        };
+
+        const checker = permissionCheckers[options.permission];
+        if (checker && !checker(user.role)) {
+          handleAuthError(
+            new AuthorizationError(options.permission),
+            options,
+          );
+          return false;
+        }
+      }
+
+      return true;
+    },
+    [handleAuthError],
+  );
+
+  /**
+   * Guard wrapper untuk mutation functions
+   */
+  const guardMutation = useCallback(
+    <TArgs extends unknown[], TReturn>(
+      fn: (...args: TArgs) => Promise<TReturn>,
+      options: GuardMutationOptions = {},
+    ) => {
+      return async (...args: TArgs): Promise<TReturn | undefined> => {
+        // Verifikasi auth sebelum menjalankan mutation
+        if (!checkAuth(options)) {
+          return undefined;
+        }
+
+        try {
+          return await fn(...args);
+        } catch (error) {
+          // Tangkap error auth yang mungkin terjadi selama operasi
+          if (
+            error instanceof AuthenticationError ||
+            error instanceof AuthorizationError ||
+            error instanceof SessionExpiredError
+          ) {
+            handleAuthError(error, options);
+            return undefined;
+          }
+          // Re-throw error non-auth agar bisa di-handle oleh caller
+          throw error;
+        }
+      };
+    },
+    [checkAuth, handleAuthError],
+  );
+
+  return {
+    isAuthenticated: authStatus.isAuthenticated,
+    user: authStatus.user,
+    canEdit: authStatus.canEdit,
+    isSuperUser: authStatus.isSuperUser,
+    authStatus,
+    guardMutation,
+    checkAuth,
+  };
+};
+
+export default useAuthGuard;
+
+
+
+================================================================================
 FILE: ../src/shared/hooks/useDebounce.ts
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/hooks/useDebounce.ts
 ================================================================================
@@ -6527,7 +8045,7 @@ FILE: ../src/shared/layout/AdminLayout.tsx
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/layout/AdminLayout.tsx
 ================================================================================
 
-import { useState, type PropsWithChildren } from "react";
+import { useState, useEffect, type PropsWithChildren } from "react";
 import { ThemedLayoutV2, ThemedSiderV2 } from "@refinedev/antd";
 import { useGetIdentity, useLogout } from "@refinedev/core";
 import { useNavigate } from "react-router-dom";
@@ -6543,9 +8061,19 @@ import {
   CrownOutlined,
 } from "@ant-design/icons";
 import { GlobalSearch } from "../components/GlobalSearch";
+import { ChatbotWidget } from "../../features/chatbot/ChatbotWidget";
 import type { UserRole } from "../types";
 import { getPendingRequestsCount } from "../../features/auth/accountRequests";
-import { getStoredUser } from "../../app/providers/authProvider";
+import {
+  AUTH_CHANGED_EVENT,
+  getStoredUser,
+} from "../../app/providers/authProvider";
+import {
+  canApproveAccounts,
+  getRoleDefinition,
+  isAuthenticatedRole,
+  isSuperUser,
+} from "../../app/providers/accessControlProvider";
 
 const { Text } = Typography;
 
@@ -6562,18 +8090,33 @@ const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
   const { mutate: logout } = useLogout();
   const navigate = useNavigate();
 
-  const stored = getStoredUser();
-  const role: UserRole = identity?.role ?? stored?.role ?? "user";
-  const isSuperUser = role === "superuser";
-  const isAdmin = role === "admin" || isSuperUser;
-  const pendingCount = isSuperUser ? getPendingRequestsCount() : 0;
+  const [stored, setStored] = useState(() => getStoredUser());
 
-  const badgeText = isSuperUser ? "SU" : isAdmin ? "AS" : "US";
-  const roleLabel = isSuperUser
-    ? "Mode Super User"
-    : isAdmin
-      ? "Mode Admin"
-      : "User (Public)";
+  useEffect(() => {
+    const syncAuth = () => setStored(getStoredUser());
+    window.addEventListener(AUTH_CHANGED_EVENT, syncAuth);
+    window.addEventListener("storage", syncAuth);
+    return () => {
+      window.removeEventListener(AUTH_CHANGED_EVENT, syncAuth);
+      window.removeEventListener("storage", syncAuth);
+    };
+  }, []);
+
+  const role: UserRole = identity?.role ?? stored?.role ?? "user";
+  const roleDef = getRoleDefinition(role);
+  const isSuper = isSuperUser(role);
+  const isLoggedIn = isAuthenticatedRole(role);
+  const pendingCount = canApproveAccounts(role) ? getPendingRequestsCount() : 0;
+
+  const badgeText = roleDef.badge;
+  const roleLabel = isLoggedIn ? `Mode ${roleDef.label}` : "User (Public)";
+
+  const getBadgeGradient = () => {
+    if (isSuper) return "linear-gradient(135deg, #722ed1, #531dab)";
+    if (roleDef.key === "supervisor") return "linear-gradient(135deg, #13c2c2, #006d75)";
+    if (isLoggedIn) return "linear-gradient(135deg, #1677ff, #0e4fb8)";
+    return "linear-gradient(135deg, #52c41a, #389e0d)";
+  };
 
   return (
     <div style={{ width: "100%", userSelect: "none" }}>
@@ -6595,11 +8138,7 @@ const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
               width: 32,
               height: 32,
               borderRadius: 8,
-              background: isSuperUser
-                ? "linear-gradient(135deg, #722ed1, #531dab)"
-                : isAdmin
-                  ? "linear-gradient(135deg, #1677ff, #0e4fb8)"
-                  : "linear-gradient(135deg, #52c41a, #389e0d)",
+              background: getBadgeGradient(),
               color: "#fff",
               display: "flex",
               alignItems: "center",
@@ -6650,11 +8189,11 @@ const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
               {identity?.name ?? stored?.name ?? "User"}
             </Text>
             <Tag
-              color={isSuperUser ? "purple" : isAdmin ? "blue" : "green"}
+              color={roleDef.color}
               icon={
-                isSuperUser ? (
+                isSuper ? (
                   <CrownOutlined />
-                ) : isAdmin ? (
+                ) : isLoggedIn ? (
                   <SafetyCertificateOutlined />
                 ) : (
                   <UserOutlined />
@@ -6662,12 +8201,12 @@ const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
               }
               style={{ margin: 0, fontSize: 11 }}
             >
-              {isSuperUser ? "Super User" : isAdmin ? "Admin" : "Public"}
+              {isLoggedIn ? roleDef.label : "Public"}
             </Tag>
           </div>
 
           <Space direction="vertical" size={6} style={{ width: "100%" }}>
-            {isSuperUser && (
+            {canApproveAccounts(role) && (
               <Badge count={pendingCount} size="small" style={{ width: "100%" }}>
                 <Button
                   size="small"
@@ -6683,7 +8222,7 @@ const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
               </Badge>
             )}
 
-            {isAdmin ? (
+            {isLoggedIn ? (
               <Button
                 danger
                 type="primary"
@@ -6730,8 +8269,440 @@ export const AdminLayout = ({ children }: PropsWithChildren) => (
   >
     <GlobalSearch />
     {children}
+    <ChatbotWidget />
   </ThemedLayoutV2>
 );
+
+================================================================================
+FILE: ../src/shared/lib/authGuard.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/lib/authGuard.ts
+================================================================================
+
+/**
+ * @file authGuard.ts
+ * @description Lapisan keamanan terpusat untuk memverifikasi autentikasi
+ * sebelum operasi mutasi (POST/PUT/DELETE) ke server.
+ *
+ * PRINSIP KEAMANAN:
+ * 1. Defense-in-depth: Verifikasi di UI + API layer + Supabase RLS
+ * 2. Fail-closed: Jika status auth tidak jelas, tolak akses
+ * 3. Least privilege: Hanya user dengan role terautentikasi yang bisa mutasi
+ * 4. Audit trail: Log setiap percobaan akses yang ditolak
+ *
+ * @example
+ * // Di dalam fungsi API / mutation:
+ * import { requireAuth, requirePermission } from '@/shared/lib/authGuard';
+ *
+ * const createBarang = async (input: BarangInput) => {
+ *   requireAuth();              // Memastikan user sudah login
+ *   requirePermission('edit_data'); // Memastikan punya izin edit
+ *   // ... lanjut operasi
+ * };
+ */
+
+import { supabaseClient } from "./supabaseClient";
+import { USE_MOCK } from "./config";
+import { getStoredUser, type StoredAuthUser } from "../../app/providers/authProvider";
+import {
+  isAuthenticatedRole,
+  canEditData,
+  canApproveAccounts,
+  canManageRoles,
+} from "../../app/providers/accessControlProvider";
+import type { PermissionKey } from "../types";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Custom Error Classes
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Error ketika user belum login / sesi tidak valid.
+ * HTTP-equivalent: 401 Unauthorized
+ */
+export class AuthenticationError extends Error {
+  public readonly code = "AUTH_REQUIRED";
+  public readonly statusCode = 401;
+
+  constructor(message = "Anda harus login terlebih dahulu untuk melakukan aksi ini") {
+    super(message);
+    this.name = "AuthenticationError";
+  }
+}
+
+/**
+ * Error ketika user login tapi tidak punya izin yang diperlukan.
+ * HTTP-equivalent: 403 Forbidden
+ */
+export class AuthorizationError extends Error {
+  public readonly code = "PERMISSION_DENIED";
+  public readonly statusCode = 403;
+  public readonly requiredPermission: string;
+
+  constructor(permission: string, message?: string) {
+    super(
+      message ??
+        `Anda tidak memiliki izin "${permission}" untuk melakukan aksi ini`,
+    );
+    this.name = "AuthorizationError";
+    this.requiredPermission = permission;
+  }
+}
+
+/**
+ * Error ketika sesi auth sudah kedaluwarsa.
+ */
+export class SessionExpiredError extends Error {
+  public readonly code = "SESSION_EXPIRED";
+  public readonly statusCode = 401;
+
+  constructor(message = "Sesi Anda telah berakhir. Silakan login kembali.") {
+    super(message);
+    this.name = "SessionExpiredError";
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Audit Logger
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface AuditLogEntry {
+  timestamp: string;
+  action: string;
+  userId: string | null;
+  userEmail: string | null;
+  userRole: string | null;
+  result: "allowed" | "denied";
+  reason?: string;
+  metadata?: Record<string, unknown>;
+}
+
+const MAX_AUDIT_LOG_SIZE = 500;
+const AUDIT_LOG_KEY = "security-audit-log";
+
+/**
+ * Mencatat aktivitas keamanan ke localStorage untuk audit trail.
+ * Pada production, ini sebaiknya dikirim ke server logging.
+ */
+const logAudit = (entry: Omit<AuditLogEntry, "timestamp">): void => {
+  try {
+    const fullEntry: AuditLogEntry = {
+      ...entry,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Console warning untuk akses yang ditolak (dev mode)
+    if (entry.result === "denied") {
+      console.warn(
+        `🔒 [Security] Akses ditolak: ${entry.action}`,
+        {
+          user: entry.userEmail ?? "anonymous",
+          role: entry.userRole ?? "none",
+          reason: entry.reason,
+        },
+      );
+    }
+
+    // Simpan ke localStorage sebagai audit trail sederhana
+    const raw = localStorage.getItem(AUDIT_LOG_KEY);
+    const logs: AuditLogEntry[] = raw ? JSON.parse(raw) : [];
+    logs.unshift(fullEntry);
+
+    // Batas ukuran agar tidak membebani storage
+    if (logs.length > MAX_AUDIT_LOG_SIZE) {
+      logs.length = MAX_AUDIT_LOG_SIZE;
+    }
+
+    localStorage.setItem(AUDIT_LOG_KEY, JSON.stringify(logs));
+  } catch {
+    // Jangan sampai audit logging mengganggu operasi utama
+  }
+};
+
+/**
+ * Membaca log audit. Berguna untuk dashboard admin / debugging.
+ */
+export const getAuditLogs = (): AuditLogEntry[] => {
+  try {
+    const raw = localStorage.getItem(AUDIT_LOG_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+/**
+ * Membersihkan log audit.
+ */
+export const clearAuditLogs = (): void => {
+  try {
+    localStorage.removeItem(AUDIT_LOG_KEY);
+  } catch {
+    // ignore
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Core Auth Verification Functions
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Mendapatkan user yang sudah terverifikasi dari stored session.
+ * Melakukan validasi menyeluruh terhadap data user.
+ *
+ * @returns StoredAuthUser jika valid, null jika tidak
+ */
+export const getVerifiedUser = (): StoredAuthUser | null => {
+  const user = getStoredUser();
+
+  if (!user) return null;
+
+  // Validasi integritas data user
+  if (!user.email || typeof user.email !== "string") return null;
+  if (!user.role || typeof user.role !== "string") return null;
+  if (!isAuthenticatedRole(user.role)) return null;
+
+  return user;
+};
+
+/**
+ * Memverifikasi sesi Supabase masih valid (untuk mode non-mock).
+ * Ini memastikan token JWT belum kedaluwarsa.
+ *
+ * @returns true jika sesi masih valid
+ */
+export const verifySupabaseSession = async (): Promise<boolean> => {
+  if (USE_MOCK) return true;
+
+  try {
+    const { data, error } = await supabaseClient.auth.getSession();
+    if (error) return false;
+    return !!data?.session;
+  } catch {
+    return false;
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Guard Functions (Synchronous — untuk penggunaan di awal setiap mutation)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GUARD UTAMA: Memastikan user sudah login sebelum operasi mutasi.
+ *
+ * Melempar `AuthenticationError` jika user belum login.
+ *
+ * @param actionDescription - Deskripsi aksi untuk audit log (opsional)
+ * @returns User yang sudah terverifikasi
+ *
+ * @throws {AuthenticationError} Jika user belum login
+ *
+ * @example
+ * const handleSave = async (data: any) => {
+ *   const user = requireAuth('Simpan data barang');
+ *   console.log(`${user.name} sedang menyimpan data...`);
+ *   await supabaseClient.from('barang').insert(data);
+ * };
+ */
+export const requireAuth = (actionDescription?: string): StoredAuthUser => {
+  const user = getVerifiedUser();
+  const action = actionDescription ?? "operasi mutasi";
+
+  if (!user) {
+    logAudit({
+      action,
+      userId: null,
+      userEmail: null,
+      userRole: null,
+      result: "denied",
+      reason: "User belum login atau sesi tidak valid",
+    });
+
+    throw new AuthenticationError();
+  }
+
+  logAudit({
+    action,
+    userId: user.id ?? null,
+    userEmail: user.email,
+    userRole: user.role,
+    result: "allowed",
+  });
+
+  return user;
+};
+
+/**
+ * GUARD ASYNC: Versi async dari requireAuth yang juga memvalidasi sesi Supabase.
+ * Gunakan ini untuk operasi kritikal yang membutuhkan validasi ekstra.
+ *
+ * @param actionDescription - Deskripsi aksi untuk audit log
+ * @returns User yang sudah terverifikasi
+ *
+ * @throws {AuthenticationError} Jika user belum login
+ * @throws {SessionExpiredError} Jika sesi Supabase sudah kedaluwarsa
+ *
+ * @example
+ * const handleDelete = async (id: number) => {
+ *   const user = await requireAuthStrict('Hapus barang');
+ *   await supabaseClient.from('barang').delete().eq('id', id);
+ * };
+ */
+export const requireAuthStrict = async (
+  actionDescription?: string,
+): Promise<StoredAuthUser> => {
+  // Step 1: Verifikasi user di local state
+  const user = requireAuth(actionDescription);
+
+  // Step 2: Verifikasi sesi Supabase masih valid (non-mock only)
+  if (!USE_MOCK) {
+    const isSessionValid = await verifySupabaseSession();
+    if (!isSessionValid) {
+      logAudit({
+        action: actionDescription ?? "operasi mutasi (strict)",
+        userId: user.id ?? null,
+        userEmail: user.email,
+        userRole: user.role,
+        result: "denied",
+        reason: "Sesi Supabase sudah kedaluwarsa",
+      });
+
+      throw new SessionExpiredError();
+    }
+  }
+
+  return user;
+};
+
+/**
+ * GUARD PERMISSION: Memastikan user memiliki permission tertentu.
+ *
+ * @param permission - Permission yang dibutuhkan
+ * @param actionDescription - Deskripsi aksi untuk audit log
+ * @returns User yang sudah terverifikasi
+ *
+ * @throws {AuthenticationError} Jika user belum login
+ * @throws {AuthorizationError} Jika user tidak punya permission
+ *
+ * @example
+ * const handleEdit = async (id: number, data: any) => {
+ *   requirePermission('edit_data', 'Edit data barang');
+ *   await supabaseClient.from('barang').update(data).eq('id', id);
+ * };
+ */
+export const requirePermission = (
+  permission: PermissionKey,
+  actionDescription?: string,
+): StoredAuthUser => {
+  const user = requireAuth(actionDescription);
+  const action = actionDescription ?? `operasi dengan izin ${permission}`;
+
+  const permissionCheckers: Record<PermissionKey, (role: string) => boolean> = {
+    edit_data: canEditData,
+    approve_accounts: canApproveAccounts,
+    manage_roles: canManageRoles,
+  };
+
+  const checker = permissionCheckers[permission];
+  if (!checker || !checker(user.role)) {
+    logAudit({
+      action,
+      userId: user.id ?? null,
+      userEmail: user.email,
+      userRole: user.role,
+      result: "denied",
+      reason: `Tidak memiliki izin: ${permission}`,
+    });
+
+    throw new AuthorizationError(permission);
+  }
+
+  return user;
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Utility: Guarded Supabase Operations
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Helper type untuk operasi Supabase yang membutuhkan auth.
+ */
+type SupabaseOperation<T> = () => Promise<T>;
+
+/**
+ * Menjalankan operasi Supabase dengan verifikasi auth di depan.
+ * Wrapper yang menggabungkan auth check + operasi dalam satu panggilan.
+ *
+ * @param operation - Fungsi async yang menjalankan operasi Supabase
+ * @param options - Konfigurasi guard
+ * @returns Hasil dari operasi
+ *
+ * @example
+ * const result = await guardedMutation(
+ *   () => supabaseClient.from('barang').insert(data).select().single(),
+ *   { action: 'Tambah barang', permission: 'edit_data' }
+ * );
+ */
+export const guardedMutation = async <T>(
+  operation: SupabaseOperation<T>,
+  options: {
+    action?: string;
+    permission?: PermissionKey;
+    strict?: boolean;
+  } = {},
+): Promise<T> => {
+  const { action, permission, strict = false } = options;
+
+  // Step 1: Auth check
+  if (strict) {
+    await requireAuthStrict(action);
+  } else if (permission) {
+    requirePermission(permission, action);
+  } else {
+    requireAuth(action);
+  }
+
+  // Step 2: Execute operation
+  return operation();
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// React Hook: useAuthGuard
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Status autentikasi user saat ini.
+ */
+export interface AuthStatus {
+  /** Apakah user sudah login */
+  isAuthenticated: boolean;
+  /** Data user yang sudah terverifikasi */
+  user: StoredAuthUser | null;
+  /** Apakah user punya izin edit */
+  canEdit: boolean;
+  /** Apakah user adalah Super User */
+  isSuperUser: boolean;
+}
+
+/**
+ * Mendapatkan status auth saat ini secara sinkron.
+ * Gunakan di level komponen untuk conditional rendering.
+ *
+ * @example
+ * const status = getAuthStatus();
+ * if (!status.canEdit) {
+ *   return <Alert message="Anda tidak memiliki izin edit" />;
+ * }
+ */
+export const getAuthStatus = (): AuthStatus => {
+  const user = getVerifiedUser();
+  return {
+    isAuthenticated: !!user,
+    user,
+    canEdit: user ? canEditData(user.role) : false,
+    isSuperUser: user?.role === "superuser",
+  };
+};
+
 
 
 ================================================================================
@@ -6904,14 +8875,30 @@ FILE: ../src/shared/types.ts
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/types.ts
 ================================================================================
 
-export type UserRole = "user" | "admin" | "superuser";
+export type BuiltInRole = "user" | "admin" | "supervisor" | "superuser";
+export type UserRole = BuiltInRole | (string & {});
+
+export type PermissionKey =
+  | "approve_accounts" // Point 1: Menyetujui / menolak pendaftaran akun (hanya superuser)
+  | "manage_roles"     // Point 2: Mengelola role & struktur hak akses akun (hanya superuser)
+  | "edit_data";       // Mengedit data barang, SPB, PO, dan transaksi (superuser, supervisor, admin, & role login lainnya)
+
+export interface RoleDefinition {
+  key: UserRole;
+  label: string;
+  badge: string;
+  color: string;
+  level: number;
+  isAuthenticated: boolean;
+  permissions: PermissionKey[];
+}
 
 export interface AccountRequest {
   id: string;
   name: string;
   email: string;
   password?: string;
-  role: "admin";
+  role: UserRole;
   status: "pending" | "approved" | "rejected";
   createdAt: string;
   decidedAt?: string | null;
@@ -7065,11 +9052,20 @@ export interface SPBItemDetail {
   lama_proses?: string | number | null;
   kurang_lebih?: string | number | null;
   keterangan?: string | null;
+  keterangan_barang?: string | null;
   status?: string | null;
   tanggal_pembuatan_spb?: string | null;
   no_surat_jalan?: string | number | null;
 }
 
+export interface ChatMessage {
+  id: string;
+  sender: "user" | "bot";
+  text: string;
+  timestamp: string;
+  suggestions?: string[];
+  actionLinks?: { label: string; path: string }[];
+}
 
 ================================================================================
 FILE: ../src/vite-env.d.ts

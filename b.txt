@@ -1,75 +1,95 @@
-# Masuk ke direktori src
 cd src
 
-# 1. Buat kerangka folder baru
-mkdir -p app/providers \
-  shared/components shared/hooks shared/lib shared/layout \
-  features/dashboard/components features/dashboard/pages \
-  features/products/components features/products/pages \
-  features/stock-out/components features/stock-out/hooks features/stock-out/pages \
-  features/stock-in/pages \
-  features/spb/pages \
-  features/auth/pages \
-  features/stock-opname/pages \
-  features/reports/pages
 
-# 2. Pindahkan Core & App
-mv App.tsx app/
-mv authProvider.ts app/providers/
-touch app/router.tsx app/providers/accessControlProvider.ts app/providers/dataProvider.ts
+# 1. Fix Mocks
+sed -i 's|from "../types"|from "../shared/types"|g' mocks/*.ts 2>/dev/null || true
 
-# 3. Pindahkan modul Shared
-mv components/common/* shared/components/
-mv components/layout/* shared/layout/
-mv hooks/useDebounce.ts shared/hooks/
-mv hooks/useKeyboardShortcut.ts shared/hooks/
-mv utility/* shared/lib/
-mv types/index.ts shared/types.ts
+# 2. Fix Shared Components
+sed -i 's|from "../../hooks/useKeyboardShortcut"|from "../hooks/useKeyboardShortcut"|g' shared/components/GlobalSearch.tsx 2>/dev/null || true
+sed -i 's|from "../../hooks/useDebounce"|from "../hooks/useDebounce"|g' shared/components/GlobalSearch.tsx 2>/dev/null || true
+sed -i 's|from "../../hooks/useProductSearch"|from "../../features/products/useProductSearch"|g' shared/components/GlobalSearch.tsx 2>/dev/null || true
+sed -i 's|from "../../types"|from "../types"|g' shared/components/GlobalSearch.tsx 2>/dev/null || true
+sed -i 's|from "../../utility/format"|from "../lib/format"|g' shared/components/Rupiah.tsx 2>/dev/null || true
+sed -i 's|from "../../types"|from "../types"|g' shared/components/StatusBadge.tsx 2>/dev/null || true
+sed -i 's|from "../../utility/constants"|from "../lib/constants"|g' shared/components/StatusBadge.tsx 2>/dev/null || true
+sed -i 's|from "../common/GlobalSearch"|from "../components/GlobalSearch"|g' shared/layout/AdminLayout.tsx 2>/dev/null || true
 
-# 4. Pindahkan modul Dashboard
-mv components/dashboard/* features/dashboard/components/
-mv pages/dashboard/index.tsx features/dashboard/pages/DashboardPage.tsx
-mv hooks/useDashboardStats.ts features/dashboard/
-mv hooks/useStockInChart.ts features/dashboard/
-mv hooks/useLowStock.ts features/dashboard/
-touch features/dashboard/api.ts
+# 3. Fix Features: Dashboard
+sed -i 's|from "../../hooks/useLowStock"|from "../useLowStock"|g' features/dashboard/components/LowStockTable.tsx 2>/dev/null || true
+sed -i 's|from "../../utility/format"|from "../../../shared/lib/format"|g' features/dashboard/components/*.tsx 2>/dev/null || true
+sed -i 's|from "../../hooks/useStockInChart"|from "../useStockInChart"|g' features/dashboard/components/StockInChart.tsx 2>/dev/null || true
+sed -i 's|from "../../types"|from "../../../shared/types"|g' features/dashboard/components/*.tsx 2>/dev/null || true
 
-# 5. Pindahkan modul Products (Master Barang & Inventory)
-mv components/inventory/InventoryTable.tsx features/products/components/
-mv pages/inventory/index.tsx features/products/pages/InventoryPage.tsx
-mv pages/products/create.tsx features/products/pages/ProductCreatePage.tsx
-mv hooks/useProducts.ts features/products/
-mv hooks/useProductSearch.ts features/products/
-touch features/products/api.ts features/products/types.ts
+sed -i 's|from "../../components/entry/SetupWizard"|from "../../stock-out/components/SetupWizard"|g' features/dashboard/pages/DashboardPage.tsx 2>/dev/null || true
+sed -i 's|from "../../components/dashboard/|from "../components/|g' features/dashboard/pages/DashboardPage.tsx 2>/dev/null || true
+sed -i 's|from "../../hooks/useEntryFlow"|from "../../stock-out/hooks/useEntryFlow"|g' features/dashboard/pages/DashboardPage.tsx 2>/dev/null || true
+sed -i 's|from "../../hooks/useProducts"|from "../../products/useProducts"|g' features/dashboard/pages/DashboardPage.tsx 2>/dev/null || true
+sed -i 's|from "../../hooks/useStockExits"|from "../../stock-out/useStockExits"|g' features/dashboard/pages/DashboardPage.tsx 2>/dev/null || true
+sed -i 's|from "../../hooks/useDashboardStats"|from "../useDashboardStats"|g' features/dashboard/pages/DashboardPage.tsx 2>/dev/null || true
+sed -i 's|from "../../hooks/useKeyboardShortcut"|from "../../../shared/hooks/useKeyboardShortcut"|g' features/dashboard/pages/DashboardPage.tsx 2>/dev/null || true
+sed -i 's|from "../../utility/|from "../../../shared/lib/|g' features/dashboard/pages/DashboardPage.tsx 2>/dev/null || true
 
-# 6. Pindahkan modul Stock-Out (Pengeluaran/Entry)
-mv components/entry/SetupWizard.tsx features/stock-out/components/
-mv pages/entry/index.tsx features/stock-out/pages/EntryPage.tsx
-mv hooks/useEntryFlow.ts features/stock-out/hooks/
-mv hooks/useStockExits.ts features/stock-out/
-mv hooks/usePersons.ts features/stock-out/
-touch features/stock-out/api.ts
+sed -i 's|from "../utility/|from "../../shared/lib/|g' features/dashboard/*.ts 2>/dev/null || true
+sed -i 's|from "../mocks/|from "../../mocks/|g' features/dashboard/*.ts 2>/dev/null || true
+sed -i 's|from "../types"|from "../../shared/types"|g' features/dashboard/*.ts 2>/dev/null || true
 
-# 7. Pindahkan modul SPB
-mv pages/monitoring-spb/index.tsx features/spb/pages/MonitoringSPBPage.tsx
-mv pages/monitoring-spb/detail.tsx features/spb/pages/MonitoringSPBDetailPage.tsx
-mv hooks/useMonitoringSPB.ts features/spb/
-mv hooks/useMonitoringSPBDetail.ts features/spb/
-touch features/spb/api.ts
+# 4. Fix Features: Products
+sed -i 's|from "../../utility/format"|from "../../../shared/lib/format"|g' features/products/components/InventoryTable.tsx 2>/dev/null || true
+sed -i 's|from "../../types"|from "../../../shared/types"|g' features/products/components/InventoryTable.tsx 2>/dev/null || true
 
-# 8. Pindahkan modul Auth & Stock-In
-mv pages/login/index.tsx features/auth/pages/LoginPage.tsx
-mv hooks/useStockEntryMutations.ts features/stock-in/ || true
-touch features/stock-in/api.ts features/stock-in/pages/StockInListPage.tsx
+sed -i 's|from "../../utility/format"|from "../../../shared/lib/format"|g' features/products/pages/InventoryPage.tsx 2>/dev/null || true
+sed -i 's|from "../../components/inventory/InventoryTable"|from "../components/InventoryTable"|g' features/products/pages/InventoryPage.tsx 2>/dev/null || true
+sed -i 's|from "../../hooks/useProducts"|from "../useProducts"|g' features/products/pages/InventoryPage.tsx 2>/dev/null || true
+sed -i 's|from "../../hooks/useStockExits"|from "../../stock-out/useStockExits"|g' features/products/pages/InventoryPage.tsx 2>/dev/null || true
 
-# 9. Buat file skeleton untuk fitur roadmap (Opname & Reports)
-touch features/stock-opname/api.ts features/stock-opname/pages/StockOpnamePage.tsx
-touch features/reports/pages/ReportsPage.tsx
+sed -i 's|from "../../utility/|from "../../../shared/lib/|g' features/products/pages/ProductCreatePage.tsx 2>/dev/null || true
+sed -i 's|from "../../hooks/useProductSearch"|from "../useProductSearch"|g' features/products/pages/ProductCreatePage.tsx 2>/dev/null || true
+sed -i 's|from "../../hooks/useDebounce"|from "../../../shared/hooks/useDebounce"|g' features/products/pages/ProductCreatePage.tsx 2>/dev/null || true
+sed -i 's|from "../../types"|from "../../../shared/types"|g' features/products/pages/ProductCreatePage.tsx 2>/dev/null || true
 
-# 10. Hapus struktur folder lama yang sudah kosong
-rm -rf components hooks pages utility types
+sed -i 's|from "../utility/|from "../../shared/lib/|g' features/products/*.ts 2>/dev/null || true
+sed -i 's|from "../mocks/|from "../../mocks/|g' features/products/*.ts 2>/dev/null || true
+sed -i 's|from "../types"|from "../../shared/types"|g' features/products/*.ts 2>/dev/null || true
 
-# 11. Hapus folder mocks (Hapus tanda # di bawah jika ingin menghapus mocks permanen)
-# rm -rf mocks
+# 5. Fix Features: SPB
+sed -i 's|from "../../hooks/|from "../|g' features/spb/pages/*.tsx 2>/dev/null || true
+sed -i 's|from "../../utility/|from "../../../shared/lib/|g' features/spb/pages/*.tsx 2>/dev/null || true
+sed -i 's|from "../utility/|from "../../shared/lib/|g' features/spb/*.ts 2>/dev/null || true
+sed -i 's|from "../types"|from "../../shared/types"|g' features/spb/*.ts 2>/dev/null || true
 
-echo "✅ Refaktor direktori selesai!"
+# 6. Fix Features: Stock-In
+sed -i 's|from "../utility/|from "../../shared/lib/|g' features/stock-in/*.ts 2>/dev/null || true
+sed -i 's|from "../types"|from "../../shared/types"|g' features/stock-in/*.ts 2>/dev/null || true
+
+# 7. Fix Features: Stock-Out
+sed -i 's|from "../../types"|from "../../../shared/types"|g' features/stock-out/components/SetupWizard.tsx 2>/dev/null || true
+sed -i 's|from "../mocks/entry"|from "../../../mocks/entry"|g' features/stock-out/hooks/useEntryFlow.ts 2>/dev/null || true
+sed -i 's|from "./usePersons"|from "../usePersons"|g' features/stock-out/hooks/useEntryFlow.ts 2>/dev/null || true
+sed -i 's|from "../types"|from "../../../shared/types"|g' features/stock-out/hooks/useEntryFlow.ts 2>/dev/null || true
+
+sed -i 's|from "../../hooks/useProductSearch"|from "../../products/useProductSearch"|g' features/stock-out/pages/EntryPage.tsx 2>/dev/null || true
+sed -i 's|from "../../hooks/usePersons"|from "../usePersons"|g' features/stock-out/pages/EntryPage.tsx 2>/dev/null || true
+sed -i 's|from "../../hooks/useKeyboardShortcut"|from "../../../shared/hooks/useKeyboardShortcut"|g' features/stock-out/pages/EntryPage.tsx 2>/dev/null || true
+sed -i 's|from "../../hooks/useDebounce"|from "../../../shared/hooks/useDebounce"|g' features/stock-out/pages/EntryPage.tsx 2>/dev/null || true
+sed -i 's|from "../../components/entry/SetupWizard"|from "../components/SetupWizard"|g' features/stock-out/pages/EntryPage.tsx 2>/dev/null || true
+sed -i 's|from "../../mocks/entry"|from "../../../mocks/entry"|g' features/stock-out/pages/EntryPage.tsx 2>/dev/null || true
+sed -i 's|from "../../utility/|from "../../../shared/lib/|g' features/stock-out/pages/EntryPage.tsx 2>/dev/null || true
+sed -i 's|from "../../types"|from "../../../shared/types"|g' features/stock-out/pages/EntryPage.tsx 2>/dev/null || true
+
+sed -i 's|from "../utility/|from "../../shared/lib/|g' features/stock-out/*.ts 2>/dev/null || true
+sed -i 's|from "../mocks/|from "../../mocks/|g' features/stock-out/*.ts 2>/dev/null || true
+sed -i 's|from "../types"|from "../../shared/types"|g' features/stock-out/*.ts 2>/dev/null || true
+
+# 8. Otomatis tambah export default pada Pages (jika belum ada)
+echo "Menambahkan export default pada Pages..."
+for file in features/dashboard/pages/DashboardPage.tsx \
+            features/products/pages/InventoryPage.tsx \
+            features/products/pages/ProductCreatePage.tsx \
+            features/spb/pages/MonitoringSPBPage.tsx \
+            features/spb/pages/MonitoringSPBDetailPage.tsx \
+            features/stock-out/pages/EntryPage.tsx; do
+  if [ -f "$file" ] && ! grep -q "export default" "$file"; then
+    name=$(basename "$file" .tsx)
+    echo -e "\nexport default $name;" >> "$file"
+  fi
+done

@@ -9,6 +9,7 @@ import {
   Alert,
   Space,
   Segmented,
+  Select,
 } from "antd";
 import {
   UserOutlined,
@@ -19,6 +20,8 @@ import {
 
 import { USE_MOCK } from "../../../shared/lib/config";
 import { registerAccountRequest } from "../accountRequests";
+import { getAssignableRoles } from "../../../app/providers/accessControlProvider";
+import type { UserRole } from "../../../shared/types";
 
 const { Title, Text } = Typography;
 
@@ -31,6 +34,7 @@ interface RegisterForm {
   name: string;
   email: string;
   password: string;
+  role?: UserRole;
 }
 
 export const LoginPage = () => {
@@ -41,7 +45,11 @@ export const LoginPage = () => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [registerForm] = Form.useForm<RegisterForm>();
 
-  const handleSubmitLogin = (values: LoginForm) => {
+  const assignableRoles = getAssignableRoles();
+
+  // 🔧 PERBAIKAN: Tambahkan e.preventDefault() untuk mencegah browser me-refresh halaman
+  const handleSubmitLogin = (values: LoginForm, e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
     login(values, {
@@ -51,12 +59,18 @@ export const LoginPage = () => {
     });
   };
 
-  const handleSubmitRegister = async (values: RegisterForm) => {
+  const handleSubmitRegister = async (values: RegisterForm, e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
     setIsRegistering(true);
     try {
-      await registerAccountRequest(values);
+      await registerAccountRequest({
+        name: values.name,
+        email: values.email,
+        password: values.password,
+        role: values.role || "admin",
+      });
       setSuccessMsg(
         "Permintaan pembuatan akun berhasil dikirim! Akun Anda telah masuk ke halaman Notifikasi Super User dan menunggu persetujuan.",
       );
@@ -114,7 +128,7 @@ export const LoginPage = () => {
           <Text type="secondary">
             {mode === "login"
               ? "Masuk untuk mengelola inventaris"
-              : "Daftar akun Admin baru (perlu persetujuan Super User)"}
+              : "Daftar akun baru (perlu persetujuan Super User)"}
           </Text>
         </div>
 
@@ -218,6 +232,7 @@ export const LoginPage = () => {
             onFinish={handleSubmitRegister}
             autoComplete="off"
             requiredMark={false}
+            initialValues={{ role: "admin" }}
           >
             <Form.Item
               name="name"
@@ -227,7 +242,7 @@ export const LoginPage = () => {
               <Input
                 size="large"
                 prefix={<IdcardOutlined />}
-                placeholder="Nama calon admin"
+                placeholder="Nama lengkap pengguna"
               />
             </Form.Item>
 
@@ -242,7 +257,7 @@ export const LoginPage = () => {
               <Input
                 size="large"
                 prefix={<MailOutlined />}
-                placeholder="calonadmin@email.com"
+                placeholder="pengguna@email.com"
               />
             </Form.Item>
 
@@ -258,6 +273,17 @@ export const LoginPage = () => {
                 size="large"
                 prefix={<LockOutlined />}
                 placeholder="Minimal 6 karakter"
+              />
+            </Form.Item>
+
+            <Form.Item name="role" label="Role yang Diajukan">
+              <Select
+                size="large"
+                aria-label="Role yang Diajukan"
+                options={assignableRoles.map((r) => ({
+                  value: r.key,
+                  label: r.label,
+                }))}
               />
             </Form.Item>
 
@@ -285,12 +311,16 @@ export const LoginPage = () => {
             description={
               <Space direction="vertical" size={2}>
                 <Text style={{ fontSize: 12 }}>
-                  Admin: <Text code>admin@admin.com</Text> /{" "}
-                  <Text code>admin123</Text>
-                </Text>
-                <Text style={{ fontSize: 12 }}>
                   Super User: <Text code>superuser@admin.com</Text> /{" "}
                   <Text code>super123</Text>
+                </Text>
+                <Text style={{ fontSize: 12 }}>
+                  Supervisor: <Text code>supervisor@admin.com</Text> /{" "}
+                  <Text code>superv123</Text>
+                </Text>
+                <Text style={{ fontSize: 12 }}>
+                  Admin: <Text code>admin@admin.com</Text> /{" "}
+                  <Text code>admin123</Text>
                 </Text>
               </Space>
             }

@@ -11,6 +11,7 @@ import { SetupWizard } from "../components/SetupWizard";
 import { mockWorkplaces } from "../../../mocks/entry";
 import { supabaseClient } from "../../../shared/lib/supabaseClient";
 import { USE_MOCK } from "../../../shared/lib/config";
+import { requirePermission } from "../../../shared/lib/authGuard";
 import { formatNumber } from "../../../shared/lib/format";
 import type { Product, Person, Workplace, OutboundLine } from "../../../shared/types"; // Menggunakan OutboundLine dari types/index
 
@@ -101,6 +102,8 @@ export const EntryPage = () => {
 
     setIsSubmitting(true);
     try {
+      // 🔒 Verifikasi: user harus login dan punya izin edit_data
+      requirePermission("edit_data", "Pengeluaran barang");
       if (!USE_MOCK) {
         // ✅ PERBAIKAN: Gunakan RPC untuk transaksi atomik
         const { error } = await supabaseClient.rpc("issue_stock", {

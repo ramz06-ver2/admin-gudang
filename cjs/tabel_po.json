@@ -9,7 +9,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 4,
     "material_datang_satuan": "unit",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "173",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -24,7 +24,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "85",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -39,7 +39,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "86",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -54,7 +54,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "87",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -69,7 +69,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 3,
     "material_datang_satuan": "roll",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "179",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -84,7 +84,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 5,
     "material_datang_satuan": "roll",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "180",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -99,7 +99,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 200,
     "material_datang_satuan": "m",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "181",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -129,7 +129,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 20,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "101",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -144,7 +144,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 20,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "102",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -159,7 +159,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 10,
     "material_datang_satuan": "set",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "176",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -174,7 +174,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "172",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -189,7 +189,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "174",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -204,7 +204,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 5,
     "material_datang_satuan": "pack",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "130",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -219,7 +219,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 30,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "12",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -234,7 +234,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "13",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -249,7 +249,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 10,
     "material_datang_satuan": "pack",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "131",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -264,7 +264,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 5,
     "material_datang_satuan": "pak",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "14",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -279,7 +279,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 5,
     "material_datang_satuan": "pak",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "10",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -294,7 +294,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 10,
     "material_datang_satuan": "kg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "103",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -309,7 +309,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 5,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "104",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -324,7 +324,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 10,
     "material_datang_satuan": "mtr",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "105",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -339,7 +339,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 2,
     "material_datang_satuan": "unit",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "106",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -354,7 +354,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "107",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -369,7 +369,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 10,
     "material_datang_satuan": "pcs",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "133",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -384,7 +384,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 10,
     "material_datang_satuan": "pcs",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "132",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -399,7 +399,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 10,
     "material_datang_satuan": "pack",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "108",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -414,7 +414,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 4,
     "material_datang_satuan": "psg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "111",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -429,7 +429,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "109",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -444,7 +444,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 5,
     "material_datang_satuan": "lmbr",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "135",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -459,7 +459,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 4,
     "material_datang_satuan": "unit",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "177",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -474,7 +474,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 1,
     "material_datang_satuan": "unit",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "178",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -489,7 +489,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 1,
     "material_datang_satuan": "unit",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "175",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -504,7 +504,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 5,
     "material_datang_satuan": "unit",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "137",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -519,7 +519,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 1,
     "material_datang_satuan": "unit",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "138",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -534,7 +534,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 10,
     "material_datang_satuan": "pcs",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "139",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -549,7 +549,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 2,
     "material_datang_satuan": "pcs",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "140",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -564,7 +564,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 2,
     "material_datang_satuan": "pcs",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "141",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -579,7 +579,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 3,
     "material_datang_satuan": "pcs",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "142",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -594,7 +594,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 3,
     "material_datang_satuan": "pcs",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "143",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -609,7 +609,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 3,
     "material_datang_satuan": "pcs",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "144",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -624,7 +624,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 5,
     "material_datang_satuan": "pack",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "113",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -639,7 +639,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 10,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "1",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -654,7 +654,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 20,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "2",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -669,7 +669,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 30,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "3",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -684,7 +684,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 50,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "4",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -699,7 +699,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 60,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "5",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -714,7 +714,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 40,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "6",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -729,7 +729,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 200,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "146",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -744,7 +744,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 300,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "147",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -759,7 +759,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 300,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "148",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -774,7 +774,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 400,
     "material_datang_satuan": "pcs",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "149",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -789,7 +789,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 500,
     "material_datang_satuan": "pcs",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "150",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -804,7 +804,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 600,
     "material_datang_satuan": "pcs",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "151",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -819,7 +819,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 30,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "152",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -834,7 +834,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 100,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "153",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -849,7 +849,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 200,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "154",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -864,7 +864,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 200,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "155",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -879,7 +879,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 300,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "156",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -894,7 +894,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 100,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "157",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -909,7 +909,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 500,
     "material_datang_satuan": "dus",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "158",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -924,7 +924,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 1000,
     "material_datang_satuan": "dus",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "159",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -939,7 +939,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 1000,
     "material_datang_satuan": "dus",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "160",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -954,7 +954,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 1000,
     "material_datang_satuan": "dus",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "161",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -969,7 +969,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 5,
     "material_datang_satuan": "Jrg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "162",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -984,7 +984,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 2,
     "material_datang_satuan": "pail",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "163",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -999,7 +999,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 20,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "114",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1029,7 +1029,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 1,
     "material_datang_satuan": "set",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "116",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1044,7 +1044,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "117",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1059,7 +1059,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 2,
     "material_datang_satuan": "set",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "119",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1074,7 +1074,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 5,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "120",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1089,7 +1089,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "121",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1104,7 +1104,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 2,
     "material_datang_satuan": "pcs",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "165",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1119,7 +1119,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 2,
     "material_datang_satuan": "pcs",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "164",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1134,7 +1134,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 50,
     "material_datang_satuan": "roll",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "122",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1149,7 +1149,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 19,
     "material_datang_satuan": "roll",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "123",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1164,7 +1164,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 20,
     "material_datang_satuan": "roll",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "124",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1179,7 +1179,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 20,
     "material_datang_satuan": "roll",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "125",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1194,7 +1194,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 10,
     "material_datang_satuan": "roll",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "126",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1209,7 +1209,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 10,
     "material_datang_satuan": "pak",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "166",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1224,7 +1224,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 5,
     "material_datang_satuan": "dus",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "168",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1269,7 +1269,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 10,
     "material_datang_satuan": "roll",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "128",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1284,7 +1284,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 12,
     "material_datang_satuan": "m",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "171",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1299,7 +1299,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 1,
     "material_datang_satuan": null,
-    "id_surat_jalan": null,
+    "id_surat_jalan": "169",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1314,7 +1314,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 20,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "58",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1329,7 +1329,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 50,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "59",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1344,7 +1344,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 50,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "60",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1359,7 +1359,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 30,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "61",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1374,7 +1374,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 50,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "62",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1389,7 +1389,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 30,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "63",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1404,7 +1404,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 5,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "64",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1419,7 +1419,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 17,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "65",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1434,7 +1434,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 8,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "66",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1449,7 +1449,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "67",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1464,7 +1464,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 40,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "68",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1479,7 +1479,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 32,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "69",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1494,7 +1494,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 40,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "70",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:52.555348+00:00",
     "judul_po": null
@@ -1509,7 +1509,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "71",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -1524,7 +1524,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 31,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "72",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -1539,7 +1539,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 8,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "73",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -1554,7 +1554,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 40,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "74",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -1569,7 +1569,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 13,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "75",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -1584,7 +1584,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 15,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "76",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -1599,7 +1599,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 20,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "77",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -1614,7 +1614,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "78",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -1629,7 +1629,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 15,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "79",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -1644,7 +1644,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "80",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -1659,7 +1659,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 5,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "81",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -1674,7 +1674,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "82",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -1689,7 +1689,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 20,
     "material_datang_satuan": "BH",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "83",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -1704,7 +1704,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 10,
     "material_datang_satuan": "BH",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "84",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -1719,7 +1719,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 4,
     "material_datang_satuan": "klg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "127",
     "keterangan": "SUPRA GLUE",
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -1734,7 +1734,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 1025,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "55",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -1749,7 +1749,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 500,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "56",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -1764,7 +1764,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 200,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "57",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -1779,7 +1779,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 20,
     "material_datang_satuan": "roll",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "129",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -1794,7 +1794,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 200,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "7",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -1854,7 +1854,7 @@
     "material_datang_tgl": "2026-08-24",
     "material_datang_qty": 20,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "20",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -2169,7 +2169,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "187",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -2184,7 +2184,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "183",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -2199,7 +2199,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "184",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -2214,7 +2214,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "185",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -2229,7 +2229,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "186",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -2244,7 +2244,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 1,
     "material_datang_satuan": "unit",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "188",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -2259,7 +2259,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 2,
     "material_datang_satuan": "kg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "189",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -2274,7 +2274,7 @@
     "material_datang_tgl": "2026-08-01",
     "material_datang_qty": 1,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "170",
     "keterangan": "ADA DI SURAT JALAN, DI SPB DAN PO TIDAK ADA",
     "created_at": "2026-10-22T00:58:53.211467+00:00",
     "judul_po": null
@@ -3039,7 +3039,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 15,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "19",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3054,7 +3054,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 7,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "22",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3069,7 +3069,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 18,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "23",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3084,7 +3084,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 55,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "24",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3114,7 +3114,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 8,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "21",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3129,7 +3129,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 14,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "25",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3144,7 +3144,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "26",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3159,7 +3159,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "27",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3174,7 +3174,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 8,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "28",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3189,7 +3189,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 8,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "29",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3204,7 +3204,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "30",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3219,7 +3219,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 16,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "31",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3234,7 +3234,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 8,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "32",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3249,7 +3249,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 8,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "33",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3264,7 +3264,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 24,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "34",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3279,7 +3279,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 210,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "35",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3294,7 +3294,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "36",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3309,7 +3309,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "37",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3324,7 +3324,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 8,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "38",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3339,7 +3339,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 16,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "39",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3354,7 +3354,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 8,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "40",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3369,7 +3369,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 16,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "41",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3384,7 +3384,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 24,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "42",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3399,7 +3399,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 100,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "43",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3414,7 +3414,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 8,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "44",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3429,7 +3429,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 24,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "45",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3444,7 +3444,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 32,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "46",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3459,7 +3459,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 100,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "47",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3474,7 +3474,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 120,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "48",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3489,7 +3489,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 100,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "49",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3504,7 +3504,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "50",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3519,7 +3519,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 1,
     "material_datang_satuan": "unit",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "51",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3534,7 +3534,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 1,
     "material_datang_satuan": "unit",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "52",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3549,7 +3549,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 10,
     "material_datang_satuan": "m",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "15",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3564,7 +3564,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "16",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3579,7 +3579,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "53",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3594,7 +3594,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 1,
     "material_datang_satuan": "unit",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "17",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -3609,7 +3609,7 @@
     "material_datang_tgl": "2026-09-09",
     "material_datang_qty": 1,
     "material_datang_satuan": "set",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "18",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -4404,7 +4404,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 32,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "226",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -4419,7 +4419,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 32,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "227",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -4434,7 +4434,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 128,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "228",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -4449,7 +4449,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 84,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "229",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -4494,7 +4494,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 20,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "192",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:53.623956+00:00",
     "judul_po": null
@@ -4509,7 +4509,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 24,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "205",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4524,7 +4524,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 38,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "206",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4539,7 +4539,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 92,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "207",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4554,7 +4554,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 28,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "191",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4569,7 +4569,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 6,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "209",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4584,7 +4584,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 8,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "210",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4599,7 +4599,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 16,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "211",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4614,7 +4614,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 32,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "212",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4644,7 +4644,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 37,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "213",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4659,7 +4659,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 24,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "214",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4674,7 +4674,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "215",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4689,7 +4689,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 8,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "216",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4704,7 +4704,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 8,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "217",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4719,7 +4719,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "218",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4734,7 +4734,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 37,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "219",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4749,7 +4749,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 35,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "220",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4764,7 +4764,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 30,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "221",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4779,7 +4779,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 60,
     "material_datang_satuan": "M'",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "238",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4794,7 +4794,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "230",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4809,7 +4809,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 3,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "231",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4824,7 +4824,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 3,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "232",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4839,7 +4839,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 5,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "306",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4854,7 +4854,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 5,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "307",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4869,7 +4869,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "308",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4884,7 +4884,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 5,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "309",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4899,7 +4899,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "310",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4914,7 +4914,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "311",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4929,7 +4929,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "312",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4944,7 +4944,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 42,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "222",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4959,7 +4959,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 60,
     "material_datang_satuan": "pcs",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "223",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4974,7 +4974,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "224",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -4989,7 +4989,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 1,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "240",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5004,7 +5004,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "19",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5019,7 +5019,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 25,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "242",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5034,7 +5034,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 20,
     "material_datang_satuan": "roll",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "225",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5049,7 +5049,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 150,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "243",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5064,7 +5064,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 200,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "244",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5079,7 +5079,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 800,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "245",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5124,7 +5124,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 75,
     "material_datang_satuan": "roll",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "329",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5139,7 +5139,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "333",
     "keterangan": "Merk \"Wefflo\"",
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5154,7 +5154,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 1,
     "material_datang_satuan": "set",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "313",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5184,7 +5184,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "314",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5199,7 +5199,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 1,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "315",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5214,7 +5214,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 1,
     "material_datang_satuan": "unit",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "330",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5229,7 +5229,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 1,
     "material_datang_satuan": "set",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "317",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5259,7 +5259,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 100,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "318",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5274,7 +5274,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 20,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "319",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5289,7 +5289,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "320",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5349,7 +5349,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 100,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "331",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5364,7 +5364,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 1,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "321",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5379,7 +5379,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 1,
     "material_datang_satuan": "set",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "332",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5394,7 +5394,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 1,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "322",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5469,7 +5469,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 1,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "323",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5574,7 +5574,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 20,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "324",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5634,7 +5634,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "325",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5694,7 +5694,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 20,
     "material_datang_satuan": "pak",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "326",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5769,7 +5769,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "327",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5844,7 +5844,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 3,
     "material_datang_satuan": "psg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "301",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5859,7 +5859,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 1,
     "material_datang_satuan": "psg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "302",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5874,7 +5874,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 2,
     "material_datang_satuan": "psg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "303",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5889,7 +5889,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 8,
     "material_datang_satuan": "psg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "304",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5904,7 +5904,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 10,
     "material_datang_satuan": "psg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "305",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5919,7 +5919,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 5,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "251",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5934,7 +5934,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 7,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "252",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5949,7 +5949,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 6,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "253",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5964,7 +5964,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 20,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "254",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5979,7 +5979,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 8,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "255",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -5994,7 +5994,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "256",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.410365+00:00",
     "judul_po": null
@@ -6009,7 +6009,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 55,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "257",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6024,7 +6024,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 15,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "258",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6039,7 +6039,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 22,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "259",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6054,7 +6054,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 20,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "260",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6069,7 +6069,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 15,
     "material_datang_satuan": "btg",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "261",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6084,7 +6084,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "277",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6099,7 +6099,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 9,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "278",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6114,7 +6114,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 40,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "279",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6129,7 +6129,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 50,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "280",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6144,7 +6144,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 50,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "281",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6159,7 +6159,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 60,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "282",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6174,7 +6174,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 50,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "283",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6189,7 +6189,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "284",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6204,7 +6204,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 8,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "285",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6219,7 +6219,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "286",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6234,7 +6234,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "287",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6249,7 +6249,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "288",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6264,7 +6264,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "289",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6279,7 +6279,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "290",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6294,7 +6294,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "263",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6309,7 +6309,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "264",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6324,7 +6324,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "265",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6339,7 +6339,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 6,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "266",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6354,7 +6354,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 15,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "267",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6369,7 +6369,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "268",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6384,7 +6384,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "291",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6399,7 +6399,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 1,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "292",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6414,7 +6414,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "293",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6429,7 +6429,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "294",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6459,7 +6459,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 20,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "269",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6474,7 +6474,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "270",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6489,7 +6489,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 6,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "271",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6504,7 +6504,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "272",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6519,7 +6519,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "273",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6534,7 +6534,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "274",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6549,7 +6549,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 30,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "275",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6564,7 +6564,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 30,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "276",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6579,7 +6579,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 1,
     "material_datang_satuan": "set",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "328",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6609,7 +6609,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "295",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6624,7 +6624,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 5,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "296",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6639,7 +6639,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 5,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "297",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6654,7 +6654,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 5,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "298",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6669,7 +6669,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 3,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "299",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6684,7 +6684,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 5,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "300",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6759,7 +6759,7 @@
     "material_datang_tgl": "2026-10-24",
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
-    "id_surat_jalan": null,
+    "id_surat_jalan": "334",
     "keterangan": null,
     "created_at": "2026-10-22T00:58:54.821666+00:00",
     "judul_po": null
@@ -6789,7 +6789,7 @@
     "material_datang_tgl": null,
     "material_datang_qty": null,
     "material_datang_satuan": null,
-    "id_surat_jalan": null,
+    "id_surat_jalan": "306",
     "keterangan": null,
     "created_at": null,
     "judul_po": null
@@ -6804,7 +6804,7 @@
     "material_datang_tgl": null,
     "material_datang_qty": null,
     "material_datang_satuan": null,
-    "id_surat_jalan": null,
+    "id_surat_jalan": "307",
     "keterangan": null,
     "created_at": null,
     "judul_po": null
@@ -6819,7 +6819,7 @@
     "material_datang_tgl": null,
     "material_datang_qty": null,
     "material_datang_satuan": null,
-    "id_surat_jalan": null,
+    "id_surat_jalan": "308",
     "keterangan": null,
     "created_at": null,
     "judul_po": null
@@ -6834,7 +6834,7 @@
     "material_datang_tgl": null,
     "material_datang_qty": null,
     "material_datang_satuan": null,
-    "id_surat_jalan": null,
+    "id_surat_jalan": "309",
     "keterangan": null,
     "created_at": null,
     "judul_po": null
@@ -6849,7 +6849,7 @@
     "material_datang_tgl": null,
     "material_datang_qty": null,
     "material_datang_satuan": null,
-    "id_surat_jalan": null,
+    "id_surat_jalan": "310",
     "keterangan": null,
     "created_at": null,
     "judul_po": null
@@ -6864,7 +6864,7 @@
     "material_datang_tgl": null,
     "material_datang_qty": null,
     "material_datang_satuan": null,
-    "id_surat_jalan": null,
+    "id_surat_jalan": "311",
     "keterangan": null,
     "created_at": null,
     "judul_po": null
@@ -6879,7 +6879,7 @@
     "material_datang_tgl": null,
     "material_datang_qty": null,
     "material_datang_satuan": null,
-    "id_surat_jalan": null,
+    "id_surat_jalan": "312",
     "keterangan": null,
     "created_at": null,
     "judul_po": null
@@ -6894,7 +6894,7 @@
     "material_datang_tgl": null,
     "material_datang_qty": null,
     "material_datang_satuan": null,
-    "id_surat_jalan": null,
+    "id_surat_jalan": "222",
     "keterangan": null,
     "created_at": null,
     "judul_po": null
@@ -6909,7 +6909,7 @@
     "material_datang_tgl": null,
     "material_datang_qty": null,
     "material_datang_satuan": null,
-    "id_surat_jalan": null,
+    "id_surat_jalan": "223",
     "keterangan": null,
     "created_at": null,
     "judul_po": null
@@ -6924,7 +6924,7 @@
     "material_datang_tgl": null,
     "material_datang_qty": null,
     "material_datang_satuan": null,
-    "id_surat_jalan": null,
+    "id_surat_jalan": "224",
     "keterangan": null,
     "created_at": null,
     "judul_po": null
@@ -7224,7 +7224,7 @@
     "material_datang_tgl": null,
     "material_datang_qty": null,
     "material_datang_satuan": null,
-    "id_surat_jalan": null,
+    "id_surat_jalan": "225",
     "keterangan": null,
     "created_at": null,
     "judul_po": null
@@ -7344,7 +7344,7 @@
     "material_datang_tgl": null,
     "material_datang_qty": null,
     "material_datang_satuan": null,
-    "id_surat_jalan": null,
+    "id_surat_jalan": "329",
     "keterangan": null,
     "created_at": null,
     "judul_po": null
@@ -7440,6 +7440,21 @@
     "judul_po": null
   },
   {
+    "id": 497,
+    "no_po": "76",
+    "tanggal_po": "2026-10-20",
+    "nama_barang_po": "Klem Gantung 4\" Komplit",
+    "nama_supplier": "PT. MANUNGGAL TEHNIK ABADI",
+    "id_spb": "967",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": null,
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
     "id": 498,
     "no_po": "76",
     "tanggal_po": "2026-10-20",
@@ -7485,6 +7500,21 @@
     "judul_po": null
   },
   {
+    "id": 501,
+    "no_po": "76",
+    "tanggal_po": "2026-10-20",
+    "nama_barang_po": "Klem Gantung 3\" Komplit",
+    "nama_supplier": "PT. MANUNGGAL TEHNIK ABADI",
+    "id_spb": "968",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": null,
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
     "id": 502,
     "no_po": "76",
     "tanggal_po": "2026-10-20",
@@ -7500,12 +7530,42 @@
     "judul_po": null
   },
   {
+    "id": 503,
+    "no_po": "76",
+    "tanggal_po": "2026-10-20",
+    "nama_barang_po": "Klem Gantung 2 1/2\" Komplit",
+    "nama_supplier": "PT. MANUNGGAL TEHNIK ABADI",
+    "id_spb": "955",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": null,
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
     "id": 504,
     "no_po": "76",
     "tanggal_po": "2026-10-20",
     "nama_barang_po": "Klem Gantung 2 1/2\" Komplit",
     "nama_supplier": "PT. MANUNGGAL TEHNIK ABADI",
     "id_spb": "962",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": null,
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 505,
+    "no_po": "76",
+    "tanggal_po": "2026-10-20",
+    "nama_barang_po": "Klem Gantung 2 1/2\" Komplit",
+    "nama_supplier": "PT. MANUNGGAL TEHNIK ABADI",
+    "id_spb": "969",
     "material_datang_tgl": null,
     "material_datang_qty": null,
     "material_datang_satuan": null,
@@ -7560,6 +7620,21 @@
     "judul_po": null
   },
   {
+    "id": 509,
+    "no_po": "76",
+    "tanggal_po": "2026-10-20",
+    "nama_barang_po": "Klem Gantung 2\" Komplit",
+    "nama_supplier": "PT. MANUNGGAL TEHNIK ABADI",
+    "id_spb": "970",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": null,
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
     "id": 510,
     "no_po": "76",
     "tanggal_po": "2026-10-20",
@@ -7596,6 +7671,21 @@
     "nama_barang_po": "Klem Gantung 1 1/2\" Komplit",
     "nama_supplier": "PT. MANUNGGAL TEHNIK ABADI",
     "id_spb": "885",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": null,
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 513,
+    "no_po": "76",
+    "tanggal_po": "2026-10-20",
+    "nama_barang_po": "Klem Gantung 1 1/2\" Komplit",
+    "nama_supplier": "PT. MANUNGGAL TEHNIK ABADI",
+    "id_spb": "971",
     "material_datang_tgl": null,
     "material_datang_qty": null,
     "material_datang_satuan": null,
@@ -7650,6 +7740,21 @@
     "judul_po": null
   },
   {
+    "id": 517,
+    "no_po": "76",
+    "tanggal_po": "2026-10-20",
+    "nama_barang_po": "Klem Gantung 1 1/4\" Komplit",
+    "nama_supplier": "PT. MANUNGGAL TEHNIK ABADI",
+    "id_spb": "972",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": null,
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
     "id": 518,
     "no_po": "76",
     "tanggal_po": "2026-10-20",
@@ -7686,6 +7791,21 @@
     "nama_barang_po": "Klem Gantung 1\" Komplit",
     "nama_supplier": "PT. MANUNGGAL TEHNIK ABADI",
     "id_spb": "887",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": null,
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 521,
+    "no_po": "76",
+    "tanggal_po": "2026-10-20",
+    "nama_barang_po": "Klem Gantung 1\" Komplit",
+    "nama_supplier": "PT. MANUNGGAL TEHNIK ABADI",
+    "id_spb": "973",
     "material_datang_tgl": null,
     "material_datang_qty": null,
     "material_datang_satuan": null,
@@ -7815,6 +7935,21 @@
     "judul_po": null
   },
   {
+    "id": 533,
+    "no_po": "76",
+    "tanggal_po": "2026-10-20",
+    "nama_barang_po": "Dynaset M10",
+    "nama_supplier": "PT. MANUNGGAL TEHNIK ABADI",
+    "id_spb": "974",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": null,
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
     "id": 535,
     "no_po": "76",
     "tanggal_po": "2026-10-20",
@@ -7851,6 +7986,36 @@
     "nama_barang_po": "Dynabolt M12 panjang 60mm",
     "nama_supplier": "PT. MANUNGGAL TEHNIK ABADI",
     "id_spb": "889",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": null,
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 538,
+    "no_po": "77",
+    "tanggal_po": "2026-10-20",
+    "nama_barang_po": "Dynaset M12",
+    "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
+    "id_spb": "876",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": null,
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 539,
+    "no_po": "77",
+    "tanggal_po": "2026-10-20",
+    "nama_barang_po": "Dynaset M12",
+    "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
+    "id_spb": "892",
     "material_datang_tgl": null,
     "material_datang_qty": null,
     "material_datang_satuan": null,
@@ -8165,6 +8330,21 @@
     "tanggal_po": "2026-10-22",
     "nama_barang_po": "Senter LED 5W merk Meval MT3-05A",
     "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
+    "id_spb": null,
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": null,
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 570,
+    "no_po": "80",
+    "tanggal_po": "2026-10-22",
+    "nama_barang_po": "Senter LED 5W merk Meval MT3-05A",
+    "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
     "id_spb": "990",
     "material_datang_tgl": null,
     "material_datang_qty": null,
@@ -8191,6 +8371,21 @@
   },
   {
     "id": 572,
+    "no_po": "80",
+    "tanggal_po": "2026-10-22",
+    "nama_barang_po": "Senter kepala 60W merk Aoki AK-3685A",
+    "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
+    "id_spb": null,
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": null,
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 573,
     "no_po": "80",
     "tanggal_po": "2026-10-22",
     "nama_barang_po": "Senter kepala 60W merk Aoki AK-3685A",
@@ -8225,6 +8420,21 @@
     "tanggal_po": "2026-10-22",
     "nama_barang_po": "Laser light pointer 303 warna hijau",
     "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
+    "id_spb": null,
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": null,
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 576,
+    "no_po": "80",
+    "tanggal_po": "2026-10-22",
+    "nama_barang_po": "Laser light pointer 303 warna hijau",
+    "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
     "id_spb": "992",
     "material_datang_tgl": null,
     "material_datang_qty": null,
@@ -8255,11 +8465,731 @@
     "tanggal_po": "2026-10-22",
     "nama_barang_po": "Regulator gas oxygen merk Yamato YR-71",
     "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
-    "id_spb": "993",
+    "id_spb": null,
     "material_datang_tgl": null,
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "id_surat_jalan": null,
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 580,
+    "no_po": "67",
+    "tanggal_po": "2026-10-09",
+    "nama_barang_po": "\"Wefflo\" Air Release (Automatic Air Vent) UL Listed , Cl. Fig. F9701 1\"",
+    "nama_supplier": "PT. RISERJAYA NUSAINDO",
+    "id_spb": "500",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "333",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 581,
+    "no_po": "65",
+    "tanggal_po": "2026-10-06",
+    "nama_barang_po": "Tang Skun Hydrolik 16-500 mm FYQ 500 Barton",
+    "nama_supplier": "PT. MANUNGGAL TEHNIK ABADI",
+    "id_spb": "519",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "332",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 583,
+    "no_po": "63",
+    "tanggal_po": "2026-10-06",
+    "nama_barang_po": "Mesin Vacuum AC + Oli Vacuum VE2100N Value",
+    "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
+    "id_spb": "506",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "330",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 584,
+    "no_po": "60",
+    "tanggal_po": "2026-09-30",
+    "nama_barang_po": "Bitumen Tape 1500 ukuran 150 mm (6\") x 10 M",
+    "nama_supplier": "PT. SHIAKO JAYA INDONESIA",
+    "id_spb": "490",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "329",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 585,
+    "no_po": "59R1",
+    "tanggal_po": "2026-10-07",
+    "nama_barang_po": "Analizer 410 Value VMG-2-R410A-B",
+    "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
+    "id_spb": "501",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "313",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 586,
+    "no_po": "59R1",
+    "tanggal_po": "2026-10-07",
+    "nama_barang_po": "Charging Valve R32 & 410 Value",
+    "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
+    "id_spb": "503",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "314",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 587,
+    "no_po": "59R1",
+    "tanggal_po": "2026-10-07",
+    "nama_barang_po": "Cutter Pipa Refrigerant VTC 32 Value",
+    "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
+    "id_spb": "504",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "315",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 588,
+    "no_po": "59R1",
+    "tanggal_po": "2026-10-07",
+    "nama_barang_po": "Flaring VFT-808E Value",
+    "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
+    "id_spb": "505",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "316",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 589,
+    "no_po": "59R1",
+    "tanggal_po": "2026-10-07",
+    "nama_barang_po": "Merger Instalasi Test 3005A Kyoritsu",
+    "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
+    "id_spb": "507",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "317",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 590,
+    "no_po": "59R1",
+    "tanggal_po": "2026-10-07",
+    "nama_barang_po": "Pentil Pipa AC 1/4\"",
+    "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
+    "id_spb": "510",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "318",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 591,
+    "no_po": "59R1",
+    "tanggal_po": "2026-10-07",
+    "nama_barang_po": "Klem Cincin 1/2\"",
+    "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
+    "id_spb": "511",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "319",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 592,
+    "no_po": "59R1",
+    "tanggal_po": "2026-10-07",
+    "nama_barang_po": "Bending Pipa Conduit 20 mm",
+    "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
+    "id_spb": "513",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "320",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 593,
+    "no_po": "59R1",
+    "tanggal_po": "2026-10-07",
+    "nama_barang_po": "Tang Skun Manual 1,25-16mm Santus",
+    "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
+    "id_spb": "518",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "321",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 594,
+    "no_po": "59R1",
+    "tanggal_po": "2026-10-07",
+    "nama_barang_po": "Tang Ampere 2007 up to 1000A Kyoritsu",
+    "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
+    "id_spb": "520",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "322",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 595,
+    "no_po": "59R1",
+    "tanggal_po": "2026-10-07",
+    "nama_barang_po": "Kunci Inggris 8\" Tekiro",
+    "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
+    "id_spb": "525",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "323",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 596,
+    "no_po": "59R1",
+    "tanggal_po": "2026-10-07",
+    "nama_barang_po": "Kuas Cat 2\"",
+    "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
+    "id_spb": "536",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "324",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 597,
+    "no_po": "59R1",
+    "tanggal_po": "2026-10-07",
+    "nama_barang_po": "Face Shield Transparan (Terlampir foto)",
+    "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
+    "id_spb": "540",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "325",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 598,
+    "no_po": "59R1",
+    "tanggal_po": "2026-10-07",
+    "nama_barang_po": "Kawat Las LB 52 2.6 mm @5Kg",
+    "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
+    "id_spb": "544",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "326",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 599,
+    "no_po": "59R1",
+    "tanggal_po": "2026-10-07",
+    "nama_barang_po": "Siku Magnet Las 3\"",
+    "nama_supplier": "PT. SURYA KENCANA ELECTRIC",
+    "id_spb": "549",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "327",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 601,
+    "no_po": "56",
+    "tanggal_po": "2026-09-29",
+    "nama_barang_po": "Double Neple BS Screw 1/2\" TSP",
+    "nama_supplier": "PT. BERLIAN SENTOSA MANDIRI",
+    "id_spb": "453",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "306",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 602,
+    "no_po": "56",
+    "tanggal_po": "2026-09-29",
+    "nama_barang_po": "Double Neple BS Screw 1\" TSP",
+    "nama_supplier": "PT. BERLIAN SENTOSA MANDIRI",
+    "id_spb": "454",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "307",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 603,
+    "no_po": "56",
+    "tanggal_po": "2026-09-29",
+    "nama_barang_po": "Bushing BS Screw 1 x 1/2\" TSP",
+    "nama_supplier": "PT. BERLIAN SENTOSA MANDIRI",
+    "id_spb": "455",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "308",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 604,
+    "no_po": "56",
+    "tanggal_po": "2026-09-29",
+    "nama_barang_po": "Tee BS Screw 1\" TSP",
+    "nama_supplier": "PT. BERLIAN SENTOSA MANDIRI",
+    "id_spb": "456",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "309",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 605,
+    "no_po": "56",
+    "tanggal_po": "2026-09-29",
+    "nama_barang_po": "Elbow 90 BS Screw 1\" TSP",
+    "nama_supplier": "PT. BERLIAN SENTOSA MANDIRI",
+    "id_spb": "457",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "310",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 606,
+    "no_po": "56",
+    "tanggal_po": "2026-09-29",
+    "nama_barang_po": "Plug BS Screw 1\" TSP",
+    "nama_supplier": "PT. BERLIAN SENTOSA MANDIRI",
+    "id_spb": "458",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "311",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 607,
+    "no_po": "56",
+    "tanggal_po": "2026-09-29",
+    "nama_barang_po": "Plug BS Screw 1/2\" TSP",
+    "nama_supplier": "PT. BERLIAN SENTOSA MANDIRI",
+    "id_spb": "459",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "312",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 608,
+    "no_po": "55",
+    "tanggal_po": "2026-09-25",
+    "nama_barang_po": "Track Shoes A102 H sz 41 (Di bawah mata kaki)",
+    "nama_supplier": "PT. BERKAT MITRA ANUGERAH",
+    "id_spb": "554",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "301",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 609,
+    "no_po": "55",
+    "tanggal_po": "2026-09-25",
+    "nama_barang_po": "Track Shoes A102 H sz 42 (Di bawah mata kaki)",
+    "nama_supplier": "PT. BERKAT MITRA ANUGERAH",
+    "id_spb": "555",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "302",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 610,
+    "no_po": "55",
+    "tanggal_po": "2026-09-25",
+    "nama_barang_po": "Track Shoes A102 H sz 43 (Di bawah mata kaki)",
+    "nama_supplier": "PT. BERKAT MITRA ANUGERAH",
+    "id_spb": "556",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "303",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 611,
+    "no_po": "55",
+    "tanggal_po": "2026-09-25",
+    "nama_barang_po": "Sepatu Safety Boots AP Orca sz 41",
+    "nama_supplier": "PT. BERKAT MITRA ANUGERAH",
+    "id_spb": "557",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "304",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 612,
+    "no_po": "55",
+    "tanggal_po": "2026-09-25",
+    "nama_barang_po": "Sepatu Safety Boots AP Orca sz 43",
+    "nama_supplier": "PT. BERKAT MITRA ANUGERAH",
+    "id_spb": "558",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "305",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 613,
+    "no_po": "53",
+    "tanggal_po": "2026-09-24",
+    "nama_barang_po": "TY 90 PVC AW 2\" X 2\" Rucika",
+    "nama_supplier": "PT. PEKSI ANDARU SAKTI",
+    "id_spb": "625",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "295",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 614,
+    "no_po": "53",
+    "tanggal_po": "2026-09-24",
+    "nama_barang_po": "Tee PVC AW 4\" X 2\" Rucika",
+    "nama_supplier": "PT. PEKSI ANDARU SAKTI",
+    "id_spb": "626",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "296",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 615,
+    "no_po": "53",
+    "tanggal_po": "2026-09-24",
+    "nama_barang_po": "Tee PVC AW 4\" X 2-1/2\" Rucika",
+    "nama_supplier": "PT. PEKSI ANDARU SAKTI",
+    "id_spb": "627",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "297",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 616,
+    "no_po": "53",
+    "tanggal_po": "2026-09-24",
+    "nama_barang_po": "Tee PVC AW 4\" X 3\" Rucika",
+    "nama_supplier": "PT. PEKSI ANDARU SAKTI",
+    "id_spb": "628",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "298",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 617,
+    "no_po": "53",
+    "tanggal_po": "2026-09-24",
+    "nama_barang_po": "Tee PVC AW 2\" X 1-1/2\" Rucika",
+    "nama_supplier": "PT. PEKSI ANDARU SAKTI",
+    "id_spb": "629",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "299",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 618,
+    "no_po": "53",
+    "tanggal_po": "2026-09-24",
+    "nama_barang_po": "Reducer PVC AW 2\" X 1-1/2\" Rucika",
+    "nama_supplier": "PT. PEKSI ANDARU SAKTI",
+    "id_spb": "630",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "300",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 619,
+    "no_po": "51",
+    "tanggal_po": "2026-09-24",
+    "nama_barang_po": "Pipa PVC AW 2-1/2\" Supramas Warna Abu",
+    "nama_supplier": "PT. PEKSI ANDARU SAKTI",
+    "id_spb": "565",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "257",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 620,
+    "no_po": "51",
+    "tanggal_po": "2026-09-24",
+    "nama_barang_po": "Pipa PVC AW 2\" Supramas Warna Abu",
+    "nama_supplier": "PT. PEKSI ANDARU SAKTI",
+    "id_spb": "566",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "258",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 621,
+    "no_po": "51",
+    "tanggal_po": "2026-09-24",
+    "nama_barang_po": "Pipa PVC AW 1-1/2\" Supramas Warna Abu",
+    "nama_supplier": "PT. PEKSI ANDARU SAKTI",
+    "id_spb": "567",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "259",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 622,
+    "no_po": "51",
+    "tanggal_po": "2026-09-24",
+    "nama_barang_po": "Pipa PVC AW 1\" Supramas Warna Abu",
+    "nama_supplier": "PT. PEKSI ANDARU SAKTI",
+    "id_spb": "568",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "260",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 623,
+    "no_po": "51",
+    "tanggal_po": "2026-09-24",
+    "nama_barang_po": "Pipa PVC AW 3/4\" Supramas Warna Abu",
+    "nama_supplier": "PT. PEKSI ANDARU SAKTI",
+    "id_spb": "569",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "261",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 624,
+    "no_po": "50",
+    "tanggal_po": "2026-09-24",
+    "nama_barang_po": "Elbow 90 BS Las 2\" Medium",
+    "nama_supplier": "PT. BERLIAN SENTOSA MANDIRI",
+    "id_spb": "562",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "254",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 625,
+    "no_po": "50",
+    "tanggal_po": "2026-09-24",
+    "nama_barang_po": "Elbow 90 BS Las 1-1/4\" Medium",
+    "nama_supplier": "PT. BERLIAN SENTOSA MANDIRI",
+    "id_spb": "563",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "255",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 626,
+    "no_po": "50",
+    "tanggal_po": "2026-09-24",
+    "nama_barang_po": "Elbow 90 BS Las 1\" Medium",
+    "nama_supplier": "PT. BERLIAN SENTOSA MANDIRI",
+    "id_spb": "564",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "256",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 627,
+    "no_po": "49",
+    "tanggal_po": "2026-09-24",
+    "nama_barang_po": "Pipa BS 2\" Medium",
+    "nama_supplier": "PT. BERLIAN SENTOSA MANDIRI",
+    "id_spb": "559",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "251",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 628,
+    "no_po": "49",
+    "tanggal_po": "2026-09-24",
+    "nama_barang_po": "Pipa BS 1-1/4\" Medium",
+    "nama_supplier": "PT. BERLIAN SENTOSA MANDIRI",
+    "id_spb": "560",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "252",
+    "keterangan": null,
+    "created_at": null,
+    "judul_po": null
+  },
+  {
+    "id": 629,
+    "no_po": "49",
+    "tanggal_po": "2026-09-24",
+    "nama_barang_po": "Pipa BS 1\" Medium",
+    "nama_supplier": "PT. BERLIAN SENTOSA MANDIRI",
+    "id_spb": "561",
+    "material_datang_tgl": null,
+    "material_datang_qty": null,
+    "material_datang_satuan": null,
+    "id_surat_jalan": "253",
     "keterangan": null,
     "created_at": null,
     "judul_po": null

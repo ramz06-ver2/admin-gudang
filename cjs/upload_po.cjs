@@ -1,5 +1,3 @@
-// File: cjs/upload_po.cjs
-
 const fs = require("node:fs");
 const path = require("node:path");
 const dotenv = require("dotenv");
@@ -47,15 +45,11 @@ const ERROR_FILE = path.join(
 const CHUNK_SIZE = 100;
 
 // ========================================
-// 3. KOLOM TABEL PO
+// 3. STRUKTUR KOLOM TABEL PO
 // ========================================
-// no_spb DIHAPUS karena tidak ditemukan
-// pada skema tabel po di Supabase.
-//
-// Jika ternyata kolom no_spb memang dibutuhkan,
-// periksa struktur tabel terlebih dahulu.
 const ALLOWED_COLUMNS = [
     "id",
+    "no_po",
     "tanggal_po",
     "nama_barang_po",
     "nama_supplier",
@@ -66,6 +60,7 @@ const ALLOWED_COLUMNS = [
     "id_surat_jalan",
     "keterangan",
     "created_at",
+    "judul_po",
 ];
 
 // ========================================
@@ -151,7 +146,9 @@ async function uploadPo() {
             return;
         }
 
-        // Validasi dan bersihkan data.
+        // ====================================
+        // 7. VALIDASI DAN PEMBERSIHAN DATA
+        // ====================================
         const cleanedData = [];
         const invalidRows = [];
 
@@ -200,7 +197,9 @@ async function uploadPo() {
             );
         }
 
-        // Periksa duplikasi ID.
+        // ====================================
+        // 8. CEK DUPLIKASI ID
+        // ====================================
         const ids = cleanedData.map(
             ({ row }) => String(row.id)
         );
@@ -211,7 +210,7 @@ async function uploadPo() {
             );
         }
 
-        console.log(`Total data: ${cleanedData.length}`);
+        console.log(`Total data : ${cleanedData.length}`);
         console.log(`Ukuran batch: ${CHUNK_SIZE}`);
         console.log("\nMemulai upload...\n");
 
@@ -221,7 +220,7 @@ async function uploadPo() {
         const failedRows = [];
 
         // ====================================
-        // 7. UPLOAD PER BATCH
+        // 9. UPLOAD PER BATCH
         // ====================================
         for (
             let i = 0;
@@ -255,7 +254,7 @@ async function uploadPo() {
                 successCount += chunk.length;
 
                 console.log(
-                    `[SUCCESS] ${chunk.length} baris berhasil diproses.\n`
+                    `[SUCCESS] ${chunk.length} baris berhasil di-upload.\n`
                 );
 
                 continue;
@@ -281,7 +280,9 @@ async function uploadPo() {
                 "\nMemeriksa setiap baris secara terpisah...\n"
             );
 
-            // Identifikasi baris yang gagal.
+            // =================================
+            // 10. IDENTIFIKASI BARIS GAGAL
+            // =================================
             for (const item of chunk) {
                 const result = await uploadSingleRow(
                     item.row,
@@ -303,16 +304,16 @@ async function uploadPo() {
                     );
 
                     console.error(
-                        `  Kode : ${result.code || "-"}`
+                        `  Kode   : ${result.code || "-"}`
                     );
 
                     console.error(
-                        `  Pesan: ${result.message}`
+                        `  Pesan  : ${result.message}`
                     );
 
                     if (result.details) {
                         console.error(
-                            `  Detail: ${result.details}`
+                            `  Detail : ${result.details}`
                         );
                     }
 
@@ -328,7 +329,7 @@ async function uploadPo() {
         }
 
         // ====================================
-        // 8. SIMPAN LAPORAN ERROR
+        // 11. SIMPAN LAPORAN ERROR
         // ====================================
         if (failedRows.length > 0) {
             fs.writeFileSync(
@@ -345,15 +346,15 @@ async function uploadPo() {
         }
 
         // ====================================
-        // 9. RINGKASAN
+        // 12. RINGKASAN
         // ====================================
         console.log("\n========================================");
         console.log("             HASIL UPLOAD PO");
         console.log("========================================");
 
-        console.log(`Total data: ${cleanedData.length}`);
-        console.log(`Berhasil  : ${successCount}`);
-        console.log(`Gagal     : ${failedCount}`);
+        console.log(`Total data : ${cleanedData.length}`);
+        console.log(`Berhasil   : ${successCount}`);
+        console.log(`Gagal      : ${failedCount}`);
 
         console.log("========================================");
 
@@ -365,9 +366,10 @@ async function uploadPo() {
             process.exitCode = 1;
         } else {
             console.log(
-                "\n[SUCCESS] Semua data berhasil diproses."
+                "\n[SUCCESS] Semua data berhasil di-upload."
             );
         }
+
     } catch (error) {
         console.error(
             "\n[SYSTEM ERROR]",
@@ -379,6 +381,6 @@ async function uploadPo() {
 }
 
 // ========================================
-// 10. JALANKAN SCRIPT
+// 13. JALANKAN SCRIPT
 // ========================================
 uploadPo();

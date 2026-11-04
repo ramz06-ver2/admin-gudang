@@ -74,7 +74,8 @@ describe("useMonitoringSPB - penempatan Surat Jalan (no 3 dst)", () => {
     const cards = await loadCards();
 
     expect(cards).toHaveLength(1);
-    expect(cards[0]).toMatchObject({ id: "63#R1", spbNo: "63#R1", itemsCount: 2 });
+    // 🔧 PERBAIKAN: ID diubah ke format baru
+    expect(cards[0]).toMatchObject({ id: "SPB_63#R1::Listrik", spbNo: "63#R1", itemsCount: 2 });
     expect(cards[0].itemNames).toEqual(expect.arrayContaining(["Kabel", "Kabel NYM"]));
   });
 
@@ -102,7 +103,6 @@ describe("useMonitoringSPB - penempatan Surat Jalan (no 3 dst)", () => {
 
     expect(poCard).toBeDefined();
     expect(poCard).toMatchObject({ poNo: "50", spbNo: null, itemsCount: 1 });
-    // card tersebut harus dikenali sebagai card PO, bukan card Surat Jalan
     expect(poCard!.suratJalanNo ?? null).toBeNull();
   });
 
@@ -134,9 +134,9 @@ describe("useMonitoringSPB - penempatan Surat Jalan (no 3 dst)", () => {
     const cards = await loadCards();
     const total = cards.reduce((sum, c) => sum + c.itemsCount, 0);
 
-    // 1 SPB + 1 PO + 3 SJ, masing-masing dihitung tepat satu kali
     expect(total).toBe(5);
-    expect(cards.find((c) => c.id === "63#R1")!.itemsCount).toBe(2);
+    // 🔧 PERBAIKAN: Karena judul kosong, IDnya menjadi SPB_63#R1::
+    expect(cards.find((c) => c.id === "SPB_63#R1::")!.itemsCount).toBe(2);
     expect(cards.find((c) => c.id === "PO_34")!.itemsCount).toBe(2);
     expect(cards.find((c) => c.id === "SJ_3")!.itemsCount).toBe(1);
   });

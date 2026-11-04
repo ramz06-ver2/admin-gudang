@@ -60,16 +60,18 @@ function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-                {/* Rute Publik */}
+                {/* Rute Publik (Bisa diakses tanpa login) */}
                 <Route element={<AdminLayout><Outlet /></AdminLayout>}>
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/inventory" element={<InventoryPage />} />
+                  
+                  {/* 🔧 Monitoring SPB dikembalikan ke publik agar bisa dilihat, fitur edit akan dibatasi di dalam UI */}
                   <Route path="/monitoring-spb" element={<MonitoringSPBPage />} />
                   <Route path="/monitoring-spb/detail" element={<MonitoringSPBDetailPage />} />
                   <Route path="/monitoring-spb/item/:id" element={<MonitoringSPBItemDetailPage />} />
                 </Route>
 
-                {/* Rute Admin & Super User */}
+                {/* Rute Admin & Super User (Wajib Login) */}
                 <Route element={
                   <Authenticated key="admin-routes" fallback={<Navigate to="/login" replace />}>
                     <AdminLayout><Outlet /></AdminLayout>

@@ -5,7 +5,6 @@ import { MemoryRouter } from "react-router-dom";
 import { App as AntdApp, ConfigProvider } from "antd";
 import type { ReactNode } from "react";
 
-// Mock Hook
 vi.mock("@/features/spb/useMonitoringSPB", () => ({
   useMonitoringSPB: vi.fn(),
   updateDocumentTitle: vi.fn().mockResolvedValue(undefined),
@@ -17,7 +16,6 @@ import MonitoringSPBPage from "@/features/spb/pages/MonitoringSPBPage";
 const mockUseMonitoringSPB = vi.mocked(useMonitoringSPB);
 const mockUpdateDocumentTitle = vi.mocked(updateDocumentTitle);
 
-// Wrapper untuk Antd & React Query
 function Wrapper({ children }: { children: ReactNode }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
@@ -31,7 +29,6 @@ function Wrapper({ children }: { children: ReactNode }) {
   );
 }
 
-// Mock Data mencakup SPB tanpa PO yang statusnya Belum PO, Datang, dan Selesai
 const mockData = [
   {
     id: "SPB_1",
@@ -159,10 +156,7 @@ describe("MonitoringSPBPage - Fitur Pencarian, Filter, Sorting, dan Edit Judul",
 
     const mainGrid = document.querySelector(".ant-row") as HTMLElement;
 
-    // Hanya SPB-01 (status "Belum PO") yang boleh muncul
     expect(within(mainGrid).getByText("SPB-01")).toBeInTheDocument();
-
-    // SPB 1A (status "Datang"), SPB 29 (status "Selesai"), dan SJ 3 (status "Selesai") TIDAK boleh muncul!
     expect(within(mainGrid).queryByText("1A")).not.toBeInTheDocument();
     expect(within(mainGrid).queryByText("29")).not.toBeInTheDocument();
     expect(within(mainGrid).queryByText("Datang")).not.toBeInTheDocument();
@@ -186,13 +180,11 @@ describe("MonitoringSPBPage - Fitur Pencarian, Filter, Sorting, dan Edit Judul",
   it("menampilkan ikon pensil kecil pada card SPB dan PO serta dapat mengedit judulnya", async () => {
     render(<MonitoringSPBPage />, { wrapper: Wrapper });
 
-    // Tombol pensil di card SPB-01 dan PO-02 harus ada
     const editSpbBtn = screen.getByTestId("edit-spb-title-SPB-01");
     const editPoBtn = screen.getByTestId("edit-po-title-PO-02");
     expect(editSpbBtn).toBeInTheDocument();
     expect(editPoBtn).toBeInTheDocument();
 
-    // Klik ikon pensil pada SPB-01
     fireEvent.click(editSpbBtn);
 
     const input = await screen.findByLabelText("Input Judul Dokumen");
@@ -202,10 +194,12 @@ describe("MonitoringSPBPage - Fitur Pencarian, Filter, Sorting, dan Edit Judul",
     fireEvent.click(screen.getByRole("button", { name: /simpan/i }));
 
     await waitFor(() => {
+      // 🔧 PERBAIKAN: Tambahkan argumen ke-4 ("Proyek A") sesuai dengan kode terbaru
       expect(mockUpdateDocumentTitle).toHaveBeenCalledWith(
         "spb",
         "SPB-01",
         "Proyek Renovasi Villa",
+        "Proyek A",
       );
       expect(screen.getByText(/- Proyek Renovasi Villa/)).toBeInTheDocument();
     });

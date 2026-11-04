@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { supabaseClient } from "../../../shared/lib/supabaseClient";
 import { USE_MOCK } from "../../../shared/lib/config";
+import { requirePermission } from "../../../shared/lib/authGuard";
 import { useProductSearch } from "../useProductSearch";
 import { useDebounce } from "../../../shared/hooks/useDebounce";
 import { formatNumber, formatDate } from "../../../shared/lib/format";
@@ -34,6 +35,8 @@ export const ProductCreatePage = () => {
     setIsSubmitting(true);
     
     try {
+      // 🔒 Verifikasi: user harus login dan punya izin edit_data
+      requirePermission("edit_data", "Tambah barang masuk");
       if (!USE_MOCK) {
         // ✅ PERBAIKAN: Gunakan RPC Supabase untuk atomicity (stok masuk)
         const { error } = await supabaseClient.rpc("receive_stock", {

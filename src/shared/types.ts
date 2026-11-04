@@ -1,11 +1,27 @@
-export type UserRole = "user" | "admin" | "superuser";
+export type BuiltInRole = "user" | "admin" | "supervisor" | "superuser";
+export type UserRole = BuiltInRole | (string & {});
+
+export type PermissionKey =
+  | "approve_accounts" // Point 1: Menyetujui / menolak pendaftaran akun (hanya superuser)
+  | "manage_roles"     // Point 2: Mengelola role & struktur hak akses akun (hanya superuser)
+  | "edit_data";       // Mengedit data barang, SPB, PO, dan transaksi (superuser, supervisor, admin, & role login lainnya)
+
+export interface RoleDefinition {
+  key: UserRole;
+  label: string;
+  badge: string;
+  color: string;
+  level: number;
+  isAuthenticated: boolean;
+  permissions: PermissionKey[];
+}
 
 export interface AccountRequest {
   id: string;
   name: string;
   email: string;
   password?: string;
-  role: "admin";
+  role: UserRole;
   status: "pending" | "approved" | "rejected";
   createdAt: string;
   decidedAt?: string | null;
@@ -159,7 +175,17 @@ export interface SPBItemDetail {
   lama_proses?: string | number | null;
   kurang_lebih?: string | number | null;
   keterangan?: string | null;
+  keterangan_barang?: string | null;
   status?: string | null;
   tanggal_pembuatan_spb?: string | null;
   no_surat_jalan?: string | number | null;
+}
+
+export interface ChatMessage {
+  id: string;
+  sender: "user" | "bot";
+  text: string;
+  timestamp: string;
+  suggestions?: string[];
+  actionLinks?: { label: string; path: string }[];
 }

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Typography,
@@ -19,9 +19,11 @@ import {
   Button,
   message,
 } from "antd";
+import { useGetIdentity } from "@refinedev/core";
 import { useMonitoringSPB, updateDocumentTitle } from "../useMonitoringSPB";
-import type { SPBDocumentGroup } from "../../../shared/types";
+import type { SPBDocumentGroup, UserRole } from "../../../shared/types";
 import { formatFullDate, formatDate } from "../../../shared/lib/format";
+import { canEditData } from "../../../app/providers/accessControlProvider";
 import {
   FileTextOutlined,
   ArrowRightOutlined,
@@ -31,7 +33,6 @@ import {
 
 const { Title, Text } = Typography;
 
-// 🔧 Tambahkan "Belum Diproses" pada FilterType
 type FilterType =
   | "Semua"
   | "Belum Diproses"
@@ -69,10 +70,32 @@ export default function MonitoringSPBPage() {
   const { data, isLoading, error, refetch } = useMonitoringSPB();
   const navigate = useNavigate();
   const screens = Grid.useBreakpoint();
-  const [filter, setFilter] = useState<FilterType>("Semua");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchMode, setSearchMode] = useState<SearchMode>("no");
-  const [sortBy, setSortBy] = useState<SortBy>("status");
+  
+  const { data: identity } = useGetIdentity<{ role: UserRole }>();
+  const userRole = identity?.role ?? "user";
+  const allowEdit = canEditData(userRole);
+
+  // 🔧 PERBAIKAN: Membaca state awal dari localStorage agar tidak hilang saat pindah halaman
+  const [filter, setFilter] = useState<FilterType>(() => {
+    return (localStorage.getItem("spb_filter") as FilterType) || "Semua";
+  });
+  const [searchTerm, setSearchTerm] = useState(() => {
+    return localStorage.getItem("spb_searchTerm") || "";
+  });
+  const [searchMode, setSearchMode] = useState<SearchMode>(() => {
+    return (localStorage.getItem("spb_searchMode") as SearchMode) || "no";
+  });
+  const [sortBy, setSortBy] = useState<SortBy>(() => {
+    return (localStorage.getItem("spb_sortBy") as SortBy) || "status";
+  });
+
+  // 🔧 PERBAIKAN: Menyimpan setiap perubahan state ke localStorage
+  useEffect(() => {
+    localStorage.setItem("spb_filter", filter);
+    localStorage.setItem("spb_searchTerm", searchTerm);
+    localStorage.setItem("spb_searchMode", searchMode);
+    localStorage.setItem("spb_sortBy", sortBy);
+  }, [filter, searchTerm, searchMode, sortBy]);
 
   const [editingTitle, setEditingTitle] = useState<EditingTitleState | null>(null);
   const [titleInput, setTitleInput] = useState("");
@@ -85,6 +108,7 @@ export default function MonitoringSPBPage() {
     docNo: string,
     currentTitle?: string | null,
   ) => {
+    if (!allowEdit) return;
     e.stopPropagation();
     const initial = currentTitle || "";
     setEditingTitle({ type, docNo, currentTitle: initial });
@@ -102,9 +126,7 @@ export default function MonitoringSPBPage() {
       await updateDocumentTitle(type, docNo, trimmed, currentTitle);
       setLocalTitles((prev) => ({ ...prev, [localKey]: trimmed }));
       setEditingTitle(null);
-      message.success(
-        `Judul ${type.toUpperCase()} ${docNo} berhasil diperbarui`,
-      );
+      message.success(`Judul ${type.toUpperCase()} ${docNo} berhasil diperbarui`);
       refetch?.();
     } catch {
       setLocalTitles((prev) => ({ ...prev, [localKey]: trimmed }));
@@ -159,11 +181,13 @@ export default function MonitoringSPBPage() {
 
       switch (filter) {
         case "Belum Diproses":
-          return item.status === "Belum Diproses"; // <--- Filter baru
+          return item.status === "Belum Diproses";
         case "Belum di PO":
           return (!item.poNo || item.poNo === "-") && item.status === "Belum PO";
         case "Sudah di PO":
-          return !!item.poNo && item.poNo !== "-" && item.status !== "Datang" && item.status !== "Selesai";
+          // 🔧 PERBAIKAN: Menghapus kondisi item.status !== "Datang" 
+          // agar SPB yang sudah PO tapi baru datang sebagian tetap muncul di sini
+          return !!item.poNo && item.poNo !== "-" && item.status !== "Selesai";
         case "Datang":
           return item.status === "Datang" || item.status === "Selesai";
         case "Selesai":
@@ -174,7 +198,7 @@ export default function MonitoringSPBPage() {
     });
 
     const getStatusWeight = (status?: string) => {
-      if (status === "Belum Diproses") return 0.5; // Taruh di atas sebelum PO
+      if (status === "Belum Diproses") return 0.5;
       if (status === "Sudah PO" || status === "Belum PO") return 1;
       if (status === "Datang") return 2;
       if (status === "Selesai") return 3;
@@ -222,7 +246,7 @@ export default function MonitoringSPBPage() {
   };
 
   const getStatusColor = (status?: string) => {
-    if (status === "Belum Diproses") return "purple"; // <--- Warna baru
+    if (status === "Belum Diproses") return "purple";
     if (status === "Belum PO") return "orange";
     if (status === "Sudah PO") return "blue";
     if (status === "Datang") return "green";
@@ -260,16 +284,18 @@ export default function MonitoringSPBPage() {
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <Text type="secondary" style={{ fontSize: 11 }}>No. SPB</Text>
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<EditOutlined style={{ fontSize: 12 }} />}
-                  aria-label={`Edit judul SPB ${item.spbNo}`}
-                  data-testid={`edit-spb-title-${item.spbNo}`}
-                  title="Edit judul SPB"
-                  style={{ padding: "0 4px", height: 20, minWidth: 20, color: "#8c8c8c" }}
-                  onClick={(e) => openEditModal(e, "spb", String(item.spbNo), resolvedSpbTitle)}
-                />
+                {allowEdit && (
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<EditOutlined style={{ fontSize: 12 }} />}
+                    aria-label={`Edit judul SPB ${item.spbNo}`}
+                    data-testid={`edit-spb-title-${item.spbNo}`}
+                    title="Edit judul SPB"
+                    style={{ padding: "0 4px", height: 20, minWidth: 20, color: "#8c8c8c" }}
+                    onClick={(e) => openEditModal(e, "spb", String(item.spbNo), resolvedSpbTitle)}
+                  />
+                )}
               </div>
               <div style={{ fontWeight: 600, fontSize: 16, wordBreak: "break-word" }}>
                 {item.spbNo}
@@ -288,16 +314,18 @@ export default function MonitoringSPBPage() {
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <Text type="secondary" style={{ fontSize: 11 }}>No. PO</Text>
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<EditOutlined style={{ fontSize: 12 }} />}
-                  aria-label={`Edit judul PO ${item.poNo}`}
-                  data-testid={`edit-po-title-${item.poNo}`}
-                  title="Edit judul PO"
-                  style={{ padding: "0 4px", height: 20, minWidth: 20, color: "#8c8c8c" }}
-                  onClick={(e) => openEditModal(e, "po", String(item.poNo), resolvedPoTitle)}
-                />
+                {allowEdit && (
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<EditOutlined style={{ fontSize: 12 }} />}
+                    aria-label={`Edit judul PO ${item.poNo}`}
+                    data-testid={`edit-po-title-${item.poNo}`}
+                    title="Edit judul PO"
+                    style={{ padding: "0 4px", height: 20, minWidth: 20, color: "#8c8c8c" }}
+                    onClick={(e) => openEditModal(e, "po", String(item.poNo), resolvedPoTitle)}
+                  />
+                )}
               </div>
               <div style={{ fontWeight: 600, fontSize: 16, wordBreak: "break-word" }}>
                 {item.poNo}
@@ -483,7 +511,6 @@ export default function MonitoringSPBPage() {
             />
           </Space.Compact>
 
-          {/* 🔧 Tambahkan opsi filter "Belum Diproses" */}
           <Segmented<FilterType>
             size="middle"
             options={[
@@ -528,29 +555,31 @@ export default function MonitoringSPBPage() {
         )}
       </div>
 
-      <Modal
-        title={
-          editingTitle
-            ? `Edit Judul ${editingTitle.type.toUpperCase()} ${editingTitle.docNo}`
-            : "Edit Judul"
-        }
-        open={!!editingTitle}
-        onCancel={() => setEditingTitle(null)}
-        onOk={handleSaveTitle}
-        okText="Simpan"
-        cancelText="Batal"
-        confirmLoading={savingTitle}
-        destroyOnHidden
-      >
-        <Input
-          placeholder="Masukkan judul baru..."
-          value={titleInput}
-          onChange={(e) => setTitleInput(e.target.value)}
-          onPressEnter={handleSaveTitle}
-          aria-label="Input Judul Dokumen"
-          autoFocus
-        />
-      </Modal>
+      {allowEdit && (
+        <Modal
+          title={
+            editingTitle
+              ? `Edit Judul ${editingTitle.type.toUpperCase()} ${editingTitle.docNo}`
+              : "Edit Judul"
+          }
+          open={!!editingTitle}
+          onCancel={() => setEditingTitle(null)}
+          onOk={handleSaveTitle}
+          okText="Simpan"
+          cancelText="Batal"
+          confirmLoading={savingTitle}
+          destroyOnHidden
+        >
+          <Input
+            placeholder="Masukkan judul baru..."
+            value={titleInput}
+            onChange={(e) => setTitleInput(e.target.value)}
+            onPressEnter={handleSaveTitle}
+            aria-label="Input Judul Dokumen"
+            autoFocus
+          />
+        </Modal>
+      )}
     </div>
   );
 }

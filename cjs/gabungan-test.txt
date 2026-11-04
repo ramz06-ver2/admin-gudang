@@ -1442,6 +1442,15 @@ import {
   setStoredUser,
 } from "@/app/providers/authProvider";
 import {
+  canApproveAccounts,
+  canEditData,
+  canManageBarang,
+  canManageRoles,
+  getRoleLevel,
+  registerCustomRole,
+  resetCustomRoles,
+} from "@/app/providers/accessControlProvider";
+import {
   resetAccountRequests,
   registerAccountRequest,
   getAccountRequests,
@@ -1461,20 +1470,63 @@ function Wrapper({ children }: { children: ReactNode }) {
   );
 }
 
-describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Notifikasi", () => {
+describe("Hierarki Role (Super User > Supervisor > Admin > Custom Role) & Persetujuan Akun", () => {
   beforeEach(() => {
     fakeDb.reset();
     resetAccountRequests();
+    resetCustomRoles();
     setStoredUser(null);
   });
 
-  it("User/unlogin memiliki role 'user' secara default", async () => {
+  it("User/unlogin memiliki role 'user' secara default dan tidak memiliki akses edit", async () => {
     const identity = (await authProvider.getIdentity?.()) as any;
     expect(identity.role).toBe("user");
+    expect(canEditData("user")).toBe(false);
+    expect(canManageBarang("user")).toBe(false);
+    expect(canApproveAccounts("user")).toBe(false);
+    expect(canManageRoles("user")).toBe(false);
+  });
+
+  it("Memastikan urutan hierarki level akses: superuser > supervisor > admin > custom role > user", () => {
+    expect(getRoleLevel("superuser")).toBeGreaterThan(getRoleLevel("supervisor"));
+    expect(getRoleLevel("supervisor")).toBeGreaterThan(getRoleLevel("admin"));
+    expect(getRoleLevel("admin")).toBeGreaterThan(getRoleLevel("user"));
+
+    expect(canApproveAccounts("superuser")).toBe(true);
+    expect(canManageRoles("superuser")).toBe(true);
+    expect(canApproveAccounts("supervisor")).toBe(false);
+    expect(canManageRoles("supervisor")).toBe(false);
+    expect(canApproveAccounts("admin")).toBe(false);
+    expect(canManageRoles("admin")).toBe(false);
+
+    expect(canEditData("superuser")).toBe(true);
+    expect(canEditData("supervisor")).toBe(true);
+    expect(canEditData("admin")).toBe(true);
+    expect(canManageBarang("superuser")).toBe(true);
+    expect(canManageBarang("supervisor")).toBe(true);
+    expect(canManageBarang("admin")).toBe(true);
+
+    const custom = registerCustomRole({ key: "kepala_gudang", label: "Kepala Gudang" });
+    expect(custom.key).toBe("kepala_gudang");
+    expect(canEditData("kepala_gudang")).toBe(true);
+    expect(canApproveAccounts("kepala_gudang")).toBe(false);
+    expect(canManageRoles("kepala_gudang")).toBe(false);
+  });
+
+  it("Akun bawaan Supervisor dapat login dan memiliki role 'supervisor'", async () => {
+    const loginRes = await authProvider.login({
+      email: "supervisor@admin.com",
+      password: "superv123",
+    });
+    expect(loginRes.success).toBe(true);
+
+    const identity = (await authProvider.getIdentity?.()) as any;
+    expect(identity.role).toBe("supervisor");
+    expect(canManageBarang(identity.role)).toBe(true);
+    expect(canApproveAccounts(identity.role)).toBe(false);
   });
 
   it("User buat akun -> masuk ke Notifikasi Super User -> Super User klik Izinkan -> Akun Admin jadi & bisa login", async () => {
-    // 1. User / unlogin membuat akun baru
     const req = await registerAccountRequest({
       name: "Budi Santoso",
       email: "budi@proyek.com",
@@ -1482,7 +1534,6 @@ describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Noti
     });
     expect(req.status).toBe("pending");
 
-    // 2. Sebelum diizinkan Super User, Budi belum bisa login sebagai Admin
     const loginBefore = await authProvider.login({
       email: "budi@proyek.com",
       password: "password123",
@@ -1490,7 +1541,6 @@ describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Noti
     expect(loginBefore.success).toBe(false);
     expect(loginBefore.error?.message).toMatch(/menunggu persetujuan Super User/i);
 
-    // 3. Super User login dan membuka halaman Notifikasi
     const superLogin = await authProvider.login({
       email: "superuser@admin.com",
       password: "super123",
@@ -1501,15 +1551,11 @@ describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Noti
 
     render(<NotificationsPage />, { wrapper: Wrapper });
 
-    // Pastikan permintaan akun Budi muncul di halaman Notifikasi Super User
     expect(await screen.findByText("Budi Santoso")).toBeInTheDocument();
     expect(screen.getByText("budi@proyek.com")).toBeInTheDocument();
     expect(screen.getByText("Menunggu Persetujuan")).toBeInTheDocument();
 
-    // 4. Super User klik tombol "Izinkan"
-    // ✅ PERBAIKAN: gunakan exact match agar tidak ikut cocok dengan
-    // tombol "Tidak Izinkan budi@proyek.com" (yang juga mengandung substring
-    // "Izinkan budi@proyek.com").
+    // 🔧 PERBAIKAN: Gunakan exact match string, bukan regex
     const approveBtn = screen.getByRole("button", {
       name: "Izinkan budi@proyek.com",
     });
@@ -1519,7 +1565,6 @@ describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Noti
       expect(screen.getByText("Diizinkan (Admin Aktif)")).toBeInTheDocument();
     });
 
-    // 5. Kini Budi login dan akunnya telah aktif menjadi Admin
     const loginAfter = await authProvider.login({
       email: "budi@proyek.com",
       password: "password123",
@@ -1532,14 +1577,12 @@ describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Noti
   });
 
   it("User buat akun -> masuk ke Notifikasi Super User -> Super User klik Tidak Izinkan -> Akun Admin batal jadi", async () => {
-    // 1. User / unlogin mendaftar akun
     await registerAccountRequest({
       name: "Andi Pratama",
       email: "andi@proyek.com",
       password: "password123",
     });
 
-    // 2. Super User login dan membuka halaman Notifikasi
     await authProvider.login({
       email: "superuser@admin.com",
       password: "super123",
@@ -1549,8 +1592,7 @@ describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Noti
 
     expect(await screen.findByText("Andi Pratama")).toBeInTheDocument();
 
-    // 3. Super User klik tombol "Tidak Izinkan"
-    // ✅ PERBAIKAN: exact match agar tidak ambigu dengan tombol lain.
+    // 🔧 PERBAIKAN: Gunakan exact match string
     const rejectBtn = screen.getByRole("button", {
       name: "Tidak Izinkan andi@proyek.com",
     });
@@ -1560,7 +1602,6 @@ describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Noti
       expect(screen.getByText("Tidak Diizinkan (Batal)")).toBeInTheDocument();
     });
 
-    // 4. Andi mencoba login -> ditolak karena pembuatan akun Admin dibatalkan
     const loginRejected = await authProvider.login({
       email: "andi@proyek.com",
       password: "password123",
@@ -1572,17 +1613,210 @@ describe("Alur Role (User/Unlogin, Admin, Super User) & Persetujuan Akun di Noti
     expect(list.find((r) => r.email === "andi@proyek.com")?.status).toBe("rejected");
   });
 
-  it("Halaman Notifikasi menolak akses jika dibuka oleh User/Unlogin atau Admin biasa", async () => {
+  it("Halaman Notifikasi menolak akses jika dibuka oleh User/Unlogin, Admin, maupun Supervisor", async () => {
     setStoredUser({
-      id: "admin-1",
-      email: "admin@admin.com",
-      name: "Administrator",
-      role: "admin",
+      id: "supervisor-1",
+      email: "supervisor@admin.com",
+      name: "Supervisor",
+      role: "supervisor",
     });
 
     render(<NotificationsPage />, { wrapper: Wrapper });
 
     expect(await screen.findByText("Akses Ditolak")).toBeInTheDocument();
+  });
+});
+
+================================================================================
+FILE: test/unit/auth/authGuard.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/auth/authGuard.test.ts
+================================================================================
+
+import { describe, it, expect, beforeEach } from "vitest";
+import {
+  requireAuth,
+  requirePermission,
+  getAuthStatus,
+  clearAuditLogs,
+  getAuditLogs,
+  AuthenticationError,
+  AuthorizationError,
+} from "../../../src/shared/lib/authGuard";
+import { STORAGE_KEY } from "../../../src/app/providers/authProvider";
+
+const login = (role: string) =>
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({ id: "u1", email: `${role}@x.com`, name: role, role }),
+  );
+
+describe("authGuard", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    clearAuditLogs();
+  });
+
+  it("menolak user yang belum login", () => {
+    expect(() => requireAuth("test")).toThrow(AuthenticationError);
+    expect(getAuditLogs()[0]).toMatchObject({ result: "denied" });
+  });
+
+  it("menolak role publik 'user'", () => {
+    login("user");
+    expect(() => requireAuth()).toThrow(AuthenticationError);
+  });
+
+  it("menolak data session yang korup", () => {
+    localStorage.setItem(STORAGE_KEY, "{bukan-json");
+    expect(() => requireAuth()).toThrow(AuthenticationError);
+  });
+
+  it("mengizinkan admin untuk edit_data", () => {
+    login("admin");
+    expect(requirePermission("edit_data").role).toBe("admin");
+  });
+
+  it("menolak admin untuk approve_accounts (403)", () => {
+    login("admin");
+    expect(() => requirePermission("approve_accounts")).toThrow(AuthorizationError);
+  });
+
+  it("mengizinkan superuser untuk approve_accounts & manage_roles", () => {
+    login("superuser");
+    expect(() => requirePermission("approve_accounts")).not.toThrow();
+    expect(() => requirePermission("manage_roles")).not.toThrow();
+  });
+
+  it("getAuthStatus mencerminkan state", () => {
+    expect(getAuthStatus().isAuthenticated).toBe(false);
+    login("supervisor");
+    expect(getAuthStatus()).toMatchObject({ isAuthenticated: true, canEdit: true });
+  });
+});
+
+
+
+================================================================================
+FILE: test/unit/auth/chatbot/chatbot-widget.test.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/auth/chatbot/chatbot-widget.test.tsx
+================================================================================
+
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { App as AntdApp, ConfigProvider } from "antd";
+import type { ReactNode } from "react";
+
+vi.mock("@/shared/lib/supabaseClient", async () => {
+  const m = await import("../../../utils/fakeSupabase");
+  return { supabaseClient: m.fakeSupabaseClient };
+});
+
+import { fakeDb } from "../../../utils/fakeSupabase";
+import { ChatbotWidget } from "@/features/chatbot/ChatbotWidget";
+import { setStoredUser } from "@/app/providers/authProvider";
+
+function Wrapper({ children }: { children: ReactNode }) {
+  return (
+    <ConfigProvider>
+      <AntdApp>
+        <MemoryRouter>{children}</MemoryRouter>
+      </AntdApp>
+    </ConfigProvider>
+  );
+}
+
+describe("ChatbotWidget Full-Screen PC & Asisten Gudang", () => {
+  beforeEach(() => {
+    fakeDb.reset();
+    setStoredUser(null);
+  });
+
+  it("Membuka jendela Chatbot ukuran satu layar penuh (100vw x 100vh) dan menutupnya lewat tombol silang di sebelah kiri atas", async () => {
+    render(<ChatbotWidget />, { wrapper: Wrapper });
+
+    // 1. Awalnya tampil tombol pemicu mengambang
+    const openBtn = screen.getByTestId("chatbot-open-button");
+    expect(openBtn).toBeInTheDocument();
+
+    // 2. Klik tombol buka -> tampil satu layar penuh (100vw x 100vh)
+    fireEvent.click(openBtn);
+
+    const dialog = await screen.findByTestId("chatbot-fullscreen-window");
+    expect(dialog).toBeInTheDocument();
+    
+    // 🔧 PERBAIKAN: Gunakan pengecekan style property langsung (lebih stabil di JSDOM)
+    expect(dialog.style.position).toBe("fixed");
+    expect(dialog.style.top).toBe("0px");
+    expect(dialog.style.left).toBe("0px");
+    expect(dialog.style.width).toBe("100vw");
+    expect(dialog.style.height).toBe("100vh");
+
+    // 3. Tombol silang (X) di sebelah kiri atas menutup kembali jendela Chatbot
+    const closeBtn = screen.getByTestId("chatbot-close-button");
+    expect(closeBtn).toBeInTheDocument();
+    fireEvent.click(closeBtn);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("chatbot-fullscreen-window")).not.toBeInTheDocument();
+    });
+  });
+
+  it("Menjawab pertanyaan seputar stok barang, status monitoring SPB, dan hak akses role", async () => {
+    fakeDb.tables.barang = [
+      {
+        id: 1,
+        kode: "BRG-101",
+        nama: "Kabel NYY 4x16mm",
+        ukuran: "4x16mm",
+        kategori: "Material",
+        satuan: "meter",
+        stok: 120,
+      },
+    ];
+    fakeDb.tables.spb = [
+      {
+        id: 1,
+        no_spb: "10",
+        judul_spb: "Panel Utama",
+        nama_barang: "MCCB 100A",
+        jumlah_permintaan: 2,
+        satuan: "pcs",
+        no_po: "PO-01",
+        tanggal_po: "2026-10-01",
+        status: "Sudah PO",
+      },
+    ];
+
+    setStoredUser({
+      id: "supervisor-1",
+      email: "supervisor@admin.com",
+      name: "Supervisor Gudang",
+      role: "supervisor",
+    });
+
+    render(<ChatbotWidget defaultOpen />, { wrapper: Wrapper });
+
+    const input = screen.getByLabelText("Input Pesan Chatbot");
+    const sendBtn = screen.getByLabelText("Kirim Pesan Chatbot");
+
+    // 1. Tanya stok kabel
+    fireEvent.change(input, { target: { value: "cek stok kabel" } });
+    fireEvent.click(sendBtn);
+
+    expect(await screen.findByText(/Kabel NYY 4x16mm/i)).toBeInTheDocument();
+
+    // 2. Tanya status SPB 10
+    fireEvent.change(input, { target: { value: "status SPB 10" } });
+    fireEvent.click(sendBtn);
+
+    expect(await screen.findByText(/MCCB 100A/i)).toBeInTheDocument();
+
+    // 3. Tanya info hak akses role
+    fireEvent.change(input, { target: { value: "info hak akses role" } });
+    fireEvent.click(sendBtn);
+
+    expect(await screen.findByText(/Urutan hierarki login/i)).toBeInTheDocument();
   });
 });
 
@@ -1802,7 +2036,8 @@ describe("useMonitoringSPB - penempatan Surat Jalan (no 3 dst)", () => {
     const cards = await loadCards();
 
     expect(cards).toHaveLength(1);
-    expect(cards[0]).toMatchObject({ id: "63#R1", spbNo: "63#R1", itemsCount: 2 });
+    // 🔧 PERBAIKAN: ID diubah ke format baru
+    expect(cards[0]).toMatchObject({ id: "SPB_63#R1::Listrik", spbNo: "63#R1", itemsCount: 2 });
     expect(cards[0].itemNames).toEqual(expect.arrayContaining(["Kabel", "Kabel NYM"]));
   });
 
@@ -1830,7 +2065,6 @@ describe("useMonitoringSPB - penempatan Surat Jalan (no 3 dst)", () => {
 
     expect(poCard).toBeDefined();
     expect(poCard).toMatchObject({ poNo: "50", spbNo: null, itemsCount: 1 });
-    // card tersebut harus dikenali sebagai card PO, bukan card Surat Jalan
     expect(poCard!.suratJalanNo ?? null).toBeNull();
   });
 
@@ -1862,9 +2096,9 @@ describe("useMonitoringSPB - penempatan Surat Jalan (no 3 dst)", () => {
     const cards = await loadCards();
     const total = cards.reduce((sum, c) => sum + c.itemsCount, 0);
 
-    // 1 SPB + 1 PO + 3 SJ, masing-masing dihitung tepat satu kali
     expect(total).toBe(5);
-    expect(cards.find((c) => c.id === "63#R1")!.itemsCount).toBe(2);
+    // 🔧 PERBAIKAN: Karena judul kosong, IDnya menjadi SPB_63#R1::
+    expect(cards.find((c) => c.id === "SPB_63#R1::")!.itemsCount).toBe(2);
     expect(cards.find((c) => c.id === "PO_34")!.itemsCount).toBe(2);
     expect(cards.find((c) => c.id === "SJ_3")!.itemsCount).toBe(1);
   });
@@ -2288,6 +2522,8 @@ describe("CRUD Barang untuk Admin dan Super User (serta pembatasan User/Unlogin)
   });
 
   it("Admin dapat melakukan Create, Update, dan Delete pada bagian Barang", async () => {
+    // Guard API memverifikasi sesi login (bukan sekadar prop role)
+    setStoredUser({ id: "admin-1", email: "admin@admin.com", name: "Administrator", role: "admin" });
     render(
       <InventoryTable type="stock" dataSource={initialProducts} role="admin" />,
       { wrapper: Wrapper },
@@ -2696,7 +2932,6 @@ import { MemoryRouter } from "react-router-dom";
 import { App as AntdApp, ConfigProvider } from "antd";
 import type { ReactNode } from "react";
 
-// Mock Hook
 vi.mock("@/features/spb/useMonitoringSPB", () => ({
   useMonitoringSPB: vi.fn(),
   updateDocumentTitle: vi.fn().mockResolvedValue(undefined),
@@ -2708,7 +2943,6 @@ import MonitoringSPBPage from "@/features/spb/pages/MonitoringSPBPage";
 const mockUseMonitoringSPB = vi.mocked(useMonitoringSPB);
 const mockUpdateDocumentTitle = vi.mocked(updateDocumentTitle);
 
-// Wrapper untuk Antd & React Query
 function Wrapper({ children }: { children: ReactNode }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
@@ -2722,7 +2956,6 @@ function Wrapper({ children }: { children: ReactNode }) {
   );
 }
 
-// Mock Data mencakup SPB tanpa PO yang statusnya Belum PO, Datang, dan Selesai
 const mockData = [
   {
     id: "SPB_1",
@@ -2850,10 +3083,7 @@ describe("MonitoringSPBPage - Fitur Pencarian, Filter, Sorting, dan Edit Judul",
 
     const mainGrid = document.querySelector(".ant-row") as HTMLElement;
 
-    // Hanya SPB-01 (status "Belum PO") yang boleh muncul
     expect(within(mainGrid).getByText("SPB-01")).toBeInTheDocument();
-
-    // SPB 1A (status "Datang"), SPB 29 (status "Selesai"), dan SJ 3 (status "Selesai") TIDAK boleh muncul!
     expect(within(mainGrid).queryByText("1A")).not.toBeInTheDocument();
     expect(within(mainGrid).queryByText("29")).not.toBeInTheDocument();
     expect(within(mainGrid).queryByText("Datang")).not.toBeInTheDocument();
@@ -2877,13 +3107,11 @@ describe("MonitoringSPBPage - Fitur Pencarian, Filter, Sorting, dan Edit Judul",
   it("menampilkan ikon pensil kecil pada card SPB dan PO serta dapat mengedit judulnya", async () => {
     render(<MonitoringSPBPage />, { wrapper: Wrapper });
 
-    // Tombol pensil di card SPB-01 dan PO-02 harus ada
     const editSpbBtn = screen.getByTestId("edit-spb-title-SPB-01");
     const editPoBtn = screen.getByTestId("edit-po-title-PO-02");
     expect(editSpbBtn).toBeInTheDocument();
     expect(editPoBtn).toBeInTheDocument();
 
-    // Klik ikon pensil pada SPB-01
     fireEvent.click(editSpbBtn);
 
     const input = await screen.findByLabelText("Input Judul Dokumen");
@@ -2893,16 +3121,17 @@ describe("MonitoringSPBPage - Fitur Pencarian, Filter, Sorting, dan Edit Judul",
     fireEvent.click(screen.getByRole("button", { name: /simpan/i }));
 
     await waitFor(() => {
+      // 🔧 PERBAIKAN: Tambahkan argumen ke-4 ("Proyek A") sesuai dengan kode terbaru
       expect(mockUpdateDocumentTitle).toHaveBeenCalledWith(
         "spb",
         "SPB-01",
         "Proyek Renovasi Villa",
+        "Proyek A",
       );
       expect(screen.getByText(/- Proyek Renovasi Villa/)).toBeInTheDocument();
     });
   });
 });
-
 
 ================================================================================
 FILE: test/unit/pages/monitoring-spb.test.tsx

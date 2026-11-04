@@ -77,6 +77,8 @@ describe("CRUD Barang untuk Admin dan Super User (serta pembatasan User/Unlogin)
   });
 
   it("Admin dapat melakukan Create, Update, dan Delete pada bagian Barang", async () => {
+    // Guard API memverifikasi sesi login (bukan sekadar prop role)
+    setStoredUser({ id: "admin-1", email: "admin@admin.com", name: "Administrator", role: "admin" });
     render(
       <InventoryTable type="stock" dataSource={initialProducts} role="admin" />,
       { wrapper: Wrapper },

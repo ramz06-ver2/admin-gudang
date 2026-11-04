@@ -3,6 +3,7 @@ import { App } from "antd";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { USE_MOCK } from "../../shared/lib/config";
+import { requirePermission } from "../../shared/lib/authGuard";
 import type { StockEntry } from "../../shared/types";
 
 export interface CreateStockEntryInput {
@@ -19,6 +20,8 @@ export const useCreateStockEntry = () => {
 
   return useMutation({
     mutationFn: async (input: CreateStockEntryInput) => {
+      // 🔒 Verifikasi: user harus login dan punya izin edit_data
+      requirePermission("edit_data", "Tambah barang masuk");
       // === MODE MOCK ===
       if (USE_MOCK) {
         await new Promise((r) => setTimeout(r, 500));
