@@ -1,236 +1,70 @@
-import { useState, useMemo, useEffect } from "react";
+// src/features/spb/pages/MonitoringSPBPage.tsx
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Typography,
-  Card,
-  Space,
-  Row,
-  Col,
-  Divider,
-  Spin,
-  Segmented,
-  Empty,
-  Alert,
-  Tag,
-  Grid,
-  Input,
-  Select,
-  Modal,
-  Button,
-  message,
-} from "antd";
+import { Alert, Col, Empty, Row, Spin } from "antd";
 import { useGetIdentity } from "@refinedev/core";
-import { useMonitoringSPB, updateDocumentTitle } from "../useMonitoringSPB";
-import type { SPBDocumentGroup, UserRole } from "../../../shared/types";
-import { formatFullDate, formatDate } from "../../../shared/lib/format";
 import { canEditData } from "../../../app/providers/accessControlProvider";
+import { getVerifiedUser } from "../../../shared/lib/authGuard";
+import type { SPBDocumentGroup, UserRole } from "../../../shared/types";
+import { canViewRestrictedSpb } from "../accessRules";
+import { EditDocumentTitleModal } from "../components/EditDocumentTitleModal";
+import { MonitoringSPBCard } from "../components/MonitoringSPBCard";
+import { MonitoringSPBHeader } from "../components/MonitoringSPBHeader";
+import { MonitoringSPBRecentList } from "../components/MonitoringSPBRecentList";
+import { MonitoringSPBToolbar } from "../components/MonitoringSPBToolbar";
+import { useEditDocumentTitle } from "../hooks/useEditDocumentTitle";
+import { useMonitoringSPBFilter } from "../hooks/useMonitoringSPBFilter";
+import { useMonitoringSPB } from "../useMonitoringSPB";
 import {
-  FileTextOutlined,
-  ArrowRightOutlined,
-  SearchOutlined,
-  EditOutlined,
-} from "@ant-design/icons";
-
-const { Title, Text } = Typography;
-
-type FilterType =
-  | "Semua"
-  | "Belum Diproses"
-  | "Belum di PO"
-  | "Sudah di PO"
-  | "Datang"
-  | "Selesai";
-
-type SearchMode = "no" | "barang";
-type SortBy = "status" | "number" | "oldest" | "newest";
-
-interface EditingTitleState {
-  type: "spb" | "po";
-  docNo: string;
-  currentTitle: string;
-}
-
-const getNumberFromStr = (spb: string | null, po: string | null) => {
-  const str = spb || po;
-  if (!str) return 999999;
-  const match = String(str).match(/\d+/);
-  return match ? parseInt(match[0], 10) : 999999;
-};
-
-const buildLocalTitleKey = (
-  type: "spb" | "po",
-  docNo: string,
-  title: string | null | undefined,
-) =>
-  type === "spb"
-    ? `SPB_${docNo}::${title ?? ""}`
-    : `PO_${docNo}`;
+  filterAndSortSpbDocuments,
+  getRecentSpbDocuments,
+} from "../utils/filterAndSortSpb";
 
 export default function MonitoringSPBPage() {
   const { data, isLoading, error, refetch } = useMonitoringSPB();
   const navigate = useNavigate();
-  const screens = Grid.useBreakpoint();
-  
+
   const { data: identity } = useGetIdentity<{ role: UserRole }>();
-  const userRole = identity?.role ?? "user";
+  const userRole = identity?.role ?? getVerifiedUser()?.role ?? "user";
   const allowEdit = canEditData(userRole);
+  const canViewRestricted = canViewRestrictedSpb();
 
-  // 🔧 PERBAIKAN: Membaca state awal dari localStorage agar tidak hilang saat pindah halaman
-  const [filter, setFilter] = useState<FilterType>(() => {
-    return (localStorage.getItem("spb_filter") as FilterType) || "Semua";
-  });
-  const [searchTerm, setSearchTerm] = useState(() => {
-    return localStorage.getItem("spb_searchTerm") || "";
-  });
-  const [searchMode, setSearchMode] = useState<SearchMode>(() => {
-    return (localStorage.getItem("spb_searchMode") as SearchMode) || "no";
-  });
-  const [sortBy, setSortBy] = useState<SortBy>(() => {
-    return (localStorage.getItem("spb_sortBy") as SortBy) || "status";
-  });
+  const {
+    filter,
+    setFilter,
+    searchTerm,
+    setSearchTerm,
+    searchMode,
+    setSearchMode,
+    sortBy,
+    setSortBy,
+  } = useMonitoringSPBFilter(canViewRestricted);
 
-  // 🔧 PERBAIKAN: Menyimpan setiap perubahan state ke localStorage
-  useEffect(() => {
-    localStorage.setItem("spb_filter", filter);
-    localStorage.setItem("spb_searchTerm", searchTerm);
-    localStorage.setItem("spb_searchMode", searchMode);
-    localStorage.setItem("spb_sortBy", sortBy);
-  }, [filter, searchTerm, searchMode, sortBy]);
+  const {
+    editingTitle,
+    titleInput,
+    setTitleInput,
+    savingTitle,
+    localTitles,
+    openEditModal,
+    closeEditModal,
+    handleSaveTitle,
+  } = useEditDocumentTitle(allowEdit, () => refetch?.());
 
-  const [editingTitle, setEditingTitle] = useState<EditingTitleState | null>(null);
-  const [titleInput, setTitleInput] = useState("");
-  const [savingTitle, setSavingTitle] = useState(false);
-  const [localTitles, setLocalTitles] = useState<Record<string, string>>({});
+  const recentItems = useMemo(() => getRecentSpbDocuments(data, 10), [data]);
 
-  const openEditModal = (
-    e: React.MouseEvent,
-    type: "spb" | "po",
-    docNo: string,
-    currentTitle?: string | null,
-  ) => {
-    if (!allowEdit) return;
-    e.stopPropagation();
-    const initial = currentTitle || "";
-    setEditingTitle({ type, docNo, currentTitle: initial });
-    setTitleInput(initial);
-  };
-
-  const handleSaveTitle = async () => {
-    if (!editingTitle) return;
-    setSavingTitle(true);
-    const { type, docNo, currentTitle } = editingTitle;
-    const trimmed = titleInput.trim();
-    const localKey = buildLocalTitleKey(type, docNo, currentTitle);
-
-    try {
-      await updateDocumentTitle(type, docNo, trimmed, currentTitle);
-      setLocalTitles((prev) => ({ ...prev, [localKey]: trimmed }));
-      setEditingTitle(null);
-      message.success(`Judul ${type.toUpperCase()} ${docNo} berhasil diperbarui`);
-      refetch?.();
-    } catch {
-      setLocalTitles((prev) => ({ ...prev, [localKey]: trimmed }));
-      setEditingTitle(null);
-    } finally {
-      setSavingTitle(false);
-    }
-  };
-
-  const recentItems = useMemo(() => {
-    return [...data]
-      .sort((a, b) => {
-        const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
-        const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
-        return dateB - dateA;
-      })
-      .slice(0, 10);
-  }, [data]);
-
-  const filteredAndSortedData = useMemo(() => {
-    const filtered = data.filter((item) => {
-      const searchLower = searchTerm.toLowerCase();
-      let matchesSearch = false;
-
-      const spbKey = item.spbNo
-        ? buildLocalTitleKey("spb", item.spbNo, item.spbTitle)
-        : null;
-      const poKey = item.poNo ? buildLocalTitleKey("po", item.poNo, item.poTitle) : null;
-
-      const spbTitle =
-        (spbKey && localTitles[spbKey] !== undefined
-          ? localTitles[spbKey]
-          : item.spbTitle) || "";
-      const poTitle =
-        (poKey && localTitles[poKey] !== undefined
-          ? localTitles[poKey]
-          : item.poTitle) || "";
-
-      if (searchMode === "no") {
-        const matchSpb = String(item.spbNo || "").toLowerCase().includes(searchLower);
-        const matchTitle = String(spbTitle).toLowerCase().includes(searchLower);
-        const matchPo = String(item.poNo || "").toLowerCase().includes(searchLower);
-        const matchPoTitle = String(poTitle).toLowerCase().includes(searchLower);
-        const matchSj = String(item.suratJalanNo || "").toLowerCase().includes(searchLower);
-
-        matchesSearch = !searchTerm || matchSpb || matchTitle || matchPo || matchPoTitle || matchSj;
-      } else {
-        matchesSearch = !searchTerm || !!item.itemNames?.some((name) => String(name).toLowerCase().includes(searchLower));
-      }
-
-      if (!matchesSearch) return false;
-
-      switch (filter) {
-        case "Belum Diproses":
-          return item.status === "Belum Diproses";
-        case "Belum di PO":
-          return (!item.poNo || item.poNo === "-") && item.status === "Belum PO";
-        case "Sudah di PO":
-          // 🔧 PERBAIKAN: Menghapus kondisi item.status !== "Datang" 
-          // agar SPB yang sudah PO tapi baru datang sebagian tetap muncul di sini
-          return !!item.poNo && item.poNo !== "-" && item.status !== "Selesai";
-        case "Datang":
-          return item.status === "Datang" || item.status === "Selesai";
-        case "Selesai":
-          return item.status === "Selesai";
-        default:
-          return true;
-      }
-    });
-
-    const getStatusWeight = (status?: string) => {
-      if (status === "Belum Diproses") return 0.5;
-      if (status === "Sudah PO" || status === "Belum PO") return 1;
-      if (status === "Datang") return 2;
-      if (status === "Selesai") return 3;
-      return 4;
-    };
-
-    return filtered.sort((a, b) => {
-      if (sortBy === "status") {
-        const wA = getStatusWeight(a.status);
-        const wB = getStatusWeight(b.status);
-        if (wA !== wB) return wA - wB;
-        return getNumberFromStr(a.spbNo, a.poNo) - getNumberFromStr(b.spbNo, b.poNo);
-      }
-
-      if (sortBy === "number") {
-        const numA = getNumberFromStr(a.spbNo, a.poNo);
-        const numB = getNumberFromStr(b.spbNo, b.poNo);
-        if (numA !== numB) return numA - numB;
-        return getStatusWeight(a.status) - getStatusWeight(b.status);
-      }
-
-      if (sortBy === "oldest") {
-        const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
-        const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
-        return dateA - dateB;
-      }
-
-      const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
-      const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
-      return dateB - dateA;
-    });
-  }, [data, filter, searchTerm, searchMode, sortBy, localTitles]);
+  const filteredAndSortedData = useMemo(
+    () =>
+      filterAndSortSpbDocuments({
+        data,
+        filter,
+        searchTerm,
+        searchMode,
+        sortBy,
+        localTitles,
+      }),
+    [data, filter, searchTerm, searchMode, sortBy, localTitles],
+  );
 
   const handleCardClick = (item: SPBDocumentGroup) => {
     const params = new URLSearchParams();
@@ -243,179 +77,6 @@ export default function MonitoringSPBPage() {
       params.set("sj", String(item.suratJalanNo));
     }
     navigate(`/monitoring-spb/detail?${params.toString()}`);
-  };
-
-  const getStatusColor = (status?: string) => {
-    if (status === "Belum Diproses") return "purple";
-    if (status === "Belum PO") return "orange";
-    if (status === "Sudah PO") return "blue";
-    if (status === "Datang") return "green";
-    if (status === "Selesai") return "cyan";
-    return "default";
-  };
-
-  const renderCardContent = (item: SPBDocumentGroup) => {
-    const hasSPB = item.spbNo !== null && item.spbNo !== "NO_SPB";
-    const hasPO = item.poNo !== null && item.poNo !== "NO_PO" && item.poNo !== "-";
-    const hasSJ = !hasSPB && !hasPO && item.suratJalanNo;
-
-    const spbKey = hasSPB && item.spbNo ? buildLocalTitleKey("spb", item.spbNo, item.spbTitle) : null;
-    const poKey = hasPO && item.poNo ? buildLocalTitleKey("po", item.poNo, item.poTitle) : null;
-
-    const resolvedSpbTitle = spbKey && localTitles[spbKey] !== undefined ? localTitles[spbKey] : item.spbTitle;
-    const resolvedPoTitle = poKey && localTitles[poKey] !== undefined ? localTitles[poKey] : item.poTitle;
-
-    return (
-      <Card
-        hoverable
-        onClick={() => handleCardClick(item)}
-        style={{
-          borderRadius: 12,
-          height: "100%",
-          border: "1px solid #f0f0f0",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-          cursor: "pointer",
-          transition: "all 0.2s",
-        }}
-        styles={{ body: { padding: 16 } }}
-      >
-        <Space direction="vertical" style={{ width: "100%" }} size={2}>
-          {hasSPB && (
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <Text type="secondary" style={{ fontSize: 11 }}>No. SPB</Text>
-                {allowEdit && (
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<EditOutlined style={{ fontSize: 12 }} />}
-                    aria-label={`Edit judul SPB ${item.spbNo}`}
-                    data-testid={`edit-spb-title-${item.spbNo}`}
-                    title="Edit judul SPB"
-                    style={{ padding: "0 4px", height: 20, minWidth: 20, color: "#8c8c8c" }}
-                    onClick={(e) => openEditModal(e, "spb", String(item.spbNo), resolvedSpbTitle)}
-                  />
-                )}
-              </div>
-              <div style={{ fontWeight: 600, fontSize: 16, wordBreak: "break-word" }}>
-                {item.spbNo}
-                {resolvedSpbTitle && (
-                  <span style={{ fontSize: 14, fontWeight: 500, color: "#595959", marginLeft: 6 }}>
-                    - {resolvedSpbTitle}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {hasSPB && hasPO && <Divider style={{ margin: "8px 0" }} />}
-
-          {hasPO && (
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <Text type="secondary" style={{ fontSize: 11 }}>No. PO</Text>
-                {allowEdit && (
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<EditOutlined style={{ fontSize: 12 }} />}
-                    aria-label={`Edit judul PO ${item.poNo}`}
-                    data-testid={`edit-po-title-${item.poNo}`}
-                    title="Edit judul PO"
-                    style={{ padding: "0 4px", height: 20, minWidth: 20, color: "#8c8c8c" }}
-                    onClick={(e) => openEditModal(e, "po", String(item.poNo), resolvedPoTitle)}
-                  />
-                )}
-              </div>
-              <div style={{ fontWeight: 600, fontSize: 16, wordBreak: "break-word" }}>
-                {item.poNo}
-                {resolvedPoTitle && (
-                  <span style={{ fontSize: 14, fontWeight: 500, color: "#595959", marginLeft: 6 }}>
-                    - {resolvedPoTitle}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {hasSJ && (
-            <div>
-              <Text type="secondary" style={{ fontSize: 11 }}>No. Surat Jalan</Text>
-              <div style={{ fontWeight: 600, fontSize: 16, wordBreak: "break-word" }}>
-                {item.suratJalanNo}
-              </div>
-            </div>
-          )}
-
-          <div
-            style={{
-              marginTop: 12,
-              fontSize: 12,
-              color: "#8c8c8c",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <div>
-              <div>Total: {item.itemsCount} Barang</div>
-              <div style={{ marginTop: 4 }}>Tanggal: {item.date !== "-" ? formatDate(item.date) : "-"}</div>
-            </div>
-            <Tag color={getStatusColor(item.status)} style={{ margin: 0, fontWeight: 600 }}>
-              {item.status || "Belum PO"}
-            </Tag>
-          </div>
-
-          <div
-            style={{
-              marginTop: 12,
-              paddingTop: 12,
-              borderTop: "1px dashed #f0f0f0",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              color: "#1677ff",
-              fontSize: 12,
-              fontWeight: 500,
-            }}
-          >
-            <span>Lihat detail</span>
-            <ArrowRightOutlined />
-          </div>
-        </Space>
-      </Card>
-    );
-  };
-
-  const renderSmallCard = (item: SPBDocumentGroup) => {
-    const hasSPB = item.spbNo && item.spbNo !== "NO_SPB";
-    const hasPO = item.poNo && item.poNo !== "NO_PO" && item.poNo !== "-";
-
-    return (
-      <Card
-        key={item.id}
-        size="small"
-        hoverable
-        onClick={() => handleCardClick(item)}
-        style={{ borderRadius: 10, background: "#fafafa", cursor: "pointer" }}
-        styles={{ body: { padding: 12 } }}
-      >
-        <Space direction="vertical" size={0}>
-          <Text strong style={{ fontSize: 13, display: "block" }} ellipsis>
-            {hasSPB && hasPO
-              ? `SPB: ${item.spbNo} · PO: ${item.poNo}`
-              : hasSPB
-                ? `SPB: ${item.spbNo}`
-                : hasPO
-                  ? `PO: ${item.poNo}`
-                  : `SJ: ${item.suratJalanNo}`}
-          </Text>
-          <Text type="secondary" style={{ fontSize: 11 }}>
-            {item.date !== "-" ? formatDate(item.date) : "-"}
-          </Text>
-        </Space>
-      </Card>
-    );
   };
 
   if (isLoading) {
@@ -438,112 +99,44 @@ export default function MonitoringSPBPage() {
   }
 
   return (
-    <div style={{ width: "100%", maxWidth: "100%", overflowX: "hidden", paddingBottom: 32 }}>
+    <div
+      style={{
+        width: "100%",
+        maxWidth: "100%",
+        overflowX: "hidden",
+        paddingBottom: 32,
+      }}
+    >
       <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-        <div style={{ marginBottom: 24 }}>
-          <Space align="center">
-            <div
-              style={{
-                width: 42,
-                height: 42,
-                borderRadius: 10,
-                background: "#1677ff15",
-                color: "#1677ff",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 20,
-              }}
-            >
-              <FileTextOutlined />
-            </div>
-            <div>
-              <Title level={3} style={{ margin: 0 }}>Monitoring SPB</Title>
-              <Text type="secondary">
-                {data.length} Dokumen Terdaftar · Diperbarui {formatFullDate(new Date())}
-              </Text>
-            </div>
-          </Space>
-        </div>
+        <MonitoringSPBHeader totalDocuments={data.length} />
 
-        {recentItems.length > 0 && (
-          <div style={{ marginBottom: 32 }}>
-            <Text strong style={{ fontSize: 16, display: "block", marginBottom: 12 }}>
-              Baru ditambahkan
-            </Text>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: screens.md ? "repeat(5, 1fr)" : "repeat(2, 1fr)",
-                gap: 12,
-              }}
-            >
-              {recentItems.map(renderSmallCard)}
-            </div>
-          </div>
-        )}
+        <MonitoringSPBRecentList
+          items={recentItems}
+          onCardClick={handleCardClick}
+        />
 
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 16,
-            marginBottom: 20,
-            alignItems: "center",
-          }}
-        >
-          <Space.Compact style={{ width: "100%", maxWidth: 400 }}>
-            <Select<SearchMode>
-              value={searchMode}
-              onChange={setSearchMode}
-              style={{ width: 130 }}
-              aria-label="Mode Pencarian"
-            >
-              <Select.Option value="no">No / Judul</Select.Option>
-              <Select.Option value="barang">Nama Barang</Select.Option>
-            </Select>
-            <Input
-              placeholder={searchMode === "no" ? "Cari No SPB/PO/SJ..." : "Cari Nama Barang..."}
-              prefix={<SearchOutlined />}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              allowClear
-            />
-          </Space.Compact>
-
-          <Segmented<FilterType>
-            size="middle"
-            options={[
-              "Semua",
-              "Belum Diproses",
-              "Belum di PO",
-              "Sudah di PO",
-              "Datang",
-              "Selesai",
-            ]}
-            value={filter}
-            onChange={setFilter}
-            style={{ padding: 4, fontWeight: 500, overflowX: "auto" }}
-          />
-
-          <Select<SortBy>
-            value={sortBy}
-            onChange={setSortBy}
-            style={{ width: 150 }}
-            aria-label="Urutan Data"
-            options={[
-              { value: "status", label: "Urut: Status" },
-              { value: "number", label: "Urut: Nomor" },
-              { value: "oldest", label: "Urut: Paling Lama" },
-              { value: "newest", label: "Urut: Paling Baru" },
-            ]}
-          />
-        </div>
+        <MonitoringSPBToolbar
+          searchMode={searchMode}
+          onSearchModeChange={setSearchMode}
+          searchTerm={searchTerm}
+          onSearchTermChange={setSearchTerm}
+          filter={filter}
+          onFilterChange={setFilter}
+          sortBy={sortBy}
+          onSortByChange={setSortBy}
+          canViewRestricted={canViewRestricted}
+        />
 
         <Row gutter={[16, 16]}>
           {filteredAndSortedData.map((item) => (
             <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
-              {renderCardContent(item)}
+              <MonitoringSPBCard
+                item={item}
+                allowEdit={allowEdit}
+                localTitles={localTitles}
+                onCardClick={handleCardClick}
+                onEditTitle={openEditModal}
+              />
             </Col>
           ))}
         </Row>
@@ -556,29 +149,14 @@ export default function MonitoringSPBPage() {
       </div>
 
       {allowEdit && (
-        <Modal
-          title={
-            editingTitle
-              ? `Edit Judul ${editingTitle.type.toUpperCase()} ${editingTitle.docNo}`
-              : "Edit Judul"
-          }
-          open={!!editingTitle}
-          onCancel={() => setEditingTitle(null)}
-          onOk={handleSaveTitle}
-          okText="Simpan"
-          cancelText="Batal"
-          confirmLoading={savingTitle}
-          destroyOnHidden
-        >
-          <Input
-            placeholder="Masukkan judul baru..."
-            value={titleInput}
-            onChange={(e) => setTitleInput(e.target.value)}
-            onPressEnter={handleSaveTitle}
-            aria-label="Input Judul Dokumen"
-            autoFocus
-          />
-        </Modal>
+        <EditDocumentTitleModal
+          editingTitle={editingTitle}
+          titleInput={titleInput}
+          onTitleInputChange={setTitleInput}
+          savingTitle={savingTitle}
+          onCancel={closeEditModal}
+          onSave={handleSaveTitle}
+        />
       )}
     </div>
   );

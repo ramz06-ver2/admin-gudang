@@ -1,11 +1,8 @@
 import type { AuthProvider, AuthActionResponse, CheckResponse } from "@refinedev/core";
+import type { User } from "@supabase/supabase-js";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
-import { USE_MOCK } from "../../shared/lib/config";
 import type { UserRole } from "../../shared/types";
-import {
-  findAccountRequestByEmail,
-  registerAccountRequest,
-} from "../../features/auth/accountRequests";
+import { registerAccountRequest } from "../../features/auth/accountRequests";
 import {
   getRoleDefinition,
   isAuthenticatedRole,
@@ -22,6 +19,11 @@ export interface StoredAuthUser {
   role: UserRole;
 }
 
+/**
+ * Cache identitas untuk render UI yang sinkron. BUKAN sumber kebenaran:
+ * sumber kebenaran adalah sesi Supabase (JWT) dan RLS di database.
+ * Cache dibersihkan otomatis saat sesi berakhir (lihat initAuthSync).
+ */
 export const getStoredUser = (): StoredAuthUser | null => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -46,126 +48,97 @@ export const setStoredUser = (user: StoredAuthUser | null) => {
   }
 };
 
-const resolveRoleFromSupabaseUser = (user: any, fallbackEmail: string): UserRole => {
-  const metaRole = user?.user_metadata?.role as string | undefined;
-  if (metaRole && normalizeRoleKey(metaRole) !== "user") {
-    return normalizeRoleKey(metaRole);
-  }
-  const lower = fallbackEmail.toLowerCase();
-  if (lower.startsWith("superuser@")) return "superuser";
-  if (lower.startsWith("supervisor@")) return "supervisor";
-  return "admin";
+/**
+ * Role HANYA dibaca dari `app_metadata` — field ini hanya bisa diubah server
+ * (service role / RPC superuser), tidak bisa diubah user dari browser.
+ * `user_metadata` sengaja TIDAK dipakai karena dapat dimodifikasi user sendiri.
+ *
+ * @returns role terautentikasi, atau null jika belum disetujui / tidak valid.
+ */
+export const resolveRoleFromSupabaseUser = (
+  user: Pick<User, "app_metadata"> | null | undefined,
+): UserRole | null => {
+  const raw = user?.app_metadata?.role;
+  if (typeof raw !== "string") return null;
+  const key = normalizeRoleKey(raw);
+  return isAuthenticatedRole(key) ? key : null;
 };
+
+const toStoredUser = (user: User, role: UserRole): StoredAuthUser => {
+  const email = user.email ?? "";
+  const metaName = user.user_metadata?.name;
+  return {
+    id: user.id,
+    email,
+    name:
+      typeof metaName === "string" && metaName.trim()
+        ? metaName.trim()
+        : email.split("@")[0] || getRoleDefinition(role).label,
+    role,
+  };
+};
+
+const sameStoredUser = (a: StoredAuthUser | null, b: StoredAuthUser) =>
+  !!a && a.id === b.id && a.email === b.email && a.name === b.name && a.role === b.role;
+
+/**
+ * Menjaga cache identitas selalu sejalan dengan sesi Supabase: dibersihkan saat
+ * logout / token kedaluwarsa, dan diperbarui saat sesi/role berubah.
+ */
+let authSyncInitialized = false;
+export const initAuthSync = () => {
+  if (authSyncInitialized || typeof window === "undefined") return;
+  authSyncInitialized = true;
+  try {
+    supabaseClient.auth.onAuthStateChange((_event, session) => {
+      const role = resolveRoleFromSupabaseUser(session?.user);
+      if (!session?.user || !role) {
+        if (getStoredUser()) setStoredUser(null);
+        return;
+      }
+      const next = toStoredUser(session.user, role);
+      if (!sameStoredUser(getStoredUser(), next)) setStoredUser(next);
+    });
+  } catch {
+    // klien auth tidak tersedia (mis. lingkungan test tanpa auth) -> lewati
+  }
+};
+
+initAuthSync();
+
+const loginError = (message: string): AuthActionResponse => ({
+  success: false,
+  error: { name: "LoginError", message },
+});
 
 export const authProvider: AuthProvider = {
   login: async ({ email, password }): Promise<AuthActionResponse> => {
     const normalizedEmail = String(email || "").trim().toLowerCase();
-
-    const accountReq = findAccountRequestByEmail(normalizedEmail);
-    if (accountReq) {
-      if (accountReq.status === "pending") {
-        return {
-          success: false,
-          error: {
-            name: "LoginError",
-            message: "Akun Anda masih menunggu persetujuan Super User",
-          },
-        };
-      }
-      if (accountReq.status === "rejected") {
-        return {
-          success: false,
-          error: {
-            name: "LoginError",
-            message: "Pendaftaran akun Anda tidak diizinkan oleh Super User",
-          },
-        };
-      }
-      if (accountReq.status === "approved") {
-        if (!accountReq.password || accountReq.password === password) {
-          const assignedRole: UserRole =
-            accountReq.role && normalizeRoleKey(accountReq.role) !== "user"
-              ? normalizeRoleKey(accountReq.role)
-              : "admin";
-          setStoredUser({
-            id: accountReq.id,
-            email: accountReq.email,
-            name: accountReq.name,
-            role: assignedRole,
-          });
-          return { success: true, redirectTo: "/dashboard" };
-        }
-        return {
-          success: false,
-          error: { name: "LoginError", message: "Email/password salah" },
-        };
-      }
-    }
-
-    if (normalizedEmail === "superuser@admin.com" && password === "super123") {
-      setStoredUser({
-        id: "superuser-1",
-        email: normalizedEmail,
-        name: "Super User",
-        role: "superuser",
-      });
-      return { success: true, redirectTo: "/dashboard" };
-    }
-
-    if (
-      normalizedEmail === "supervisor@admin.com" &&
-      (password === "superv123" || password === "supervisor123")
-    ) {
-      setStoredUser({
-        id: "supervisor-1",
-        email: normalizedEmail,
-        name: "Supervisor",
-        role: "supervisor",
-      });
-      return { success: true, redirectTo: "/dashboard" };
-    }
-
-    if (normalizedEmail === "admin@admin.com" && password === "admin123") {
-      setStoredUser({
-        id: "admin-1",
-        email: normalizedEmail,
-        name: "Administrator",
-        role: "admin",
-      });
-      return { success: true, redirectTo: "/dashboard" };
-    }
-
-    if (USE_MOCK) {
-      return {
-        success: false,
-        error: { name: "LoginError", message: "Email/password salah" },
-      };
+    if (!normalizedEmail || !password) {
+      return loginError("Email dan password wajib diisi");
     }
 
     const { data, error } = await supabaseClient.auth.signInWithPassword({
-      email,
+      email: normalizedEmail,
       password,
     });
+
+    // Pesan generik: tidak membocorkan apakah email terdaftar atau tidak.
     if (error || !data?.user) {
-      return {
-        success: false,
-        error: {
-          name: "LoginError",
-          message: error?.message || "User tidak ditemukan",
-        },
-      };
+      return loginError("Email atau password salah");
     }
 
-    const resolvedRole = resolveRoleFromSupabaseUser(data.user, normalizedEmail);
-    const roleDef = getRoleDefinition(resolvedRole);
+    const role = resolveRoleFromSupabaseUser(data.user);
+    if (!role) {
+      // Akun ada tapi belum disetujui / belum diberi role -> jangan biarkan sesi aktif.
+      await supabaseClient.auth.signOut();
+      setStoredUser(null);
+      return loginError(
+        "Akun Anda masih menunggu persetujuan Super User atau belum diberi role. Hubungi Super User.",
+      );
+    }
 
-    setStoredUser({
-      id: data.user.id,
-      email: data.user.email || normalizedEmail,
-      name: data.user.email?.split("@")[0] ?? roleDef.label,
-      role: resolvedRole,
-    });
-
+    setStoredUser(toStoredUser(data.user, role));
     return { success: true, redirectTo: "/dashboard" };
   },
 
@@ -177,10 +150,7 @@ export const authProvider: AuthProvider = {
         password,
         role: role || "admin",
       });
-      return {
-        success: true,
-        redirectTo: "/login",
-      };
+      return { success: true, redirectTo: "/login" };
     } catch (err) {
       return {
         success: false,
@@ -193,63 +163,40 @@ export const authProvider: AuthProvider = {
   },
 
   logout: async (): Promise<AuthActionResponse> => {
-    // 🔧 PERBAIKAN: Hapus state filter & urutan SPB dari localStorage saat logout
-    localStorage.removeItem("spb_filter");
-    localStorage.removeItem("spb_searchTerm");
-    localStorage.removeItem("spb_searchMode");
-    localStorage.removeItem("spb_sortBy");
-
     setStoredUser(null);
-    if (!USE_MOCK) {
-      try {
-        await supabaseClient.auth.signOut();
-      } catch {
-        // ignore
-      }
+    try {
+      await supabaseClient.auth.signOut();
+    } catch {
+      // sesi lokal sudah dibersihkan
     }
     return { success: true, redirectTo: "/dashboard" };
   },
 
   check: async (): Promise<CheckResponse> => {
-    const stored = getStoredUser();
-    if (stored && isAuthenticatedRole(stored.role)) {
-      return { authenticated: true };
-    }
-    if (USE_MOCK) {
+    const { data } = await supabaseClient.auth.getSession();
+    const user = data?.session?.user;
+    const role = resolveRoleFromSupabaseUser(user);
+
+    if (!user || !role) {
+      if (getStoredUser()) setStoredUser(null);
       return { authenticated: false, redirectTo: "/login" };
     }
-    const { data } = await supabaseClient.auth.getSession();
-    return {
-      authenticated: !!data?.session,
-      redirectTo: "/login",
-    };
+
+    const next = toStoredUser(user, role);
+    if (!sameStoredUser(getStoredUser(), next)) setStoredUser(next);
+    return { authenticated: true };
   },
 
   getIdentity: async () => {
-    const stored = getStoredUser();
-    if (stored) {
-      const def = getRoleDefinition(stored.role);
-      return {
-        id: stored.id || `${def.key}-1`,
-        name: stored.name,
-        email: stored.email,
-        role: stored.role,
-      };
+    const { data } = await supabaseClient.auth.getSession();
+    const user = data?.session?.user;
+    const role = resolveRoleFromSupabaseUser(user);
+
+    if (user && role) {
+      const stored = toStoredUser(user, role);
+      return { id: stored.id, name: stored.name, email: stored.email, role };
     }
-    if (!USE_MOCK) {
-      const { data } = await supabaseClient.auth.getUser();
-      if (data?.user) {
-        const email = data.user.email || "";
-        const role = resolveRoleFromSupabaseUser(data.user, email);
-        const def = getRoleDefinition(role);
-        return {
-          id: data.user.id,
-          name: email.split("@")[0] || def.label,
-          email,
-          role,
-        };
-      }
-    }
+
     return {
       id: "public-user",
       name: "User (Public)",
@@ -259,14 +206,17 @@ export const authProvider: AuthProvider = {
   },
 
   getPermissions: async () => {
-    const stored = getStoredUser();
-    if (stored) return [stored.role];
-    if (!USE_MOCK) {
-      const { data } = await supabaseClient.auth.getSession();
-      if (data?.session) return ["admin"];
-    }
-    return ["user"];
+    const { data } = await supabaseClient.auth.getSession();
+    const role = resolveRoleFromSupabaseUser(data?.session?.user);
+    return [role ?? "user"];
   },
 
-  onError: async (error) => ({ error }),
+  onError: async (error) => {
+    // Sesi tidak valid / kedaluwarsa (401) -> paksa logout & kembali ke login.
+    const status = (error as any)?.status ?? (error as any)?.statusCode;
+    if (status === 401) {
+      return { logout: true, redirectTo: "/login", error };
+    }
+    return { error };
+  },
 };

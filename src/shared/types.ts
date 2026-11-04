@@ -20,7 +20,6 @@ export interface AccountRequest {
   id: string;
   name: string;
   email: string;
-  password?: string;
   role: UserRole;
   status: "pending" | "approved" | "rejected";
   createdAt: string;
@@ -145,6 +144,10 @@ export interface SPBDocumentGroup {
   spbTitle?: string | null;
   poNo: string | null;
   poTitle?: string | null;
+  /** Link file asli SPB (kolom spb.source_file), publik. */
+  spbSourceFile?: string | null;
+  /** Link file asli PO (kolom po.source_file), publik. */
+  poSourceFile?: string | null;
   suratJalanNo?: string | null;
   date: string;
   itemsCount: number;
@@ -179,6 +182,10 @@ export interface SPBItemDetail {
   status?: string | null;
   tanggal_pembuatan_spb?: string | null;
   no_surat_jalan?: string | number | null;
+  
+  // Tambahan baru untuk link file
+  spbSourceFile?: string | null;
+  poSourceFile?: string | null;
 }
 
 export interface ChatMessage {

@@ -10,7 +10,7 @@ vi.mock("@/shared/lib/supabaseClient", async () => {
   return { supabaseClient: m.fakeSupabaseClient };
 });
 
-import { fakeDb } from "../../utils/fakeSupabase";
+import { fakeDb, fakeAuth, fakeSupabaseClient } from "../../utils/fakeSupabase";
 import {
   authProvider,
   setStoredUser,
@@ -28,6 +28,7 @@ import {
   resetAccountRequests,
   registerAccountRequest,
   getAccountRequests,
+  approveAccountRequest,
 } from "@/features/auth/accountRequests";
 import { NotificationsPage } from "@/features/auth/pages/NotificationsPage";
 
@@ -87,10 +88,12 @@ describe("Hierarki Role (Super User > Supervisor > Admin > Custom Role) & Perset
     expect(canManageRoles("kepala_gudang")).toBe(false);
   });
 
-  it("Akun bawaan Supervisor dapat login dan memiliki role 'supervisor'", async () => {
+  it("Supervisor (role dari app_metadata Supabase) dapat login dan memiliki role 'supervisor'", async () => {
+    fakeAuth.addUser("supervisor@perusahaan.com", "Passw0rd!123", { role: "supervisor" });
+
     const loginRes = await authProvider.login({
-      email: "supervisor@admin.com",
-      password: "superv123",
+      email: "supervisor@perusahaan.com",
+      password: "Passw0rd!123",
     });
     expect(loginRes.success).toBe(true);
 
@@ -98,6 +101,63 @@ describe("Hierarki Role (Super User > Supervisor > Admin > Custom Role) & Perset
     expect(identity.role).toBe("supervisor");
     expect(canManageBarang(identity.role)).toBe(true);
     expect(canApproveAccounts(identity.role)).toBe(false);
+  });
+
+  it("Akun hardcode lama tidak lagi bisa login", async () => {
+    for (const [email, password] of [
+      ["superuser@admin.com", "super123"],
+      ["supervisor@admin.com", "superv123"],
+      ["admin@admin.com", "admin123"],
+    ]) {
+      const res = await authProvider.login({ email, password });
+      expect(res.success).toBe(false);
+    }
+    expect(((await authProvider.getIdentity?.()) as any).role).toBe("user");
+  });
+
+  it("Pesan gagal login generik (tidak membocorkan apakah email terdaftar)", async () => {
+    fakeAuth.addUser("ada@perusahaan.com", "Passw0rd!123", { role: "admin" });
+    const wrongPass = await authProvider.login({ email: "ada@perusahaan.com", password: "salah-salah" });
+    const unknown = await authProvider.login({ email: "tidakada@perusahaan.com", password: "salah-salah" });
+    expect(wrongPass.error?.message).toBe(unknown.error?.message);
+  });
+
+  it("Role di user_metadata (bisa diubah user sendiri) TIDAK dipercaya", async () => {
+    fakeAuth.addUser("nakal@perusahaan.com", "Passw0rd!123");
+    fakeAuth.users["nakal@perusahaan.com"].user_metadata.role = "superuser";
+
+    const res = await authProvider.login({ email: "nakal@perusahaan.com", password: "Passw0rd!123" });
+    expect(res.success).toBe(false);
+    expect(((await authProvider.getIdentity?.()) as any).role).toBe("user");
+  });
+
+  it("check() hanya authenticated bila ada sesi Supabase dengan role valid", async () => {
+    expect((await authProvider.check?.())?.authenticated).toBe(false);
+
+    fakeAuth.addUser("admin@perusahaan.com", "Passw0rd!123", { role: "admin" });
+    await authProvider.login({ email: "admin@perusahaan.com", password: "Passw0rd!123" });
+    expect((await authProvider.check?.())?.authenticated).toBe(true);
+
+    // Cache localStorage dipalsukan tanpa sesi -> tetap ditolak & cache dibersihkan
+    await fakeSupabaseClient.auth.signOut();
+    setStoredUser({ id: "x", email: "palsu@x.com", name: "Palsu", role: "superuser" });
+    expect((await authProvider.check?.())?.authenticated).toBe(false);
+    expect(localStorage.getItem("mock-auth-user")).toBeNull();
+  });
+
+  it("Pendaftaran menolak password pendek dan tidak pernah menyimpan password di tabel/cache", async () => {
+    await expect(
+      registerAccountRequest({ name: "Cici", email: "cici@proyek.com", password: "pendek" }),
+    ).rejects.toThrow(/minimal 8/i);
+
+    await registerAccountRequest({
+      name: "Cici",
+      email: "cici@proyek.com",
+      password: "password123",
+    });
+    expect(fakeDb.tables.account_requests).toHaveLength(1);
+    expect(fakeDb.tables.account_requests[0]).not.toHaveProperty("password");
+    expect(localStorage.getItem("account-registration-requests")).not.toContain("password123");
   });
 
   it("User buat akun -> masuk ke Notifikasi Super User -> Super User klik Izinkan -> Akun Admin jadi & bisa login", async () => {
@@ -115,9 +175,10 @@ describe("Hierarki Role (Super User > Supervisor > Admin > Custom Role) & Perset
     expect(loginBefore.success).toBe(false);
     expect(loginBefore.error?.message).toMatch(/menunggu persetujuan Super User/i);
 
+    fakeAuth.addUser("super@perusahaan.com", "Passw0rd!123", { role: "superuser" });
     const superLogin = await authProvider.login({
-      email: "superuser@admin.com",
-      password: "super123",
+      email: "super@perusahaan.com",
+      password: "Passw0rd!123",
     });
     expect(superLogin.success).toBe(true);
     const superIdentity = (await authProvider.getIdentity?.()) as any;
@@ -129,7 +190,6 @@ describe("Hierarki Role (Super User > Supervisor > Admin > Custom Role) & Perset
     expect(screen.getByText("budi@proyek.com")).toBeInTheDocument();
     expect(screen.getByText("Menunggu Persetujuan")).toBeInTheDocument();
 
-    // 🔧 PERBAIKAN: Gunakan exact match string, bukan regex
     const approveBtn = screen.getByRole("button", {
       name: "Izinkan budi@proyek.com",
     });
@@ -157,16 +217,16 @@ describe("Hierarki Role (Super User > Supervisor > Admin > Custom Role) & Perset
       password: "password123",
     });
 
+    fakeAuth.addUser("super@perusahaan.com", "Passw0rd!123", { role: "superuser" });
     await authProvider.login({
-      email: "superuser@admin.com",
-      password: "super123",
+      email: "super@perusahaan.com",
+      password: "Passw0rd!123",
     });
 
     render(<NotificationsPage />, { wrapper: Wrapper });
 
     expect(await screen.findByText("Andi Pratama")).toBeInTheDocument();
 
-    // 🔧 PERBAIKAN: Gunakan exact match string
     const rejectBtn = screen.getByRole("button", {
       name: "Tidak Izinkan andi@proyek.com",
     });
@@ -181,10 +241,47 @@ describe("Hierarki Role (Super User > Supervisor > Admin > Custom Role) & Perset
       password: "password123",
     });
     expect(loginRejected.success).toBe(false);
-    expect(loginRejected.error?.message).toMatch(/tidak diizinkan/i);
+    expect(loginRejected.error?.message).toMatch(/menunggu persetujuan|belum diberi role/i);
 
     const list = await getAccountRequests();
     expect(list.find((r) => r.email === "andi@proyek.com")?.status).toBe("rejected");
+  });
+
+  it("Admin tidak bisa menyetujui akun: ditolak di klien DAN di server (RPC)", async () => {
+    await registerAccountRequest({
+      name: "Dedi",
+      email: "dedi@proyek.com",
+      password: "password123",
+    });
+    const reqId = fakeDb.tables.account_requests[0].id as string;
+
+    fakeAuth.addUser("admin@perusahaan.com", "Passw0rd!123", { role: "admin" });
+    await authProvider.login({ email: "admin@perusahaan.com", password: "Passw0rd!123" });
+
+    await expect(approveAccountRequest(reqId, "admin")).rejects.toThrow();
+
+    // Meski guard klien dilewati, server tetap menolak karena JWT bukan superuser
+    const direct = await fakeSupabaseClient.rpc("approve_account", {
+      p_request_id: reqId,
+      p_role: "superuser",
+    });
+    expect(direct.error?.message).toBe("forbidden");
+    expect(fakeAuth.users["dedi@proyek.com"].app_metadata.role).toBeUndefined();
+  });
+
+  it("Persetujuan tidak bisa mengangkat role menjadi superuser", async () => {
+    await registerAccountRequest({
+      name: "Eko",
+      email: "eko@proyek.com",
+      password: "password123",
+    });
+    const reqId = fakeDb.tables.account_requests[0].id as string;
+
+    fakeAuth.addUser("super@perusahaan.com", "Passw0rd!123", { role: "superuser" });
+    await authProvider.login({ email: "super@perusahaan.com", password: "Passw0rd!123" });
+
+    await approveAccountRequest(reqId, "superuser");
+    expect(fakeAuth.users["eko@proyek.com"].app_metadata.role).toBe("admin");
   });
 
   it("Halaman Notifikasi menolak akses jika dibuka oleh User/Unlogin, Admin, maupun Supervisor", async () => {

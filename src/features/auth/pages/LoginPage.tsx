@@ -7,7 +7,6 @@ import {
   Input,
   Typography,
   Alert,
-  Space,
   Segmented,
   Select,
 } from "antd";
@@ -18,8 +17,7 @@ import {
   IdcardOutlined,
 } from "@ant-design/icons";
 
-import { USE_MOCK } from "../../../shared/lib/config";
-import { registerAccountRequest } from "../accountRequests";
+import { MIN_PASSWORD_LENGTH, registerAccountRequest } from "../accountRequests";
 import { getAssignableRoles } from "../../../app/providers/accessControlProvider";
 import type { UserRole } from "../../../shared/types";
 
@@ -179,11 +177,6 @@ export const LoginPage = () => {
             onFinish={handleSubmitLogin}
             autoComplete="off"
             requiredMark={false}
-            initialValues={
-              USE_MOCK
-                ? { email: "admin@admin.com", password: "admin123" }
-                : undefined
-            }
           >
             <Form.Item
               name="email"
@@ -196,7 +189,7 @@ export const LoginPage = () => {
               <Input
                 size="large"
                 prefix={<UserOutlined />}
-                placeholder="admin@admin.com"
+                placeholder="nama@perusahaan.com"
                 autoFocus
               />
             </Form.Item>
@@ -266,13 +259,13 @@ export const LoginPage = () => {
               label="Password"
               rules={[
                 { required: true, message: "Password wajib diisi" },
-                { min: 6, message: "Password minimal 6 karakter" },
+                { min: MIN_PASSWORD_LENGTH, message: `Password minimal ${MIN_PASSWORD_LENGTH} karakter` },
               ]}
             >
               <Input.Password
                 size="large"
                 prefix={<LockOutlined />}
-                placeholder="Minimal 6 karakter"
+                placeholder={`Minimal ${MIN_PASSWORD_LENGTH} karakter`}
               />
             </Form.Item>
 
@@ -301,31 +294,6 @@ export const LoginPage = () => {
           </Form>
         )}
 
-        {/* Info mock */}
-        {USE_MOCK && mode === "login" && (
-          <Alert
-            type="info"
-            showIcon
-            style={{ marginTop: 8 }}
-            message="Mode Demo"
-            description={
-              <Space direction="vertical" size={2}>
-                <Text style={{ fontSize: 12 }}>
-                  Super User: <Text code>superuser@admin.com</Text> /{" "}
-                  <Text code>super123</Text>
-                </Text>
-                <Text style={{ fontSize: 12 }}>
-                  Supervisor: <Text code>supervisor@admin.com</Text> /{" "}
-                  <Text code>superv123</Text>
-                </Text>
-                <Text style={{ fontSize: 12 }}>
-                  Admin: <Text code>admin@admin.com</Text> /{" "}
-                  <Text code>admin123</Text>
-                </Text>
-              </Space>
-            }
-          />
-        )}
       </Card>
     </div>
   );

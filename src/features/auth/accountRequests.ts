@@ -2,14 +2,18 @@ import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import type { AccountRequest, UserRole } from "../../shared/types";
 import { requirePermission } from "../../shared/lib/authGuard";
-import {
-  canApproveAccounts,
-  canManageRoles,
-  normalizeRoleKey,
-} from "../../app/providers/accessControlProvider";
+import { normalizeRoleKey } from "../../app/providers/accessControlProvider";
+
+/** Kebijakan password minimum (selaras dengan pengaturan Supabase Auth). */
+export const MIN_PASSWORD_LENGTH = 8;
 
 const REQUESTS_STORAGE_KEY = "account-registration-requests";
 
+/**
+ * Cache lokal daftar permintaan akun (hanya untuk badge/UX cepat).
+ * TIDAK PERNAH menyimpan password. Sumber kebenaran: tabel account_requests
+ * di server + Supabase Auth.
+ */
 export const readLocalRequests = (): AccountRequest[] => {
   try {
     const raw = localStorage.getItem(REQUESTS_STORAGE_KEY);
@@ -47,45 +51,56 @@ const sanitizeAssignableRole = (role?: UserRole | string | null): UserRole => {
   return key;
 };
 
-export const getAccountRequests = async (): Promise<AccountRequest[]> => {
-  const local = readLocalRequests();
-  try {
-    const res = await supabaseClient
-      .from(TABLES.accountRequests)
-      .select("*");
-    if (!res.error && Array.isArray(res.data) && res.data.length > 0) {
-      const mergedMap = new Map<string, AccountRequest>();
-      local.forEach((item) => mergedMap.set(item.email.toLowerCase(), item));
-      res.data.forEach((row: any) => {
-        const emailKey = String(row.email || "").toLowerCase();
-        if (!emailKey) return;
-        const existing = mergedMap.get(emailKey);
-        mergedMap.set(emailKey, {
-          id: String(row.id ?? existing?.id ?? Date.now()),
-          name: row.name || existing?.name || "Calon Pengguna",
-          email: row.email,
-          password: row.password ?? existing?.password,
-          role: sanitizeAssignableRole(row.role ?? existing?.role ?? "admin"),
-          status: row.status || existing?.status || "pending",
-          createdAt:
-            row.created_at ||
-            row.createdAt ||
-            existing?.createdAt ||
-            new Date().toISOString(),
-          decidedAt:
-            row.decided_at || row.decidedAt || existing?.decidedAt || null,
-        });
-      });
-      const merged = Array.from(mergedMap.values());
-      writeLocalRequests(merged);
-      return merged;
-    }
-  } catch {
-    // fallback ke localStorage jika tabel belum tersedia
+const mapRow = (row: any): AccountRequest => ({
+  id: String(row.id),
+  name: row.name || "Calon Pengguna",
+  email: String(row.email || ""),
+  role: sanitizeAssignableRole(row.role ?? "admin"),
+  status: row.status || "pending",
+  createdAt: row.created_at || row.createdAt || new Date().toISOString(),
+  decidedAt: row.decided_at || row.decidedAt || null,
+});
+
+const patchLocalRequest = (
+  requestId: string,
+  patch: Partial<AccountRequest>,
+  fallback: AccountRequest,
+): AccountRequest => {
+  const list = readLocalRequests();
+  const idx = list.findIndex((r) => String(r.id) === String(requestId));
+  if (idx >= 0) {
+    const updated = { ...list[idx], ...patch };
+    list[idx] = updated;
+    writeLocalRequests(list);
+    return updated;
   }
-  return local;
+  return { ...fallback, ...patch };
 };
 
+/**
+ * Daftar permintaan akun. RLS membatasi baca hanya untuk Super User;
+ * jika server menolak/tabel belum ada, jatuh ke cache lokal.
+ */
+export const getAccountRequests = async (): Promise<AccountRequest[]> => {
+  try {
+    const res = await supabaseClient.from(TABLES.accountRequests).select("*");
+    if (!res.error && Array.isArray(res.data)) {
+      const fromServer = res.data.map(mapRow).filter((r) => r.email);
+      writeLocalRequests(fromServer);
+      return fromServer;
+    }
+  } catch {
+    // fallback ke cache lokal
+  }
+  return readLocalRequests();
+};
+
+/**
+ * Pendaftaran akun: membuat user di Supabase Auth (password di-hash oleh
+ * server, tidak pernah disimpan/dikirim ke tabel kita) lalu mencatat permintaan
+ * persetujuan TANPA password. Akun baru tidak punya role sampai Super User
+ * menyetujui (role ditulis server-side ke app_metadata).
+ */
 export const registerAccountRequest = async (input: {
   name: string;
   email: string;
@@ -100,210 +115,137 @@ export const registerAccountRequest = async (input: {
   if (!name || !email || !password) {
     throw new Error("Nama, email, dan password wajib diisi");
   }
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    throw new Error(`Password minimal ${MIN_PASSWORD_LENGTH} karakter`);
+  }
 
-  const existingList = readLocalRequests();
-  const duplicate = existingList.find(
-    (r) => r.email.toLowerCase() === email && r.status !== "rejected",
-  );
-  if (duplicate) {
-    throw new Error(
-      duplicate.status === "pending"
-        ? "Email ini sudah terdaftar dan masih menunggu persetujuan Super User"
-        : "Email ini sudah terdaftar dan aktif di sistem",
-    );
+  const { data, error } = await supabaseClient.auth.signUp({
+    email,
+    password,
+    options: { data: { name } },
+  });
+  if (error) {
+    throw new Error(error.message || "Gagal membuat akun");
+  }
+  // Supabase mengembalikan user dengan identities kosong jika email sudah terdaftar.
+  if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+    throw new Error("Email ini sudah terdaftar");
+  }
+
+  // Pastikan tidak ada sesi aktif sebelum akun disetujui.
+  try {
+    await supabaseClient.auth.signOut();
+  } catch {
+    // ignore
   }
 
   const newRequest: AccountRequest = {
     id: `req-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     name,
     email,
-    password,
     role: requestedRole,
     status: "pending",
     createdAt: new Date().toISOString(),
     decidedAt: null,
   };
 
-  const updated = [
-    newRequest,
-    ...existingList.filter((r) => r.email.toLowerCase() !== email),
-  ];
-  writeLocalRequests(updated);
-
-  try {
-    await supabaseClient.from(TABLES.accountRequests).insert([
+  const { error: insertError } = await supabaseClient
+    .from(TABLES.accountRequests)
+    .insert([
       {
         id: newRequest.id,
         name: newRequest.name,
         email: newRequest.email,
-        password: newRequest.password,
         role: newRequest.role,
         status: "pending",
         created_at: newRequest.createdAt,
       },
     ]);
-  } catch {
-    // fallback ke localStorage
+  if (insertError) {
+    throw new Error("Akun dibuat, tetapi permintaan persetujuan gagal dikirim. Hubungi Super User.");
   }
+
+  writeLocalRequests([
+    newRequest,
+    ...readLocalRequests().filter((r) => r.email.toLowerCase() !== email),
+  ]);
 
   return newRequest;
 };
 
+const placeholder = (id: string, status: AccountRequest["status"]): AccountRequest => ({
+  id,
+  name: "Pengguna",
+  email: "",
+  role: "admin",
+  status,
+  createdAt: new Date().toISOString(),
+  decidedAt: null,
+});
+
 /**
- * Point 1: Menyetujui permintaan akun baru (hanya Super User).
- * Mendukung pemilihan role saat disetujui (misal: 'admin', 'supervisor', atau role tambahan).
+ * Menyetujui akun + menetapkan role (hanya Super User).
+ * Otorisasi ditegakkan DI SERVER: RPC `approve_account` memeriksa JWT
+ * (app_metadata.role = 'superuser') lalu menulis role ke app_metadata user.
  */
 export const approveAccountRequest = async (
   requestId: string,
   assignedRole?: UserRole,
-  actorRole: UserRole = "superuser",
 ): Promise<AccountRequest> => {
-  // 🔒 Verifikasi: user harus login terlebih dahulu
   requirePermission("approve_accounts", "Setujui pendaftaran akun");
 
-  if (!canApproveAccounts(actorRole)) {
-    throw new Error("Hanya Super User yang dapat menyetujui pendaftaran akun");
-  }
+  const existing = readLocalRequests().find((r) => String(r.id) === String(requestId));
+  const targetRole = sanitizeAssignableRole(assignedRole ?? existing?.role ?? "admin");
 
-  const list = readLocalRequests();
-  const idx = list.findIndex((r) => String(r.id) === String(requestId));
-  const decidedAt = new Date().toISOString();
+  const { error } = await supabaseClient.rpc("approve_account", {
+    p_request_id: String(requestId),
+    p_role: targetRole,
+  });
+  if (error) throw new Error(error.message || "Gagal menyetujui akun");
 
-  let updatedItem: AccountRequest;
-  if (idx >= 0) {
-    const targetRole = sanitizeAssignableRole(assignedRole ?? list[idx].role ?? "admin");
-    updatedItem = {
-      ...list[idx],
-      status: "approved",
-      role: targetRole,
-      decidedAt,
-    };
-    list[idx] = updatedItem;
-    writeLocalRequests(list);
-  } else {
-    const targetRole = sanitizeAssignableRole(assignedRole ?? "admin");
-    updatedItem = {
-      id: requestId,
-      name: "Pengguna Baru",
-      email: "",
-      role: targetRole,
-      status: "approved",
-      createdAt: decidedAt,
-      decidedAt,
-    };
-  }
-
-  try {
-    await supabaseClient
-      .from(TABLES.accountRequests)
-      .update({
-        status: "approved",
-        role: updatedItem.role,
-        decided_at: decidedAt,
-      })
-      .eq("id", requestId);
-  } catch {
-    // fallback ke localStorage
-  }
-
-  return updatedItem;
+  return patchLocalRequest(
+    requestId,
+    { status: "approved", role: targetRole, decidedAt: new Date().toISOString() },
+    placeholder(requestId, "approved"),
+  );
 };
 
-/**
- * Point 1: Menolak permintaan akun baru (hanya Super User).
- */
+/** Menolak akun (hanya Super User) — role dicabut di server. */
 export const rejectAccountRequest = async (
   requestId: string,
-  actorRole: UserRole = "superuser",
 ): Promise<AccountRequest> => {
-  // 🔒 Verifikasi: user harus login terlebih dahulu
   requirePermission("approve_accounts", "Tolak pendaftaran akun");
 
-  if (!canApproveAccounts(actorRole)) {
-    throw new Error("Hanya Super User yang dapat menolak pendaftaran akun");
-  }
+  const { error } = await supabaseClient.rpc("reject_account", {
+    p_request_id: String(requestId),
+  });
+  if (error) throw new Error(error.message || "Gagal menolak akun");
 
-  const list = readLocalRequests();
-  const idx = list.findIndex((r) => String(r.id) === String(requestId));
-  const decidedAt = new Date().toISOString();
-
-  let updatedItem: AccountRequest;
-  if (idx >= 0) {
-    updatedItem = {
-      ...list[idx],
-      status: "rejected",
-      decidedAt,
-    };
-    list[idx] = updatedItem;
-    writeLocalRequests(list);
-  } else {
-    updatedItem = {
-      id: requestId,
-      name: "Calon Pengguna",
-      email: "",
-      role: "admin",
-      status: "rejected",
-      createdAt: decidedAt,
-      decidedAt,
-    };
-  }
-
-  try {
-    await supabaseClient
-      .from(TABLES.accountRequests)
-      .update({ status: "rejected", decided_at: decidedAt })
-      .eq("id", requestId);
-  } catch {
-    // fallback ke localStorage
-  }
-
-  return updatedItem;
+  return patchLocalRequest(
+    requestId,
+    { status: "rejected", decidedAt: new Date().toISOString() },
+    placeholder(requestId, "rejected"),
+  );
 };
 
-/**
- * Point 2: Mengubah role akun pengguna (hanya Super User).
- */
+/** Mengubah role akun yang sudah disetujui (hanya Super User). */
 export const updateAccountRole = async (
   requestId: string,
   newRole: UserRole,
-  actorRole: UserRole = "superuser",
 ): Promise<AccountRequest> => {
-  // 🔒 Verifikasi: user harus login terlebih dahulu
   requirePermission("manage_roles", "Ubah role akun");
 
-  if (!canManageRoles(actorRole)) {
-    throw new Error("Hanya Super User yang dapat mengubah role akun");
-  }
-
   const targetRole = sanitizeAssignableRole(newRole);
-  const list = readLocalRequests();
-  const idx = list.findIndex((r) => String(r.id) === String(requestId));
-  if (idx < 0) {
+  const existing = readLocalRequests().find((r) => String(r.id) === String(requestId));
+  if (!existing) {
     throw new Error("Data akun tidak ditemukan");
   }
 
-  const updatedItem: AccountRequest = {
-    ...list[idx],
-    role: targetRole,
-  };
-  list[idx] = updatedItem;
-  writeLocalRequests(list);
+  const { error } = await supabaseClient.rpc("set_account_role", {
+    p_request_id: String(requestId),
+    p_role: targetRole,
+  });
+  if (error) throw new Error(error.message || "Gagal mengubah role akun");
 
-  try {
-    await supabaseClient
-      .from(TABLES.accountRequests)
-      .update({ role: targetRole })
-      .eq("id", requestId);
-  } catch {
-    // fallback ke localStorage
-  }
-
-  return updatedItem;
-};
-
-export const findAccountRequestByEmail = (
-  email: string,
-): AccountRequest | undefined => {
-  const normalized = email.trim().toLowerCase();
-  return readLocalRequests().find((r) => r.email.toLowerCase() === normalized);
+  return patchLocalRequest(requestId, { role: targetRole }, existing);
 };

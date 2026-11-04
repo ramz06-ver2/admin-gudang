@@ -98,7 +98,7 @@ export const NotificationsPage = () => {
     setSelectedRoles((prev) => ({ ...prev, [req.id]: nextRole }));
     if (req.status === "approved") {
       try {
-        const updated = await updateAccountRole(req.id, nextRole, effectiveRole);
+        const updated = await updateAccountRole(req.id, nextRole);
         setRequests((prev) =>
           prev.map((item) => (item.id === req.id ? updated : item)),
         );
@@ -112,20 +112,28 @@ export const NotificationsPage = () => {
 
   const handleApprove = async (req: AccountRequest) => {
     const roleToAssign = selectedRoles[req.id] || req.role || "admin";
-    const updated = await approveAccountRequest(req.id, roleToAssign, effectiveRole);
-    setRequests((prev) =>
-      prev.map((item) => (item.id === req.id ? updated : item)),
-    );
-    const def = getRoleDefinition(updated.role);
-    message.success(`Akun ${req.email} diizinkan dan aktif sebagai ${def.label}.`);
+    try {
+      const updated = await approveAccountRequest(req.id, roleToAssign);
+      setRequests((prev) =>
+        prev.map((item) => (item.id === req.id ? updated : item)),
+      );
+      const def = getRoleDefinition(updated.role);
+      message.success(`Akun ${req.email} diizinkan dan aktif sebagai ${def.label}.`);
+    } catch (err) {
+      message.error((err as Error)?.message ?? "Gagal menyetujui akun");
+    }
   };
 
   const handleReject = async (req: AccountRequest) => {
-    const updated = await rejectAccountRequest(req.id, effectiveRole);
-    setRequests((prev) =>
-      prev.map((item) => (item.id === req.id ? updated : item)),
-    );
-    message.info(`Permintaan akun ${req.email} tidak diizinkan (dibatalkan).`);
+    try {
+      const updated = await rejectAccountRequest(req.id);
+      setRequests((prev) =>
+        prev.map((item) => (item.id === req.id ? updated : item)),
+      );
+      message.info(`Permintaan akun ${req.email} tidak diizinkan (dibatalkan).`);
+    } catch (err) {
+      message.error((err as Error)?.message ?? "Gagal menolak akun");
+    }
   };
 
   const handleAddCustomRole = () => {

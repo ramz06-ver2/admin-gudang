@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import type { SPBItemDetail } from "../../shared/types";
+import { canViewRestrictedSpb, isRestrictedSpbStatus } from "./accessRules";
 
 export const useSPBItemDetail = (itemId: string | null) => {
   const enabled = !!itemId;
@@ -26,6 +27,9 @@ export const useSPBItemDetail = (itemId: string | null) => {
 
       if (error) throw error;
       if (!data) return null;
+
+      // 🔒 SPB "belum di proses" hanya untuk user yang login
+      if (isRestrictedSpbStatus(data.status) && !canViewRestrictedSpb()) return null;
 
       const dataPo = Array.isArray(data.po) ? data.po[0] : data.po;
 

@@ -37,12 +37,9 @@ interface IdentityUser {
   role: UserRole;
 }
 
-const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
-  const [openMenu, setOpenMenu] = useState(false);
+/** Peran user saat ini (reaktif terhadap login/logout). */
+const useCurrentUser = () => {
   const { data: identity } = useGetIdentity<IdentityUser>();
-  const { mutate: logout } = useLogout();
-  const navigate = useNavigate();
-
   const [stored, setStored] = useState(() => getStoredUser());
 
   useEffect(() => {
@@ -56,6 +53,20 @@ const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
   }, []);
 
   const role: UserRole = identity?.role ?? stored?.role ?? "user";
+  return { identity, stored, role };
+};
+
+/** Chatbot hanya dirender untuk Super User. */
+const SuperUserChatbot = () => {
+  const { role } = useCurrentUser();
+  return isSuperUser(role) ? <ChatbotWidget /> : null;
+};
+
+const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
+  const [openMenu, setOpenMenu] = useState(false);
+  const { identity, stored, role } = useCurrentUser();
+  const { mutate: logout } = useLogout();
+  const navigate = useNavigate();
   const roleDef = getRoleDefinition(role);
   const isSuper = isSuperUser(role);
   const isLoggedIn = isAuthenticatedRole(role);
@@ -222,6 +233,6 @@ export const AdminLayout = ({ children }: PropsWithChildren) => (
   >
     <GlobalSearch />
     {children}
-    <ChatbotWidget />
+    <SuperUserChatbot />
   </ThemedLayoutV2>
 );

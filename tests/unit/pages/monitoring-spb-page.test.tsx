@@ -178,6 +178,10 @@ describe("MonitoringSPBPage - Fitur Pencarian, Filter, Sorting, dan Edit Judul",
   });
 
   it("menampilkan ikon pensil kecil pada card SPB dan PO serta dapat mengedit judulnya", async () => {
+    localStorage.setItem(
+      "mock-auth-user",
+      JSON.stringify({ id: "admin-1", email: "admin@perusahaan.com", name: "Admin", role: "admin" }),
+    );
     render(<MonitoringSPBPage />, { wrapper: Wrapper });
 
     const editSpbBtn = screen.getByTestId("edit-spb-title-SPB-01");

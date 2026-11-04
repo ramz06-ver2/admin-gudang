@@ -425,13 +425,10 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/app/providers/authProvider.ts
 ================================================================================
 
 import type { AuthProvider, AuthActionResponse, CheckResponse } from "@refinedev/core";
+import type { User } from "@supabase/supabase-js";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
-import { USE_MOCK } from "../../shared/lib/config";
 import type { UserRole } from "../../shared/types";
-import {
-  findAccountRequestByEmail,
-  registerAccountRequest,
-} from "../../features/auth/accountRequests";
+import { registerAccountRequest } from "../../features/auth/accountRequests";
 import {
   getRoleDefinition,
   isAuthenticatedRole,
@@ -448,6 +445,11 @@ export interface StoredAuthUser {
   role: UserRole;
 }
 
+/**
+ * Cache identitas untuk render UI yang sinkron. BUKAN sumber kebenaran:
+ * sumber kebenaran adalah sesi Supabase (JWT) dan RLS di database.
+ * Cache dibersihkan otomatis saat sesi berakhir (lihat initAuthSync).
+ */
 export const getStoredUser = (): StoredAuthUser | null => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -472,126 +474,97 @@ export const setStoredUser = (user: StoredAuthUser | null) => {
   }
 };
 
-const resolveRoleFromSupabaseUser = (user: any, fallbackEmail: string): UserRole => {
-  const metaRole = user?.user_metadata?.role as string | undefined;
-  if (metaRole && normalizeRoleKey(metaRole) !== "user") {
-    return normalizeRoleKey(metaRole);
-  }
-  const lower = fallbackEmail.toLowerCase();
-  if (lower.startsWith("superuser@")) return "superuser";
-  if (lower.startsWith("supervisor@")) return "supervisor";
-  return "admin";
+/**
+ * Role HANYA dibaca dari `app_metadata` — field ini hanya bisa diubah server
+ * (service role / RPC superuser), tidak bisa diubah user dari browser.
+ * `user_metadata` sengaja TIDAK dipakai karena dapat dimodifikasi user sendiri.
+ *
+ * @returns role terautentikasi, atau null jika belum disetujui / tidak valid.
+ */
+export const resolveRoleFromSupabaseUser = (
+  user: Pick<User, "app_metadata"> | null | undefined,
+): UserRole | null => {
+  const raw = user?.app_metadata?.role;
+  if (typeof raw !== "string") return null;
+  const key = normalizeRoleKey(raw);
+  return isAuthenticatedRole(key) ? key : null;
 };
+
+const toStoredUser = (user: User, role: UserRole): StoredAuthUser => {
+  const email = user.email ?? "";
+  const metaName = user.user_metadata?.name;
+  return {
+    id: user.id,
+    email,
+    name:
+      typeof metaName === "string" && metaName.trim()
+        ? metaName.trim()
+        : email.split("@")[0] || getRoleDefinition(role).label,
+    role,
+  };
+};
+
+const sameStoredUser = (a: StoredAuthUser | null, b: StoredAuthUser) =>
+  !!a && a.id === b.id && a.email === b.email && a.name === b.name && a.role === b.role;
+
+/**
+ * Menjaga cache identitas selalu sejalan dengan sesi Supabase: dibersihkan saat
+ * logout / token kedaluwarsa, dan diperbarui saat sesi/role berubah.
+ */
+let authSyncInitialized = false;
+export const initAuthSync = () => {
+  if (authSyncInitialized || typeof window === "undefined") return;
+  authSyncInitialized = true;
+  try {
+    supabaseClient.auth.onAuthStateChange((_event, session) => {
+      const role = resolveRoleFromSupabaseUser(session?.user);
+      if (!session?.user || !role) {
+        if (getStoredUser()) setStoredUser(null);
+        return;
+      }
+      const next = toStoredUser(session.user, role);
+      if (!sameStoredUser(getStoredUser(), next)) setStoredUser(next);
+    });
+  } catch {
+    // klien auth tidak tersedia (mis. lingkungan test tanpa auth) -> lewati
+  }
+};
+
+initAuthSync();
+
+const loginError = (message: string): AuthActionResponse => ({
+  success: false,
+  error: { name: "LoginError", message },
+});
 
 export const authProvider: AuthProvider = {
   login: async ({ email, password }): Promise<AuthActionResponse> => {
     const normalizedEmail = String(email || "").trim().toLowerCase();
-
-    const accountReq = findAccountRequestByEmail(normalizedEmail);
-    if (accountReq) {
-      if (accountReq.status === "pending") {
-        return {
-          success: false,
-          error: {
-            name: "LoginError",
-            message: "Akun Anda masih menunggu persetujuan Super User",
-          },
-        };
-      }
-      if (accountReq.status === "rejected") {
-        return {
-          success: false,
-          error: {
-            name: "LoginError",
-            message: "Pendaftaran akun Anda tidak diizinkan oleh Super User",
-          },
-        };
-      }
-      if (accountReq.status === "approved") {
-        if (!accountReq.password || accountReq.password === password) {
-          const assignedRole: UserRole =
-            accountReq.role && normalizeRoleKey(accountReq.role) !== "user"
-              ? normalizeRoleKey(accountReq.role)
-              : "admin";
-          setStoredUser({
-            id: accountReq.id,
-            email: accountReq.email,
-            name: accountReq.name,
-            role: assignedRole,
-          });
-          return { success: true, redirectTo: "/dashboard" };
-        }
-        return {
-          success: false,
-          error: { name: "LoginError", message: "Email/password salah" },
-        };
-      }
-    }
-
-    if (normalizedEmail === "superuser@admin.com" && password === "super123") {
-      setStoredUser({
-        id: "superuser-1",
-        email: normalizedEmail,
-        name: "Super User",
-        role: "superuser",
-      });
-      return { success: true, redirectTo: "/dashboard" };
-    }
-
-    if (
-      normalizedEmail === "supervisor@admin.com" &&
-      (password === "superv123" || password === "supervisor123")
-    ) {
-      setStoredUser({
-        id: "supervisor-1",
-        email: normalizedEmail,
-        name: "Supervisor",
-        role: "supervisor",
-      });
-      return { success: true, redirectTo: "/dashboard" };
-    }
-
-    if (normalizedEmail === "admin@admin.com" && password === "admin123") {
-      setStoredUser({
-        id: "admin-1",
-        email: normalizedEmail,
-        name: "Administrator",
-        role: "admin",
-      });
-      return { success: true, redirectTo: "/dashboard" };
-    }
-
-    if (USE_MOCK) {
-      return {
-        success: false,
-        error: { name: "LoginError", message: "Email/password salah" },
-      };
+    if (!normalizedEmail || !password) {
+      return loginError("Email dan password wajib diisi");
     }
 
     const { data, error } = await supabaseClient.auth.signInWithPassword({
-      email,
+      email: normalizedEmail,
       password,
     });
+
+    // Pesan generik: tidak membocorkan apakah email terdaftar atau tidak.
     if (error || !data?.user) {
-      return {
-        success: false,
-        error: {
-          name: "LoginError",
-          message: error?.message || "User tidak ditemukan",
-        },
-      };
+      return loginError("Email atau password salah");
     }
 
-    const resolvedRole = resolveRoleFromSupabaseUser(data.user, normalizedEmail);
-    const roleDef = getRoleDefinition(resolvedRole);
+    const role = resolveRoleFromSupabaseUser(data.user);
+    if (!role) {
+      // Akun ada tapi belum disetujui / belum diberi role -> jangan biarkan sesi aktif.
+      await supabaseClient.auth.signOut();
+      setStoredUser(null);
+      return loginError(
+        "Akun Anda masih menunggu persetujuan Super User atau belum diberi role. Hubungi Super User.",
+      );
+    }
 
-    setStoredUser({
-      id: data.user.id,
-      email: data.user.email || normalizedEmail,
-      name: data.user.email?.split("@")[0] ?? roleDef.label,
-      role: resolvedRole,
-    });
-
+    setStoredUser(toStoredUser(data.user, role));
     return { success: true, redirectTo: "/dashboard" };
   },
 
@@ -603,10 +576,7 @@ export const authProvider: AuthProvider = {
         password,
         role: role || "admin",
       });
-      return {
-        success: true,
-        redirectTo: "/login",
-      };
+      return { success: true, redirectTo: "/login" };
     } catch (err) {
       return {
         success: false,
@@ -619,63 +589,40 @@ export const authProvider: AuthProvider = {
   },
 
   logout: async (): Promise<AuthActionResponse> => {
-    // 🔧 PERBAIKAN: Hapus state filter & urutan SPB dari localStorage saat logout
-    localStorage.removeItem("spb_filter");
-    localStorage.removeItem("spb_searchTerm");
-    localStorage.removeItem("spb_searchMode");
-    localStorage.removeItem("spb_sortBy");
-
     setStoredUser(null);
-    if (!USE_MOCK) {
-      try {
-        await supabaseClient.auth.signOut();
-      } catch {
-        // ignore
-      }
+    try {
+      await supabaseClient.auth.signOut();
+    } catch {
+      // sesi lokal sudah dibersihkan
     }
     return { success: true, redirectTo: "/dashboard" };
   },
 
   check: async (): Promise<CheckResponse> => {
-    const stored = getStoredUser();
-    if (stored && isAuthenticatedRole(stored.role)) {
-      return { authenticated: true };
-    }
-    if (USE_MOCK) {
+    const { data } = await supabaseClient.auth.getSession();
+    const user = data?.session?.user;
+    const role = resolveRoleFromSupabaseUser(user);
+
+    if (!user || !role) {
+      if (getStoredUser()) setStoredUser(null);
       return { authenticated: false, redirectTo: "/login" };
     }
-    const { data } = await supabaseClient.auth.getSession();
-    return {
-      authenticated: !!data?.session,
-      redirectTo: "/login",
-    };
+
+    const next = toStoredUser(user, role);
+    if (!sameStoredUser(getStoredUser(), next)) setStoredUser(next);
+    return { authenticated: true };
   },
 
   getIdentity: async () => {
-    const stored = getStoredUser();
-    if (stored) {
-      const def = getRoleDefinition(stored.role);
-      return {
-        id: stored.id || `${def.key}-1`,
-        name: stored.name,
-        email: stored.email,
-        role: stored.role,
-      };
+    const { data } = await supabaseClient.auth.getSession();
+    const user = data?.session?.user;
+    const role = resolveRoleFromSupabaseUser(user);
+
+    if (user && role) {
+      const stored = toStoredUser(user, role);
+      return { id: stored.id, name: stored.name, email: stored.email, role };
     }
-    if (!USE_MOCK) {
-      const { data } = await supabaseClient.auth.getUser();
-      if (data?.user) {
-        const email = data.user.email || "";
-        const role = resolveRoleFromSupabaseUser(data.user, email);
-        const def = getRoleDefinition(role);
-        return {
-          id: data.user.id,
-          name: email.split("@")[0] || def.label,
-          email,
-          role,
-        };
-      }
-    }
+
     return {
       id: "public-user",
       name: "User (Public)",
@@ -685,17 +632,21 @@ export const authProvider: AuthProvider = {
   },
 
   getPermissions: async () => {
-    const stored = getStoredUser();
-    if (stored) return [stored.role];
-    if (!USE_MOCK) {
-      const { data } = await supabaseClient.auth.getSession();
-      if (data?.session) return ["admin"];
-    }
-    return ["user"];
+    const { data } = await supabaseClient.auth.getSession();
+    const role = resolveRoleFromSupabaseUser(data?.session?.user);
+    return [role ?? "user"];
   },
 
-  onError: async (error) => ({ error }),
+  onError: async (error) => {
+    // Sesi tidak valid / kedaluwarsa (401) -> paksa logout & kembali ke login.
+    const status = (error as any)?.status ?? (error as any)?.statusCode;
+    if (status === 401) {
+      return { logout: true, redirectTo: "/login", error };
+    }
+    return { error };
+  },
 };
+
 
 ================================================================================
 FILE: ../src/app/providers/dataProvider.ts
@@ -720,14 +671,18 @@ import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import type { AccountRequest, UserRole } from "../../shared/types";
 import { requirePermission } from "../../shared/lib/authGuard";
-import {
-  canApproveAccounts,
-  canManageRoles,
-  normalizeRoleKey,
-} from "../../app/providers/accessControlProvider";
+import { normalizeRoleKey } from "../../app/providers/accessControlProvider";
+
+/** Kebijakan password minimum (selaras dengan pengaturan Supabase Auth). */
+export const MIN_PASSWORD_LENGTH = 8;
 
 const REQUESTS_STORAGE_KEY = "account-registration-requests";
 
+/**
+ * Cache lokal daftar permintaan akun (hanya untuk badge/UX cepat).
+ * TIDAK PERNAH menyimpan password. Sumber kebenaran: tabel account_requests
+ * di server + Supabase Auth.
+ */
 export const readLocalRequests = (): AccountRequest[] => {
   try {
     const raw = localStorage.getItem(REQUESTS_STORAGE_KEY);
@@ -765,45 +720,56 @@ const sanitizeAssignableRole = (role?: UserRole | string | null): UserRole => {
   return key;
 };
 
-export const getAccountRequests = async (): Promise<AccountRequest[]> => {
-  const local = readLocalRequests();
-  try {
-    const res = await supabaseClient
-      .from(TABLES.accountRequests)
-      .select("*");
-    if (!res.error && Array.isArray(res.data) && res.data.length > 0) {
-      const mergedMap = new Map<string, AccountRequest>();
-      local.forEach((item) => mergedMap.set(item.email.toLowerCase(), item));
-      res.data.forEach((row: any) => {
-        const emailKey = String(row.email || "").toLowerCase();
-        if (!emailKey) return;
-        const existing = mergedMap.get(emailKey);
-        mergedMap.set(emailKey, {
-          id: String(row.id ?? existing?.id ?? Date.now()),
-          name: row.name || existing?.name || "Calon Pengguna",
-          email: row.email,
-          password: row.password ?? existing?.password,
-          role: sanitizeAssignableRole(row.role ?? existing?.role ?? "admin"),
-          status: row.status || existing?.status || "pending",
-          createdAt:
-            row.created_at ||
-            row.createdAt ||
-            existing?.createdAt ||
-            new Date().toISOString(),
-          decidedAt:
-            row.decided_at || row.decidedAt || existing?.decidedAt || null,
-        });
-      });
-      const merged = Array.from(mergedMap.values());
-      writeLocalRequests(merged);
-      return merged;
-    }
-  } catch {
-    // fallback ke localStorage jika tabel belum tersedia
+const mapRow = (row: any): AccountRequest => ({
+  id: String(row.id),
+  name: row.name || "Calon Pengguna",
+  email: String(row.email || ""),
+  role: sanitizeAssignableRole(row.role ?? "admin"),
+  status: row.status || "pending",
+  createdAt: row.created_at || row.createdAt || new Date().toISOString(),
+  decidedAt: row.decided_at || row.decidedAt || null,
+});
+
+const patchLocalRequest = (
+  requestId: string,
+  patch: Partial<AccountRequest>,
+  fallback: AccountRequest,
+): AccountRequest => {
+  const list = readLocalRequests();
+  const idx = list.findIndex((r) => String(r.id) === String(requestId));
+  if (idx >= 0) {
+    const updated = { ...list[idx], ...patch };
+    list[idx] = updated;
+    writeLocalRequests(list);
+    return updated;
   }
-  return local;
+  return { ...fallback, ...patch };
 };
 
+/**
+ * Daftar permintaan akun. RLS membatasi baca hanya untuk Super User;
+ * jika server menolak/tabel belum ada, jatuh ke cache lokal.
+ */
+export const getAccountRequests = async (): Promise<AccountRequest[]> => {
+  try {
+    const res = await supabaseClient.from(TABLES.accountRequests).select("*");
+    if (!res.error && Array.isArray(res.data)) {
+      const fromServer = res.data.map(mapRow).filter((r) => r.email);
+      writeLocalRequests(fromServer);
+      return fromServer;
+    }
+  } catch {
+    // fallback ke cache lokal
+  }
+  return readLocalRequests();
+};
+
+/**
+ * Pendaftaran akun: membuat user di Supabase Auth (password di-hash oleh
+ * server, tidak pernah disimpan/dikirim ke tabel kita) lalu mencatat permintaan
+ * persetujuan TANPA password. Akun baru tidak punya role sampai Super User
+ * menyetujui (role ditulis server-side ke app_metadata).
+ */
 export const registerAccountRequest = async (input: {
   name: string;
   email: string;
@@ -818,213 +784,141 @@ export const registerAccountRequest = async (input: {
   if (!name || !email || !password) {
     throw new Error("Nama, email, dan password wajib diisi");
   }
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    throw new Error(`Password minimal ${MIN_PASSWORD_LENGTH} karakter`);
+  }
 
-  const existingList = readLocalRequests();
-  const duplicate = existingList.find(
-    (r) => r.email.toLowerCase() === email && r.status !== "rejected",
-  );
-  if (duplicate) {
-    throw new Error(
-      duplicate.status === "pending"
-        ? "Email ini sudah terdaftar dan masih menunggu persetujuan Super User"
-        : "Email ini sudah terdaftar dan aktif di sistem",
-    );
+  const { data, error } = await supabaseClient.auth.signUp({
+    email,
+    password,
+    options: { data: { name } },
+  });
+  if (error) {
+    throw new Error(error.message || "Gagal membuat akun");
+  }
+  // Supabase mengembalikan user dengan identities kosong jika email sudah terdaftar.
+  if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+    throw new Error("Email ini sudah terdaftar");
+  }
+
+  // Pastikan tidak ada sesi aktif sebelum akun disetujui.
+  try {
+    await supabaseClient.auth.signOut();
+  } catch {
+    // ignore
   }
 
   const newRequest: AccountRequest = {
     id: `req-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     name,
     email,
-    password,
     role: requestedRole,
     status: "pending",
     createdAt: new Date().toISOString(),
     decidedAt: null,
   };
 
-  const updated = [
-    newRequest,
-    ...existingList.filter((r) => r.email.toLowerCase() !== email),
-  ];
-  writeLocalRequests(updated);
-
-  try {
-    await supabaseClient.from(TABLES.accountRequests).insert([
+  const { error: insertError } = await supabaseClient
+    .from(TABLES.accountRequests)
+    .insert([
       {
         id: newRequest.id,
         name: newRequest.name,
         email: newRequest.email,
-        password: newRequest.password,
         role: newRequest.role,
         status: "pending",
         created_at: newRequest.createdAt,
       },
     ]);
-  } catch {
-    // fallback ke localStorage
+  if (insertError) {
+    throw new Error("Akun dibuat, tetapi permintaan persetujuan gagal dikirim. Hubungi Super User.");
   }
+
+  writeLocalRequests([
+    newRequest,
+    ...readLocalRequests().filter((r) => r.email.toLowerCase() !== email),
+  ]);
 
   return newRequest;
 };
 
+const placeholder = (id: string, status: AccountRequest["status"]): AccountRequest => ({
+  id,
+  name: "Pengguna",
+  email: "",
+  role: "admin",
+  status,
+  createdAt: new Date().toISOString(),
+  decidedAt: null,
+});
+
 /**
- * Point 1: Menyetujui permintaan akun baru (hanya Super User).
- * Mendukung pemilihan role saat disetujui (misal: 'admin', 'supervisor', atau role tambahan).
+ * Menyetujui akun + menetapkan role (hanya Super User).
+ * Otorisasi ditegakkan DI SERVER: RPC `approve_account` memeriksa JWT
+ * (app_metadata.role = 'superuser') lalu menulis role ke app_metadata user.
  */
 export const approveAccountRequest = async (
   requestId: string,
   assignedRole?: UserRole,
-  actorRole: UserRole = "superuser",
 ): Promise<AccountRequest> => {
-  // 🔒 Verifikasi: user harus login terlebih dahulu
   requirePermission("approve_accounts", "Setujui pendaftaran akun");
 
-  if (!canApproveAccounts(actorRole)) {
-    throw new Error("Hanya Super User yang dapat menyetujui pendaftaran akun");
-  }
+  const existing = readLocalRequests().find((r) => String(r.id) === String(requestId));
+  const targetRole = sanitizeAssignableRole(assignedRole ?? existing?.role ?? "admin");
 
-  const list = readLocalRequests();
-  const idx = list.findIndex((r) => String(r.id) === String(requestId));
-  const decidedAt = new Date().toISOString();
+  const { error } = await supabaseClient.rpc("approve_account", {
+    p_request_id: String(requestId),
+    p_role: targetRole,
+  });
+  if (error) throw new Error(error.message || "Gagal menyetujui akun");
 
-  let updatedItem: AccountRequest;
-  if (idx >= 0) {
-    const targetRole = sanitizeAssignableRole(assignedRole ?? list[idx].role ?? "admin");
-    updatedItem = {
-      ...list[idx],
-      status: "approved",
-      role: targetRole,
-      decidedAt,
-    };
-    list[idx] = updatedItem;
-    writeLocalRequests(list);
-  } else {
-    const targetRole = sanitizeAssignableRole(assignedRole ?? "admin");
-    updatedItem = {
-      id: requestId,
-      name: "Pengguna Baru",
-      email: "",
-      role: targetRole,
-      status: "approved",
-      createdAt: decidedAt,
-      decidedAt,
-    };
-  }
-
-  try {
-    await supabaseClient
-      .from(TABLES.accountRequests)
-      .update({
-        status: "approved",
-        role: updatedItem.role,
-        decided_at: decidedAt,
-      })
-      .eq("id", requestId);
-  } catch {
-    // fallback ke localStorage
-  }
-
-  return updatedItem;
+  return patchLocalRequest(
+    requestId,
+    { status: "approved", role: targetRole, decidedAt: new Date().toISOString() },
+    placeholder(requestId, "approved"),
+  );
 };
 
-/**
- * Point 1: Menolak permintaan akun baru (hanya Super User).
- */
+/** Menolak akun (hanya Super User) — role dicabut di server. */
 export const rejectAccountRequest = async (
   requestId: string,
-  actorRole: UserRole = "superuser",
 ): Promise<AccountRequest> => {
-  // 🔒 Verifikasi: user harus login terlebih dahulu
   requirePermission("approve_accounts", "Tolak pendaftaran akun");
 
-  if (!canApproveAccounts(actorRole)) {
-    throw new Error("Hanya Super User yang dapat menolak pendaftaran akun");
-  }
+  const { error } = await supabaseClient.rpc("reject_account", {
+    p_request_id: String(requestId),
+  });
+  if (error) throw new Error(error.message || "Gagal menolak akun");
 
-  const list = readLocalRequests();
-  const idx = list.findIndex((r) => String(r.id) === String(requestId));
-  const decidedAt = new Date().toISOString();
-
-  let updatedItem: AccountRequest;
-  if (idx >= 0) {
-    updatedItem = {
-      ...list[idx],
-      status: "rejected",
-      decidedAt,
-    };
-    list[idx] = updatedItem;
-    writeLocalRequests(list);
-  } else {
-    updatedItem = {
-      id: requestId,
-      name: "Calon Pengguna",
-      email: "",
-      role: "admin",
-      status: "rejected",
-      createdAt: decidedAt,
-      decidedAt,
-    };
-  }
-
-  try {
-    await supabaseClient
-      .from(TABLES.accountRequests)
-      .update({ status: "rejected", decided_at: decidedAt })
-      .eq("id", requestId);
-  } catch {
-    // fallback ke localStorage
-  }
-
-  return updatedItem;
+  return patchLocalRequest(
+    requestId,
+    { status: "rejected", decidedAt: new Date().toISOString() },
+    placeholder(requestId, "rejected"),
+  );
 };
 
-/**
- * Point 2: Mengubah role akun pengguna (hanya Super User).
- */
+/** Mengubah role akun yang sudah disetujui (hanya Super User). */
 export const updateAccountRole = async (
   requestId: string,
   newRole: UserRole,
-  actorRole: UserRole = "superuser",
 ): Promise<AccountRequest> => {
-  // 🔒 Verifikasi: user harus login terlebih dahulu
   requirePermission("manage_roles", "Ubah role akun");
 
-  if (!canManageRoles(actorRole)) {
-    throw new Error("Hanya Super User yang dapat mengubah role akun");
-  }
-
   const targetRole = sanitizeAssignableRole(newRole);
-  const list = readLocalRequests();
-  const idx = list.findIndex((r) => String(r.id) === String(requestId));
-  if (idx < 0) {
+  const existing = readLocalRequests().find((r) => String(r.id) === String(requestId));
+  if (!existing) {
     throw new Error("Data akun tidak ditemukan");
   }
 
-  const updatedItem: AccountRequest = {
-    ...list[idx],
-    role: targetRole,
-  };
-  list[idx] = updatedItem;
-  writeLocalRequests(list);
+  const { error } = await supabaseClient.rpc("set_account_role", {
+    p_request_id: String(requestId),
+    p_role: targetRole,
+  });
+  if (error) throw new Error(error.message || "Gagal mengubah role akun");
 
-  try {
-    await supabaseClient
-      .from(TABLES.accountRequests)
-      .update({ role: targetRole })
-      .eq("id", requestId);
-  } catch {
-    // fallback ke localStorage
-  }
-
-  return updatedItem;
+  return patchLocalRequest(requestId, { role: targetRole }, existing);
 };
 
-export const findAccountRequestByEmail = (
-  email: string,
-): AccountRequest | undefined => {
-  const normalized = email.trim().toLowerCase();
-  return readLocalRequests().find((r) => r.email.toLowerCase() === normalized);
-};
 
 ================================================================================
 FILE: ../src/features/auth/pages/LoginPage.tsx
@@ -1040,7 +934,6 @@ import {
   Input,
   Typography,
   Alert,
-  Space,
   Segmented,
   Select,
 } from "antd";
@@ -1051,8 +944,7 @@ import {
   IdcardOutlined,
 } from "@ant-design/icons";
 
-import { USE_MOCK } from "../../../shared/lib/config";
-import { registerAccountRequest } from "../accountRequests";
+import { MIN_PASSWORD_LENGTH, registerAccountRequest } from "../accountRequests";
 import { getAssignableRoles } from "../../../app/providers/accessControlProvider";
 import type { UserRole } from "../../../shared/types";
 
@@ -1212,11 +1104,6 @@ export const LoginPage = () => {
             onFinish={handleSubmitLogin}
             autoComplete="off"
             requiredMark={false}
-            initialValues={
-              USE_MOCK
-                ? { email: "admin@admin.com", password: "admin123" }
-                : undefined
-            }
           >
             <Form.Item
               name="email"
@@ -1229,7 +1116,7 @@ export const LoginPage = () => {
               <Input
                 size="large"
                 prefix={<UserOutlined />}
-                placeholder="admin@admin.com"
+                placeholder="nama@perusahaan.com"
                 autoFocus
               />
             </Form.Item>
@@ -1299,13 +1186,13 @@ export const LoginPage = () => {
               label="Password"
               rules={[
                 { required: true, message: "Password wajib diisi" },
-                { min: 6, message: "Password minimal 6 karakter" },
+                { min: MIN_PASSWORD_LENGTH, message: `Password minimal ${MIN_PASSWORD_LENGTH} karakter` },
               ]}
             >
               <Input.Password
                 size="large"
                 prefix={<LockOutlined />}
-                placeholder="Minimal 6 karakter"
+                placeholder={`Minimal ${MIN_PASSWORD_LENGTH} karakter`}
               />
             </Form.Item>
 
@@ -1334,31 +1221,6 @@ export const LoginPage = () => {
           </Form>
         )}
 
-        {/* Info mock */}
-        {USE_MOCK && mode === "login" && (
-          <Alert
-            type="info"
-            showIcon
-            style={{ marginTop: 8 }}
-            message="Mode Demo"
-            description={
-              <Space direction="vertical" size={2}>
-                <Text style={{ fontSize: 12 }}>
-                  Super User: <Text code>superuser@admin.com</Text> /{" "}
-                  <Text code>super123</Text>
-                </Text>
-                <Text style={{ fontSize: 12 }}>
-                  Supervisor: <Text code>supervisor@admin.com</Text> /{" "}
-                  <Text code>superv123</Text>
-                </Text>
-                <Text style={{ fontSize: 12 }}>
-                  Admin: <Text code>admin@admin.com</Text> /{" "}
-                  <Text code>admin123</Text>
-                </Text>
-              </Space>
-            }
-          />
-        )}
       </Card>
     </div>
   );
@@ -1471,7 +1333,7 @@ export const NotificationsPage = () => {
     setSelectedRoles((prev) => ({ ...prev, [req.id]: nextRole }));
     if (req.status === "approved") {
       try {
-        const updated = await updateAccountRole(req.id, nextRole, effectiveRole);
+        const updated = await updateAccountRole(req.id, nextRole);
         setRequests((prev) =>
           prev.map((item) => (item.id === req.id ? updated : item)),
         );
@@ -1485,20 +1347,28 @@ export const NotificationsPage = () => {
 
   const handleApprove = async (req: AccountRequest) => {
     const roleToAssign = selectedRoles[req.id] || req.role || "admin";
-    const updated = await approveAccountRequest(req.id, roleToAssign, effectiveRole);
-    setRequests((prev) =>
-      prev.map((item) => (item.id === req.id ? updated : item)),
-    );
-    const def = getRoleDefinition(updated.role);
-    message.success(`Akun ${req.email} diizinkan dan aktif sebagai ${def.label}.`);
+    try {
+      const updated = await approveAccountRequest(req.id, roleToAssign);
+      setRequests((prev) =>
+        prev.map((item) => (item.id === req.id ? updated : item)),
+      );
+      const def = getRoleDefinition(updated.role);
+      message.success(`Akun ${req.email} diizinkan dan aktif sebagai ${def.label}.`);
+    } catch (err) {
+      message.error((err as Error)?.message ?? "Gagal menyetujui akun");
+    }
   };
 
   const handleReject = async (req: AccountRequest) => {
-    const updated = await rejectAccountRequest(req.id, effectiveRole);
-    setRequests((prev) =>
-      prev.map((item) => (item.id === req.id ? updated : item)),
-    );
-    message.info(`Permintaan akun ${req.email} tidak diizinkan (dibatalkan).`);
+    try {
+      const updated = await rejectAccountRequest(req.id);
+      setRequests((prev) =>
+        prev.map((item) => (item.id === req.id ? updated : item)),
+      );
+      message.info(`Permintaan akun ${req.email} tidak diizinkan (dibatalkan).`);
+    } catch (err) {
+      message.error((err as Error)?.message ?? "Gagal menolak akun");
+    }
   };
 
   const handleAddCustomRole = () => {
@@ -4217,116 +4087,759 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/reports/pages/Report
 
 
 ================================================================================
+FILE: ../src/features/spb/accessRules.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/accessRules.ts
+================================================================================
+
+/**
+ * Aturan akses data SPB (sisi klien).
+ *
+ * CATATAN KEAMANAN: aturan ini hanya lapisan UX/defense-in-depth. Penegakan
+ * sebenarnya ada di database (RLS pada tabel `spb`, lihat
+ * supabase/migrations/20261103_enforce_auth_rls.sql). Jangan mengandalkan
+ * filter klien saja.
+ */
+import { getVerifiedUser } from "../../shared/lib/authGuard";
+
+/** Nilai kolom `status` tabel spb yang hanya boleh dilihat user yang login. */
+export const RESTRICTED_SPB_STATUS = "belum di proses";
+
+/** Label filter di UI yang hanya tersedia untuk user yang login. */
+export const RESTRICTED_FILTER_LABEL = "Belum Diproses";
+
+export const isRestrictedSpbStatus = (status: unknown): boolean =>
+  String(status ?? "").trim().toLowerCase() === RESTRICTED_SPB_STATUS;
+
+/** True jika user saat ini sudah login (role terautentikasi). */
+export const canViewRestrictedSpb = (): boolean => getVerifiedUser() !== null;
+
+/**
+ * Menyaring baris SPB mentah: user yang belum login tidak menerima baris
+ * berstatus "belum di proses".
+ */
+export const filterVisibleSpbRows = <T extends { status?: unknown }>(
+  rows: T[],
+  canViewRestricted: boolean,
+): T[] =>
+  canViewRestricted
+    ? rows
+    : rows.filter((row) => !isRestrictedSpbStatus(row.status));
+
+/**
+ * Validasi URL file sumber (mis. Google Drive) sebelum dijadikan link.
+ * Hanya `https:` yang diterima — mencegah `javascript:`/`data:` URL dari data DB.
+ * @returns URL ternormalisasi, atau null jika kosong/tidak aman.
+ */
+export const toSafeExternalUrl = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+  const raw = value.trim();
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+};
+
+
+
+================================================================================
 FILE: ../src/features/spb/api.ts
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/api.ts
 ================================================================================
 
-
-
-================================================================================
-FILE: ../src/features/spb/pages/MonitoringSPBDetailPage.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/pages/MonitoringSPBDetailPage.tsx
-================================================================================
-
-import { useMemo } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+// src/features/spb/api.ts
+import { supabaseClient } from "../../shared/lib/supabaseClient";
+import { TABLES } from "../../shared/lib/constants";
+import { requirePermission } from "../../shared/lib/authGuard";
+import type { SPBItemDetail } from "../../shared/types";
+import { canViewRestrictedSpb, filterVisibleSpbRows, isRestrictedSpbStatus } from "./accessRules";
+import { cleanDocNo, hasValue, isIgnoredSuratJalan } from "./suratJalanRules";
+import type { MonitoringDetailItem } from "./types";
 import {
-  Typography,
-  Card,
-  Row,
-  Col,
-  Table,
-  Button,
-  Spin,
-  Empty,
-  Space,
-  Result,
-  Tag,
-  Grid,
-} from "antd";
-import { ArrowLeftOutlined, InfoCircleOutlined } from "@ant-design/icons";
-import { useMonitoringSPBDetail } from "../useMonitoringSPBDetail";
-import type { MonitoringDetailItem } from "../useMonitoringSPBDetail";
+  mapPoRow,
+  mapSinglePoItem,
+  mapSingleSjItem,
+  mapSingleSpbItem,
+  mapSjRow,
+  mapSpbRow,
+  sortById,
+  unique,
+  unwrap,
+  type Row,
+} from "./utils/mapDetailRows";
+import {
+  buildPoOverrideKey,
+  buildSpbOverrideKey,
+  saveTitleOverride,
+} from "./utils/titleOverrides";
+
+// PostgREST (Supabase) default max-rows = 1000.
+const PAGE_SIZE = 1000;
+
+const SPB_SELECT = `*, po:po!id_po (no_po, tanggal_po, source_file)`;
+const SJ_SELECT = `*, spb:spb!id_spb (no_spb, judul_spb, source_file), po:po!id_po (no_po, source_file)`;
+
+/**
+ * Mengambil seluruh baris dari sebuah tabel dengan pagination `.range()`
+ * untuk menghindari batas default 1000 baris PostgREST.
+ */
+export const fetchAllRows = async (
+  table: string,
+  select: string,
+): Promise<any[]> => {
+  const all: any[] = [];
+  let from = 0;
+
+  for (let guard = 0; guard < 100; guard += 1) {
+    const { data, error } = await supabaseClient
+      .from(table)
+      .select(select)
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+
+    const rows = (data as any[]) ?? [];
+    all.push(...rows);
+    if (rows.length < PAGE_SIZE) break;
+
+    from += PAGE_SIZE;
+  }
+
+  return all;
+};
+
+/**
+ * Mengambil semua baris mentah (SPB, PO, Surat Jalan) untuk halaman Monitoring SPB.
+ */
+export const fetchMonitoringRawData = async () => {
+  const [allSpbData, poData, sjData] = await Promise.all([
+    fetchAllRows(
+      "spb",
+      `id, no_spb, judul_spb, tgl_spb, material_datang_tgl, id_po,
+       qty_permintaan, material_datang_qty, nama_barang_spb, status,
+       source_file,
+       po:po!id_po (no_po, tanggal_po)`,
+    ),
+    fetchAllRows(
+      "po",
+      `id, no_po, judul_po, tanggal_po, id_spb, material_datang_tgl,
+       material_datang_qty, nama_barang_po, nama_supplier, source_file`,
+    ),
+    fetchAllRows(
+      "surat_jalan",
+      `id, no_surat_jalan, id_spb, id_po, nama_barang,
+       material_datang_tgl, material_datang_qty,
+       spb:spb!id_spb (no_spb, judul_spb),
+       po:po!id_po (no_po)`,
+    ),
+  ]);
+
+  return { allSpbData, poData, sjData };
+};
+
+/**
+ * Memperbarui judul dokumen SPB atau PO di database & menyimpan override lokal.
+ */
+export const updateDocumentTitle = async (
+  type: "spb" | "po",
+  docNo: string,
+  newTitle: string,
+  originalTitle?: string | null,
+): Promise<void> => {
+  requirePermission("edit_data", `Edit judul ${type.toUpperCase()}`);
+  const trimmed = newTitle.trim();
+
+  if (type === "spb") {
+    saveTitleOverride(buildSpbOverrideKey(docNo, originalTitle), trimmed);
+    let q = supabaseClient
+      .from("spb")
+      .update({ judul_spb: trimmed })
+      .eq("no_spb", docNo);
+    if (originalTitle) q = q.eq("judul_spb", originalTitle);
+    const { error } = await q;
+    if (error) throw error;
+  } else {
+    saveTitleOverride(buildPoOverrideKey(docNo), trimmed);
+    const { error } = await supabaseClient
+      .from("po")
+      .update({ judul_po: trimmed })
+      .eq("no_po", docNo);
+    if (error) throw error;
+  }
+};
+
+/**
+ * Mengambil daftar barang detail berdasarkan nomor SPB.
+ */
+export const fetchDetailBySpb = async (
+  spbNo: string,
+  judulSpb: string | null = null,
+  canViewRestricted = false,
+): Promise<MonitoringDetailItem[]> => {
+  let spbQuery = supabaseClient
+    .from("spb")
+    .select(SPB_SELECT)
+    .eq("no_spb", spbNo);
+  if (judulSpb) spbQuery = spbQuery.eq("judul_spb", judulSpb);
+
+  const spbRows = filterVisibleSpbRows(
+    sortById(unwrap(await spbQuery)),
+    canViewRestricted,
+  );
+  if (spbRows.length === 0) return [];
+
+  const spbIds = spbRows.map((r) => r.id);
+
+  const [poRes, sjRes] = await Promise.all([
+    supabaseClient
+      .from("po")
+      .select("id, no_po, tanggal_po, id_spb, source_file")
+      .in("id_spb", spbIds),
+    supabaseClient.from("surat_jalan").select(SJ_SELECT).in("id_spb", spbIds),
+  ]);
+
+  const poBySpbId = new Map<string, Row>();
+  unwrap(poRes).forEach((p) => {
+    const key = String(p.id_spb);
+    if (cleanDocNo(p.no_po) && !poBySpbId.has(key)) poBySpbId.set(key, p);
+  });
+
+  const spbItems = spbRows.map((r) =>
+    mapSpbRow(r, poBySpbId.get(String(r.id)) ?? null),
+  );
+  const sjItems = sortById(unwrap(sjRes))
+    .filter((sj) => !isIgnoredSuratJalan(sj.no_surat_jalan))
+    .map(mapSjRow);
+
+  return [...spbItems, ...sjItems];
+};
+
+/**
+ * Mengambil daftar barang detail berdasarkan nomor PO.
+ */
+export const fetchDetailByPo = async (
+  poNo: string,
+): Promise<MonitoringDetailItem[]> => {
+  const poRows = sortById(
+    unwrap(await supabaseClient.from("po").select("*").eq("no_po", poNo)),
+  );
+  if (poRows.length === 0) return [];
+
+  const poIds = poRows.map((p) => p.id);
+  const parentSpbIds = unique(poRows.map((p) => p.id_spb).filter(hasValue));
+
+  const [parentSpbRes, spbPointingRes, sjRes] = await Promise.all([
+    parentSpbIds.length > 0
+      ? supabaseClient.from("spb").select("id").in("id", parentSpbIds)
+      : Promise.resolve({ data: [], error: null }),
+    supabaseClient.from("spb").select("id, id_po").in("id_po", poIds),
+    supabaseClient
+      .from("surat_jalan")
+      .select(SJ_SELECT)
+      .in("id_po", poIds)
+      .is("id_spb", null),
+  ]);
+
+  const existingParentSpb = new Set(
+    unwrap(parentSpbRes).map((s) => String(s.id)),
+  );
+  const poIdsUsedBySpb = new Set(
+    unwrap(spbPointingRes).map((s) => String(s.id_po)),
+  );
+
+  const isLinkedToSpb = (p: Row) =>
+    (hasValue(p.id_spb) && existingParentSpb.has(String(p.id_spb))) ||
+    poIdsUsedBySpb.has(String(p.id));
+
+  const poItems = poRows.filter((p) => !isLinkedToSpb(p)).map(mapPoRow);
+  const sjItems = sortById(unwrap(sjRes))
+    .filter((sj) => !isIgnoredSuratJalan(sj.no_surat_jalan))
+    .map(mapSjRow);
+
+  return [...poItems, ...sjItems];
+};
+
+/**
+ * Mengambil daftar barang detail berdasarkan nomor Surat Jalan murni.
+ */
+export const fetchDetailBySuratJalan = async (
+  sjNo: string,
+): Promise<MonitoringDetailItem[]> => {
+  if (isIgnoredSuratJalan(sjNo)) return [];
+
+  const rows = unwrap(
+    await supabaseClient
+      .from("surat_jalan")
+      .select(SJ_SELECT)
+      .eq("no_surat_jalan", sjNo)
+      .is("id_spb", null)
+      .is("id_po", null),
+  );
+
+  return sortById(rows).map(mapSjRow);
+};
+
+/**
+ * Mengambil rincian satu barang berdasarkan ID dan tipe sumber ("spb" | "po" | "sj").
+ */
+export const fetchSingleItemById = async (
+  id: string,
+  type: string,
+): Promise<SPBItemDetail | null> => {
+  if (type === "po") {
+    const { data, error } = await supabaseClient
+      .from("po")
+      .select("*")
+      .eq("id", id)
+      .single();
+    if (error) throw error;
+    if (!data) return null;
+    return mapSinglePoItem(data);
+  }
+
+  if (type === "sj") {
+    const { data, error } = await supabaseClient
+      .from("surat_jalan")
+      .select(
+        `*, spb:spb!id_spb (no_spb, tgl_spb, source_file), po:po!id_po (no_po, tanggal_po, nama_supplier, source_file)`,
+      )
+      .eq("id", id)
+      .single();
+    if (error) throw error;
+    if (!data) return null;
+    return mapSingleSjItem(data);
+  }
+
+  const { data, error } = await supabaseClient
+    .from(TABLES.spb)
+    .select(`*, po (no_po, tanggal_po, nama_supplier, source_file)`)
+    .eq("id", id)
+    .single();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  if (isRestrictedSpbStatus(data.status) && !canViewRestrictedSpb()) {
+    return null;
+  }
+
+  let dataPo = Array.isArray(data.po) ? data.po[0] : data.po;
+
+  if (!dataPo && data.id) {
+    try {
+      const fallbackRes = await supabaseClient
+        .from("po")
+        .select("no_po, tanggal_po, nama_supplier, source_file")
+        .eq("id_spb", data.id)
+        .single();
+      if (fallbackRes?.data) {
+        dataPo = fallbackRes.data;
+      }
+    } catch {
+      // ignore fallback error
+    }
+  }
+
+  return mapSingleSpbItem(data, dataPo);
+};
+
+
+
+================================================================================
+FILE: ../src/features/spb/components/EditDocumentTitleModal.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/components/EditDocumentTitleModal.tsx
+================================================================================
+
+// src/features/spb/components/EditDocumentTitleModal.tsx
+import { Input, Modal } from "antd";
+import type { EditingTitleState } from "../types";
+
+export interface EditDocumentTitleModalProps {
+  editingTitle: EditingTitleState | null;
+  titleInput: string;
+  onTitleInputChange: (val: string) => void;
+  savingTitle: boolean;
+  onCancel: () => void;
+  onSave: () => void;
+}
+
+export const EditDocumentTitleModal = ({
+  editingTitle,
+  titleInput,
+  onTitleInputChange,
+  savingTitle,
+  onCancel,
+  onSave,
+}: EditDocumentTitleModalProps) => (
+  <Modal
+    title={
+      editingTitle
+        ? `Edit Judul ${editingTitle.type.toUpperCase()} ${editingTitle.docNo}`
+        : "Edit Judul"
+    }
+    open={!!editingTitle}
+    onCancel={onCancel}
+    onOk={onSave}
+    okText="Simpan"
+    cancelText="Batal"
+    confirmLoading={savingTitle}
+    destroyOnHidden
+  >
+    <Input
+      placeholder="Masukkan judul baru..."
+      value={titleInput}
+      onChange={(e) => onTitleInputChange(e.target.value)}
+      onPressEnter={onSave}
+      aria-label="Input Judul Dokumen"
+      autoFocus
+    />
+  </Modal>
+);
+
+
+
+================================================================================
+FILE: ../src/features/spb/components/ItemDetailRowsBuilder.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/components/ItemDetailRowsBuilder.tsx
+================================================================================
+
+// src/features/spb/components/ItemDetailRowsBuilder.tsx
+import { Button, Space, Tag, Tooltip, Typography } from "antd";
+import { FileOutlined } from "@ant-design/icons";
+import type { SPBItemDetail } from "../../../shared/types";
 import { formatDate } from "../../../shared/lib/format";
+import { toSafeExternalUrl } from "../accessRules";
+import type { DetailRow } from "../types";
+import { getItemDetailStatusColor } from "../utils/statusHelpers";
+
+const { Text } = Typography;
+
+/**
+ * Membangun 20 baris rincian untuk halaman Rincian Barang (Item Detail).
+ */
+export const buildItemDetailRows = (
+  item: SPBItemDetail,
+  type: string,
+): DetailRow[] => {
+  const safeSpbUrl = toSafeExternalUrl((item as any).spbSourceFile);
+  const safePoUrl = toSafeExternalUrl((item as any).poSourceFile);
+
+  return [
+    {
+      key: "1",
+      field: "No SPB",
+      value: (
+        <Space>
+          <Text>{item.no_spb || "-"}</Text>
+          {/* Tombol File di samping No SPB */}
+          {safeSpbUrl ? (
+            <a href={safeSpbUrl} target="_blank" rel="noopener noreferrer">
+              <Button size="small" type="primary" ghost icon={<FileOutlined />}>
+                File
+              </Button>
+            </a>
+          ) : (
+            <Tooltip title="File belum di-upload">
+              <Button size="small" type="default" icon={<FileOutlined />} disabled>
+                File
+              </Button>
+            </Tooltip>
+          )}
+        </Space>
+      ),
+    },
+    {
+      key: "2",
+      field: "Tanggal SPB",
+      value: item.tanggal_spb ? formatDate(item.tanggal_spb) : "-",
+    },
+    {
+      key: "3",
+      field: "Nama Barang",
+      value: <Text strong>{item.nama_barang || "-"}</Text>,
+    },
+    { key: "4", field: "Ukuran", value: item.ukuran || "-" },
+    {
+      key: "5",
+      field: "Jumlah Permintaan",
+      value: item.jumlah_permintaan ?? "-",
+    },
+    { key: "6", field: "Satuan", value: item.satuan || "-" },
+    {
+      key: "7",
+      field: "No PO",
+      value: (
+        <Space>
+          <Text>{item.no_po || "-"}</Text>
+          {/* Tombol File di samping No PO */}
+          {safePoUrl ? (
+            <a href={safePoUrl} target="_blank" rel="noopener noreferrer">
+              <Button size="small" type="primary" ghost icon={<FileOutlined />}>
+                File
+              </Button>
+            </a>
+          ) : (
+            <Tooltip title="File belum di-upload">
+              <Button size="small" type="default" icon={<FileOutlined />} disabled>
+                File
+              </Button>
+            </Tooltip>
+          )}
+        </Space>
+      ),
+    },
+    {
+      key: "8",
+      field: "Tanggal PO",
+      value: item.tanggal_po ? formatDate(item.tanggal_po) : "-",
+    },
+    { key: "9", field: "Supplier", value: item.supplier || "-" },
+    { key: "10", field: "Merk", value: item.merk || "-" },
+    {
+      key: "11",
+      field: "Spesifikasi Teknis",
+      value: item.spesifikasi_teknis || "-",
+    },
+    {
+      key: "12",
+      field: "Lokasi Pemasangan",
+      value: item.lokasi_pemasangan || "-",
+    },
+    type === "sj"
+      ? {
+          key: "13",
+          field: "No Surat Jalan",
+          value: String(item.no_surat_jalan ?? "-"),
+        }
+      : {
+          key: "13",
+          field: "Rencana Pemasangan",
+          value: item.rencana_pemasangan || "-",
+        },
+    {
+      key: "14",
+      field: "Tanggal Datang",
+      value: item.tanggal_datang ? formatDate(item.tanggal_datang) : "-",
+    },
+    { key: "15", field: "Qty Datang", value: item.qty_datang ?? 0 },
+    {
+      key: "16",
+      field: "Satuan (Datang)",
+      value: item.satuan_datang || "-",
+    },
+    { key: "17", field: "Lama Proses", value: item.lama_proses || "-" },
+    {
+      key: "18",
+      field: "Kurang/Lebih",
+      value: item.kurang_lebih ?? "-",
+    },
+    { key: "19", field: "Keterangan", value: item.keterangan || "-" },
+    {
+      key: "20",
+      field: "Status",
+      value: (
+        <Tag color={getItemDetailStatusColor(item.status)}>
+          {item.status || "-"}
+        </Tag>
+      ),
+    },
+  ];
+};
+
+================================================================================
+FILE: ../src/features/spb/components/MonitoringDetailHeader.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/components/MonitoringDetailHeader.tsx
+================================================================================
+
+// src/features/spb/components/MonitoringDetailHeader.tsx
+import { Button, Card, Col, Row, Space, Typography } from "antd";
+import { ArrowLeftOutlined } from "@ant-design/icons";
+import type { UniquePoInfo } from "../types";
+import { SourceFileLink } from "./SourceFileLink";
 
 const { Title, Text } = Typography;
 
-export const MonitoringSPBDetailPage = () => {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const spbNo = searchParams.get("spb");
-  const poNo = searchParams.get("po");
-  const sjNo = searchParams.get("sj");
-  // 🔧 Judul SPB dipakai untuk memfilter detail ketika ada dua SPB bernomor
-  // sama tetapi judul berbeda (mis. SPB 56 "Ducting PU" vs SPB 56 "Kabel Feeder Utama").
-  const judulSpb = searchParams.get("judul");
+export interface MonitoringDetailHeaderProps {
+  spbNo: string | null;
+  spbTitle: string | null | undefined;
+  spbSourceFile?: string | null;
+  uniquePos: UniquePoInfo[];
+  sjNo: string | null;
+  onBack: () => void;
+}
 
-  const screens = Grid.useBreakpoint();
-  const isMobile = !screens.md;
+export const MonitoringDetailHeader = ({
+  spbNo,
+  spbTitle,
+  spbSourceFile,
+  uniquePos,
+  sjNo,
+  onBack,
+}: MonitoringDetailHeaderProps) => (
+  <Space align="center" style={{ marginBottom: 16 }}>
+    <Button
+      type="text"
+      size="large"
+      icon={<ArrowLeftOutlined />}
+      onClick={onBack}
+    />
+    <div>
+      <Title level={3} style={{ margin: 0 }}>
+        Detail SPB / PO
+      </Title>
+      <div style={{ marginTop: 4 }}>
+        {/* Bagian Judul SPB */}
+        {spbNo && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Text strong style={{ fontSize: 18 }}>
+              SPB: {spbNo} {spbTitle ? ` - ${spbTitle}` : ""}
+            </Text>
+            <SourceFileLink
+              url={spbSourceFile}
+              label={`Buka file asli SPB ${spbNo}`}
+              fontSize={18}
+              stopPropagation={false}
+            />
+          </div>
+        )}
 
-  const { items, isLoading, error } = useMonitoringSPBDetail(
-    spbNo,
-    poNo,
-    sjNo,
-    judulSpb,
-  );
+        {/* Bagian Daftar PO (Bisa lebih dari satu) */}
+        {uniquePos.length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              gap: 6,
+              marginTop: 4,
+            }}
+          >
+            <Text strong style={{ fontSize: 18 }}>
+              PO:{" "}
+            </Text>
+            {uniquePos.map((po, idx) => (
+              <span
+                key={po.no}
+                style={{ display: "flex", alignItems: "center", gap: 4 }}
+              >
+                <Text strong style={{ fontSize: 18 }}>
+                  {po.no}
+                </Text>
+                <SourceFileLink
+                  url={po.file}
+                  label={`Buka file asli PO ${po.no}`}
+                  fontSize={18}
+                  stopPropagation={false}
+                />
+                {idx < uniquePos.length - 1 && (
+                  <Text strong style={{ fontSize: 18, marginLeft: 2 }}>
+                    ,
+                  </Text>
+                )}
+              </span>
+            ))}
+          </div>
+        )}
 
-  const spbTitle = items.length > 0 ? items[0].judul_spb : null;
+        {sjNo && (
+          <div style={{ marginTop: 4 }}>
+            <Text strong style={{ fontSize: 18 }}>
+              Surat Jalan: {sjNo}
+            </Text>
+          </div>
+        )}
+      </div>
+    </div>
+  </Space>
+);
 
-  // Card Surat Jalan murni tidak punya PO, jadi status PO tidak ditampilkan
-  const showPoStatus = !!(spbNo || poNo);
-
-  const statuses = useMemo(() => {
-    if (items.length === 0) return { belumDiPo: false, sudahDiPo: false };
-    const somePo = items.some((it) => it.no_po && it.no_po !== "-");
-    return { belumDiPo: !somePo, sudahDiPo: somePo };
-  }, [items]);
-
-  const StatusCard = ({ title, active }: { title: string; active: boolean }) => (
-    <Card
-      size="small"
+const StatusSummaryCard = ({
+  title,
+  active,
+}: {
+  title: string;
+  active: boolean;
+}) => (
+  <Card
+    size="small"
+    style={{
+      backgroundColor: active ? "#f6ffed" : "#f5f5f5",
+      borderColor: active ? "#b7eb8f" : "#d9d9d9",
+      textAlign: "center",
+    }}
+  >
+    <span
       style={{
-        backgroundColor: active ? "#f6ffed" : "#f5f5f5",
-        borderColor: active ? "#b7eb8f" : "#d9d9d9",
-        textAlign: "center",
+        color: active ? "#52c41a" : "#8c8c8c",
+        fontWeight: active ? "bold" : "normal",
       }}
     >
-      <span
-        style={{
-          color: active ? "#52c41a" : "#8c8c8c",
-          fontWeight: active ? "bold" : "normal",
-        }}
-      >
-        {title}
-      </span>
-    </Card>
-  );
+      {title}
+    </span>
+  </Card>
+);
 
-  const getStatusColor = (status: string | null | undefined) => {
-    if (status === "Belum PO") return "orange";
-    if (status === "Sudah PO") return "blue";
-    if (status === "Datang Sesuai" || status === "Datang") return "green";
-    if (status === "Datang Kurang") return "volcano";
-    if (status === "Datang Lebih") return "purple";
-    return "default";
-  };
+export const MonitoringPoStatusRow = ({
+  belumDiPo,
+  sudahDiPo,
+}: {
+  belumDiPo: boolean;
+  sudahDiPo: boolean;
+}) => (
+  <Row gutter={[8, 8]} style={{ marginBottom: 16 }}>
+    <Col xs={12} md={12}>
+      <StatusSummaryCard title="Belum di PO" active={belumDiPo} />
+    </Col>
+    <Col xs={12} md={12}>
+      <StatusSummaryCard title="Sudah di PO" active={sudahDiPo} />
+    </Col>
+  </Row>
+);
 
-  const renderNamaBarang = (r: MonitoringDetailItem) => {
-    const nameWithSize = r.ukuran ? `${r.nama_barang} - ${r.ukuran}` : r.nama_barang;
-    return (
-      <Space direction="vertical" size={1} style={{ width: "100%" }}>
-        <Text strong style={{ fontSize: 13, wordBreak: "break-word" }}>
-          {nameWithSize}
+================================================================================
+FILE: ../src/features/spb/components/MonitoringDetailTable.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/components/MonitoringDetailTable.tsx
+================================================================================
+
+// src/features/spb/components/MonitoringDetailTable.tsx
+import { Button, Card, Space, Table, Tag, Typography } from "antd";
+import { InfoCircleOutlined } from "@ant-design/icons";
+import { formatDate } from "../../../shared/lib/format";
+import type { MonitoringDetailItem } from "../types";
+import { getDetailStatusColor } from "../utils/statusHelpers";
+
+const { Text } = Typography;
+
+export interface MonitoringDetailTableProps {
+  items: MonitoringDetailItem[];
+  isMobile: boolean;
+  onViewItemDetail: (item: MonitoringDetailItem) => void;
+}
+
+const renderNamaBarang = (r: MonitoringDetailItem) => {
+  const nameWithSize = r.ukuran
+    ? `${r.nama_barang} - ${r.ukuran}`
+    : r.nama_barang;
+  return (
+    <Space direction="vertical" size={1} style={{ width: "100%" }}>
+      <Text strong style={{ fontSize: 13, wordBreak: "break-word" }}>
+        {nameWithSize}
+      </Text>
+      {r.spesifikasi_teknis && r.spesifikasi_teknis !== "-" && (
+        <Text style={{ fontSize: 11, color: "#8c8c8c", lineHeight: 1.2 }}>
+          • {r.spesifikasi_teknis}
         </Text>
-        {r.spesifikasi_teknis && r.spesifikasi_teknis !== "-" && (
-          <Text style={{ fontSize: 11, color: "#8c8c8c", lineHeight: 1.2 }}>
-            • {r.spesifikasi_teknis}
-          </Text>
-        )}
-      </Space>
-    );
-  };
+      )}
+    </Space>
+  );
+};
 
+export const MonitoringDetailTable = ({
+  items,
+  isMobile,
+  onViewItemDetail,
+}: MonitoringDetailTableProps) => {
   const mobileColumns = [
     {
       title: "No",
@@ -4362,7 +4875,7 @@ export const MonitoringSPBDetailPage = () => {
       align: "center" as const,
       render: (_: any, r: MonitoringDetailItem) => (
         <Tag
-          color={getStatusColor(r.status)}
+          color={getDetailStatusColor(r.status)}
           style={{
             margin: 0,
             padding: "0 4px",
@@ -4386,7 +4899,7 @@ export const MonitoringSPBDetailPage = () => {
           size="small"
           icon={<InfoCircleOutlined />}
           style={{ fontSize: 11, padding: "0 6px" }}
-          onClick={() => navigate(`/monitoring-spb/item/${r.id}?type=${r.sumber}`)}
+          onClick={() => onViewItemDetail(r)}
         >
           Detail
         </Button>
@@ -4450,7 +4963,7 @@ export const MonitoringSPBDetailPage = () => {
       width: 110,
       align: "center" as const,
       render: (_: any, r: MonitoringDetailItem) => (
-        <Tag color={getStatusColor(r.status)} style={{ margin: 0 }}>
+        <Tag color={getDetailStatusColor(r.status)} style={{ margin: 0 }}>
           {r.status || "Belum PO"}
         </Tag>
       ),
@@ -4465,7 +4978,7 @@ export const MonitoringSPBDetailPage = () => {
           type="primary"
           size="small"
           icon={<InfoCircleOutlined />}
-          onClick={() => navigate(`/monitoring-spb/item/${r.id}?type=${r.sumber}`)}
+          onClick={() => onViewItemDetail(r)}
         >
           Detail
         </Button>
@@ -4473,40 +4986,842 @@ export const MonitoringSPBDetailPage = () => {
     },
   ];
 
-  const columns = isMobile ? mobileColumns : desktopColumns;
+  return (
+    <Card
+      title={`Daftar Barang (${items.length})`}
+      variant="borderless"
+      style={{
+        borderRadius: isMobile ? 0 : 12,
+        ...(isMobile && {
+          width: "100vw",
+          position: "relative",
+          left: "50%",
+          transform: "translateX(-50%)",
+        }),
+      }}
+      styles={{ body: { padding: 0 } }}
+    >
+      <Table<MonitoringDetailItem>
+        dataSource={items}
+        columns={isMobile ? mobileColumns : desktopColumns}
+        rowKey="key"
+        size="small"
+        tableLayout="fixed"
+        pagination={{ pageSize: 20, size: "small" }}
+        scroll={undefined}
+      />
+    </Card>
+  );
+};
+
+
+
+================================================================================
+FILE: ../src/features/spb/components/MonitoringSPBCard.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/components/MonitoringSPBCard.tsx
+================================================================================
+
+// src/features/spb/components/MonitoringSPBCard.tsx
+import type { MouseEvent } from "react";
+import { Button, Card, Divider, Space, Tag, Typography } from "antd";
+import { ArrowRightOutlined, EditOutlined } from "@ant-design/icons";
+import type { SPBDocumentGroup } from "../../../shared/types";
+import { formatDate } from "../../../shared/lib/format";
+import { getCardStatusColor } from "../utils/statusHelpers";
+import { buildLocalTitleKey } from "../utils/titleOverrides";
+import { SourceFileLink } from "./SourceFileLink";
+
+const { Text } = Typography;
+
+export interface MonitoringSPBCardProps {
+  item: SPBDocumentGroup;
+  allowEdit: boolean;
+  localTitles: Record<string, string>;
+  onCardClick: (item: SPBDocumentGroup) => void;
+  onEditTitle: (
+    e: MouseEvent,
+    type: "spb" | "po",
+    docNo: string,
+    currentTitle?: string | null,
+  ) => void;
+}
+
+export const MonitoringSPBCard = ({
+  item,
+  allowEdit,
+  localTitles,
+  onCardClick,
+  onEditTitle,
+}: MonitoringSPBCardProps) => {
+  const hasSPB = item.spbNo !== null && item.spbNo !== "NO_SPB";
+  const hasPO =
+    item.poNo !== null && item.poNo !== "NO_PO" && item.poNo !== "-";
+  const hasSJ = !hasSPB && !hasPO && item.suratJalanNo;
+
+  const spbKey =
+    hasSPB && item.spbNo
+      ? buildLocalTitleKey("spb", item.spbNo, item.spbTitle)
+      : null;
+  const poKey =
+    hasPO && item.poNo
+      ? buildLocalTitleKey("po", item.poNo, item.poTitle)
+      : null;
+
+  const resolvedSpbTitle =
+    spbKey && localTitles[spbKey] !== undefined
+      ? localTitles[spbKey]
+      : item.spbTitle;
+  const resolvedPoTitle =
+    poKey && localTitles[poKey] !== undefined
+      ? localTitles[poKey]
+      : item.poTitle;
+
+  return (
+    <Card
+      hoverable
+      onClick={() => onCardClick(item)}
+      style={{
+        borderRadius: 12,
+        height: "100%",
+        border: "1px solid #f0f0f0",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+        cursor: "pointer",
+        transition: "all 0.2s",
+      }}
+      styles={{ body: { padding: 16 } }}
+    >
+      <Space direction="vertical" style={{ width: "100%" }} size={2}>
+        {hasSPB && (
+          <div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Text type="secondary" style={{ fontSize: 11 }}>
+                No. SPB
+              </Text>
+              {allowEdit && (
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<EditOutlined style={{ fontSize: 12 }} />}
+                  aria-label={`Edit judul SPB ${item.spbNo}`}
+                  data-testid={`edit-spb-title-${item.spbNo}`}
+                  title="Edit judul SPB"
+                  style={{
+                    padding: "0 4px",
+                    height: 20,
+                    minWidth: 20,
+                    color: "#8c8c8c",
+                  }}
+                  onClick={(e) =>
+                    onEditTitle(e, "spb", String(item.spbNo), resolvedSpbTitle)
+                  }
+                />
+              )}
+            </div>
+            <div
+              style={{ 
+                fontWeight: 600, 
+                fontSize: 16, 
+                wordBreak: "break-word",
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center"
+              }}
+            >
+              {item.spbNo}
+              {resolvedSpbTitle && (
+                <span
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 500,
+                    color: "#595959",
+                    marginLeft: 6,
+                  }}
+                >
+                  - {resolvedSpbTitle}
+                </span>
+              )}
+              <SourceFileLink
+                url={item.spbSourceFile}
+                label={`Buka file asli SPB ${item.spbNo}`}
+                testId={`source-file-spb-${item.spbNo}`}
+              />
+            </div>
+          </div>
+        )}
+
+        {hasSPB && hasPO && <Divider style={{ margin: "8px 0" }} />}
+
+        {hasPO && (
+          <div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Text type="secondary" style={{ fontSize: 11 }}>
+                No. PO
+              </Text>
+              {allowEdit && (
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<EditOutlined style={{ fontSize: 12 }} />}
+                  aria-label={`Edit judul PO ${item.poNo}`}
+                  data-testid={`edit-po-title-${item.poNo}`}
+                  title="Edit judul PO"
+                  style={{
+                    padding: "0 4px",
+                    height: 20,
+                    minWidth: 20,
+                    color: "#8c8c8c",
+                  }}
+                  onClick={(e) =>
+                    onEditTitle(e, "po", String(item.poNo), resolvedPoTitle)
+                  }
+                />
+              )}
+            </div>
+            <div
+              style={{ 
+                fontWeight: 600, 
+                fontSize: 16, 
+                wordBreak: "break-word",
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center"
+              }}
+            >
+              {item.poNo}
+              {resolvedPoTitle && (
+                <span
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 500,
+                    color: "#595959",
+                    marginLeft: 6,
+                  }}
+                >
+                  - {resolvedPoTitle}
+                </span>
+              )}
+              <SourceFileLink
+                url={item.poSourceFile}
+                label={`Buka file asli PO ${item.poNo}`}
+                testId={`source-file-po-${item.poNo}`}
+              />
+            </div>
+          </div>
+        )}
+
+        {hasSJ && (
+          <div>
+            <Text type="secondary" style={{ fontSize: 11 }}>
+              No. Surat Jalan
+            </Text>
+            <div
+              style={{ fontWeight: 600, fontSize: 16, wordBreak: "break-word" }}
+            >
+              {item.suratJalanNo}
+            </div>
+          </div>
+        )}
+
+        <div
+          style={{
+            marginTop: 12,
+            fontSize: 12,
+            color: "#8c8c8c",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <div>
+            <div>Total: {item.itemsCount} Barang</div>
+            <div style={{ marginTop: 4 }}>
+              Tanggal: {item.date !== "-" ? formatDate(item.date) : "-"}
+            </div>
+          </div>
+          <Tag
+            color={getCardStatusColor(item.status)}
+            style={{ margin: 0, fontWeight: 600 }}
+          >
+            {item.status || "Belum PO"}
+          </Tag>
+        </div>
+
+        <div
+          style={{
+            marginTop: 12,
+            paddingTop: 12,
+            borderTop: "1px dashed #f0f0f0",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            color: "#1677ff",
+            fontSize: 12,
+            fontWeight: 500,
+          }}
+        >
+          <span>Lihat detail</span>
+          <ArrowRightOutlined />
+        </div>
+      </Space>
+    </Card>
+  );
+};
+
+================================================================================
+FILE: ../src/features/spb/components/MonitoringSPBHeader.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/components/MonitoringSPBHeader.tsx
+================================================================================
+
+// src/features/spb/components/MonitoringSPBHeader.tsx
+import { Space, Typography } from "antd";
+import { FileTextOutlined } from "@ant-design/icons";
+import { formatFullDate } from "../../../shared/lib/format";
+
+const { Title, Text } = Typography;
+
+export interface MonitoringSPBHeaderProps {
+  totalDocuments: number;
+}
+
+export const MonitoringSPBHeader = ({
+  totalDocuments,
+}: MonitoringSPBHeaderProps) => (
+  <div style={{ marginBottom: 24 }}>
+    <Space align="center">
+      <div
+        style={{
+          width: 42,
+          height: 42,
+          borderRadius: 10,
+          background: "#1677ff15",
+          color: "#1677ff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 20,
+        }}
+      >
+        <FileTextOutlined />
+      </div>
+      <div>
+        <Title level={3} style={{ margin: 0 }}>
+          Monitoring SPB
+        </Title>
+        <Text type="secondary">
+          {totalDocuments} Dokumen Terdaftar · Diperbarui{" "}
+          {formatFullDate(new Date())}
+        </Text>
+      </div>
+    </Space>
+  </div>
+);
+
+
+
+================================================================================
+FILE: ../src/features/spb/components/MonitoringSPBRecentList.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/components/MonitoringSPBRecentList.tsx
+================================================================================
+
+// src/features/spb/components/MonitoringSPBRecentList.tsx
+import { Card, Grid, Space, Typography } from "antd";
+import type { SPBDocumentGroup } from "../../../shared/types";
+import { formatDate } from "../../../shared/lib/format";
+
+const { Text } = Typography;
+
+export interface MonitoringSPBRecentListProps {
+  items: SPBDocumentGroup[];
+  onCardClick: (item: SPBDocumentGroup) => void;
+}
+
+export const MonitoringSPBRecentList = ({
+  items,
+  onCardClick,
+}: MonitoringSPBRecentListProps) => {
+  const screens = Grid.useBreakpoint();
+
+  if (items.length === 0) return null;
+
+  return (
+    <div style={{ marginBottom: 32 }}>
+      <Text
+        strong
+        style={{ fontSize: 16, display: "block", marginBottom: 12 }}
+      >
+        Baru ditambahkan
+      </Text>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: screens.md ? "repeat(5, 1fr)" : "repeat(2, 1fr)",
+          gap: 12,
+        }}
+      >
+        {items.map((item) => {
+          const hasSPB = item.spbNo && item.spbNo !== "NO_SPB";
+          const hasPO =
+            item.poNo && item.poNo !== "NO_PO" && item.poNo !== "-";
+
+          return (
+            <Card
+              key={item.id}
+              size="small"
+              hoverable
+              onClick={() => onCardClick(item)}
+              style={{
+                borderRadius: 10,
+                background: "#fafafa",
+                cursor: "pointer",
+              }}
+              styles={{ body: { padding: 12 } }}
+            >
+              <Space direction="vertical" size={0}>
+                <Text strong style={{ fontSize: 13, display: "block" }} ellipsis>
+                  {hasSPB && hasPO
+                    ? `SPB: ${item.spbNo} · PO: ${item.poNo}`
+                    : hasSPB
+                      ? `SPB: ${item.spbNo}`
+                      : hasPO
+                        ? `PO: ${item.poNo}`
+                        : `SJ: ${item.suratJalanNo}`}
+                </Text>
+                <Text type="secondary" style={{ fontSize: 11 }}>
+                  {item.date !== "-" ? formatDate(item.date) : "-"}
+                </Text>
+              </Space>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+
+
+================================================================================
+FILE: ../src/features/spb/components/MonitoringSPBToolbar.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/components/MonitoringSPBToolbar.tsx
+================================================================================
+
+// src/features/spb/components/MonitoringSPBToolbar.tsx
+import { Input, Segmented, Select, Space } from "antd";
+import { SearchOutlined } from "@ant-design/icons";
+import { RESTRICTED_FILTER_LABEL } from "../accessRules";
+import type { FilterType, SearchMode, SortBy } from "../types";
+
+export interface MonitoringSPBToolbarProps {
+  searchMode: SearchMode;
+  onSearchModeChange: (mode: SearchMode) => void;
+  searchTerm: string;
+  onSearchTermChange: (value: string) => void;
+  filter: FilterType;
+  onFilterChange: (filter: FilterType) => void;
+  sortBy: SortBy;
+  onSortByChange: (sortBy: SortBy) => void;
+  canViewRestricted: boolean;
+}
+
+export const MonitoringSPBToolbar = ({
+  searchMode,
+  onSearchModeChange,
+  searchTerm,
+  onSearchTermChange,
+  filter,
+  onFilterChange,
+  sortBy,
+  onSortByChange,
+  canViewRestricted,
+}: MonitoringSPBToolbarProps) => {
+  const filterOptions: FilterType[] = [
+    "Semua",
+    ...(canViewRestricted ? [RESTRICTED_FILTER_LABEL as FilterType] : []),
+    "Belum di PO",
+    "Sudah di PO",
+    "Datang",
+    "Selesai",
+  ];
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 16,
+        marginBottom: 20,
+        alignItems: "center",
+      }}
+    >
+      <Space.Compact style={{ width: "100%", maxWidth: 400 }}>
+        <Select<SearchMode>
+          value={searchMode}
+          onChange={onSearchModeChange}
+          style={{ width: 130 }}
+          aria-label="Mode Pencarian"
+        >
+          <Select.Option value="no">No / Judul</Select.Option>
+          <Select.Option value="barang">Nama Barang</Select.Option>
+        </Select>
+        <Input
+          placeholder={
+            searchMode === "no"
+              ? "Cari No SPB/PO/SJ..."
+              : "Cari Nama Barang..."
+          }
+          prefix={<SearchOutlined />}
+          value={searchTerm}
+          onChange={(e) => onSearchTermChange(e.target.value)}
+          allowClear
+        />
+      </Space.Compact>
+
+      <Segmented<FilterType>
+        size="middle"
+        options={filterOptions}
+        value={filter}
+        onChange={onFilterChange}
+        style={{ padding: 4, fontWeight: 500, overflowX: "auto" }}
+      />
+
+      <Select<SortBy>
+        value={sortBy}
+        onChange={onSortByChange}
+        style={{ width: 150 }}
+        aria-label="Urutan Data"
+        options={[
+          { value: "status", label: "Urut: Status" },
+          { value: "number", label: "Urut: Nomor" },
+          { value: "oldest", label: "Urut: Paling Lama" },
+          { value: "newest", label: "Urut: Paling Baru" },
+        ]}
+      />
+    </div>
+  );
+};
+
+
+
+================================================================================
+FILE: ../src/features/spb/components/SourceFileLink.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/components/SourceFileLink.tsx
+================================================================================
+
+// src/features/spb/components/SourceFileLink.tsx
+import { FileOutlined } from "@ant-design/icons";
+import { Tooltip } from "antd";
+import { toSafeExternalUrl } from "../accessRules";
+
+export interface SourceFileLinkProps {
+  url?: string | null;
+  label?: string;
+  testId?: string;
+  fontSize?: number;
+  stopPropagation?: boolean;
+}
+
+/**
+ * Ikon file yang membuka file asli (mis. Google Drive) di tab baru.
+ * Publik: tidak memerlukan login. URL divalidasi hanya untuk protokol `https:`.
+ * Jika URL kosong/tidak valid, ikon tetap dirender namun berwarna abu-abu.
+ */
+export const SourceFileLink = ({
+  url,
+  label,
+  testId,
+  fontSize = 14,
+  stopPropagation = true,
+}: SourceFileLinkProps) => {
+  const isSafe = !!toSafeExternalUrl(url);
+  // Fallback URL dummy agar ikon bisa diklik saat testing UI (jika database belum ada link)
+  const safeUrl = toSafeExternalUrl(url) || "https://drive.google.com";
+
+  return (
+    <Tooltip title={isSafe ? label : "File belum di-upload / Link tidak valid"}>
+      <a
+        href={safeUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={label}
+        data-testid={testId}
+        onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
+        style={{
+          marginLeft: 6,
+          color: isSafe ? "#1677ff" : "#bfbfbf", // Biru jika ada, Abu-abu jika dummy
+          fontSize,
+          verticalAlign: "middle",
+          display: "inline-flex",
+          alignItems: "center",
+        }}
+      >
+        <FileOutlined />
+      </a>
+    </Tooltip>
+  );
+};
+
+================================================================================
+FILE: ../src/features/spb/hooks/useEditDocumentTitle.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/hooks/useEditDocumentTitle.ts
+================================================================================
+
+// src/features/spb/hooks/useEditDocumentTitle.ts
+import { useState, type MouseEvent } from "react";
+import { message } from "antd";
+import type { EditingTitleState } from "../types";
+import { updateDocumentTitle } from "../useMonitoringSPB";
+import { buildLocalTitleKey } from "../utils/titleOverrides";
+
+export const useEditDocumentTitle = (
+  allowEdit: boolean,
+  onAfterSave?: () => void,
+) => {
+  const [editingTitle, setEditingTitle] = useState<EditingTitleState | null>(
+    null,
+  );
+  const [titleInput, setTitleInput] = useState("");
+  const [savingTitle, setSavingTitle] = useState(false);
+  const [localTitles, setLocalTitles] = useState<Record<string, string>>({});
+
+  const openEditModal = (
+    e: MouseEvent,
+    type: "spb" | "po",
+    docNo: string,
+    currentTitle?: string | null,
+  ) => {
+    if (!allowEdit) return;
+    e.stopPropagation();
+    const initial = currentTitle || "";
+    setEditingTitle({ type, docNo, currentTitle: initial });
+    setTitleInput(initial);
+  };
+
+  const closeEditModal = () => setEditingTitle(null);
+
+  const handleSaveTitle = async () => {
+    if (!editingTitle) return;
+    setSavingTitle(true);
+    const { type, docNo, currentTitle } = editingTitle;
+    const trimmed = titleInput.trim();
+    const localKey = buildLocalTitleKey(type, docNo, currentTitle);
+
+    try {
+      await updateDocumentTitle(type, docNo, trimmed, currentTitle);
+      setLocalTitles((prev) => ({ ...prev, [localKey]: trimmed }));
+      setEditingTitle(null);
+      message.success(
+        `Judul ${type.toUpperCase()} ${docNo} berhasil diperbarui`,
+      );
+      onAfterSave?.();
+    } catch {
+      setLocalTitles((prev) => ({ ...prev, [localKey]: trimmed }));
+      setEditingTitle(null);
+    } finally {
+      setSavingTitle(false);
+    }
+  };
+
+  return {
+    editingTitle,
+    titleInput,
+    setTitleInput,
+    savingTitle,
+    localTitles,
+    openEditModal,
+    closeEditModal,
+    handleSaveTitle,
+  };
+};
+
+
+
+================================================================================
+FILE: ../src/features/spb/hooks/useMonitoringSPBFilter.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/hooks/useMonitoringSPBFilter.ts
+================================================================================
+
+// src/features/spb/hooks/useMonitoringSPBFilter.ts
+import { useEffect, useState } from "react";
+import { RESTRICTED_FILTER_LABEL } from "../accessRules";
+import type { FilterType, SearchMode, SortBy } from "../types";
+
+export const useMonitoringSPBFilter = (canViewRestricted: boolean) => {
+  const [storedFilter, setFilter] = useState<FilterType>(() => {
+    return (localStorage.getItem("spb_filter") as FilterType) || "Semua";
+  });
+
+  // Filter tersimpan "Belum Diproses" diabaikan jika user belum login
+  const filter: FilterType =
+    !canViewRestricted && storedFilter === RESTRICTED_FILTER_LABEL
+      ? "Semua"
+      : storedFilter;
+
+  const [searchTerm, setSearchTerm] = useState(() => {
+    return localStorage.getItem("spb_searchTerm") || "";
+  });
+
+  const [searchMode, setSearchMode] = useState<SearchMode>(() => {
+    return (localStorage.getItem("spb_searchMode") as SearchMode) || "no";
+  });
+
+  const [sortBy, setSortBy] = useState<SortBy>(() => {
+    return (localStorage.getItem("spb_sortBy") as SortBy) || "status";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("spb_filter", filter);
+    localStorage.setItem("spb_searchTerm", searchTerm);
+    localStorage.setItem("spb_searchMode", searchMode);
+    localStorage.setItem("spb_sortBy", sortBy);
+  }, [filter, searchTerm, searchMode, sortBy]);
+
+  return {
+    filter,
+    setFilter,
+    searchTerm,
+    setSearchTerm,
+    searchMode,
+    setSearchMode,
+    sortBy,
+    setSortBy,
+  };
+};
+
+
+
+================================================================================
+FILE: ../src/features/spb/hooks/useSPBItem.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/hooks/useSPBItem.ts
+================================================================================
+
+// src/features/spb/hooks/useSPBItem.ts
+import { useQuery } from "@tanstack/react-query";
+import type { SPBItemDetail } from "../../../shared/types";
+import { fetchSingleItemById } from "../api";
+
+export const useSPBItem = (id: string | undefined, type: string) => {
+  const enabled = !!id;
+  return useQuery<SPBItemDetail | null, Error>({
+    queryKey: ["spb-item", id, type],
+    queryFn: async () => {
+      if (!id) return null;
+      return fetchSingleItemById(id, type);
+    },
+    enabled,
+    retry: false,
+  });
+};
+
+
+
+================================================================================
+FILE: ../src/features/spb/index.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/index.ts
+================================================================================
+
+// src/features/spb/index.ts
+export * from "./types";
+export * from "./accessRules";
+export * from "./suratJalanRules";
+export * from "./api";
+export * from "./useMonitoringSPB";
+export * from "./useMonitoringSPBDetail";
+export * from "./useSPBItemDetail";
+export * from "./hooks/useMonitoringSPBFilter";
+export * from "./hooks/useEditDocumentTitle";
+export * from "./hooks/useSPBItem";
+export * from "./components/SourceFileLink";
+export * from "./components/MonitoringSPBHeader";
+export * from "./components/MonitoringSPBRecentList";
+export * from "./components/MonitoringSPBToolbar";
+export * from "./components/MonitoringSPBCard";
+export * from "./components/EditDocumentTitleModal";
+export * from "./components/MonitoringDetailHeader";
+export * from "./components/MonitoringDetailTable";
+export * from "./components/ItemDetailRowsBuilder";
+
+
+
+================================================================================
+FILE: ../src/features/spb/pages/MonitoringSPBDetailPage.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/pages/MonitoringSPBDetailPage.tsx
+================================================================================
+
+// src/features/spb/pages/MonitoringSPBDetailPage.tsx
+import { useMemo } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Empty, Grid, Result, Spin } from "antd";
+import {
+  MonitoringDetailHeader,
+  MonitoringPoStatusRow,
+} from "../components/MonitoringDetailHeader";
+import { MonitoringDetailTable } from "../components/MonitoringDetailTable";
+import type { UniquePoInfo } from "../types";
+import { useMonitoringSPBDetail } from "../useMonitoringSPBDetail";
+
+export const MonitoringSPBDetailPage = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const spbNo = searchParams.get("spb");
+  const poNo = searchParams.get("po");
+  const sjNo = searchParams.get("sj");
+  const judulSpb = searchParams.get("judul");
+
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
+
+  const { items, isLoading, error } = useMonitoringSPBDetail(
+    spbNo,
+    poNo,
+    sjNo,
+    judulSpb,
+  );
+
+  const spbTitle = items.length > 0 ? items[0].judul_spb : null;
+  const spbSourceFile = items.length > 0 ? items[0].spbSourceFile : null;
+
+  const uniquePos = useMemo<UniquePoInfo[]>(() => {
+    const map = new Map<string, string | null | undefined>();
+    items.forEach((item) => {
+      if (item.no_po && item.no_po !== "-") {
+        if (!map.has(item.no_po) || !map.get(item.no_po)) {
+          map.set(item.no_po, item.poSourceFile);
+        }
+      }
+    });
+    return Array.from(map.entries()).map(([no, file]) => ({ no, file }));
+  }, [items]);
+
+  const showPoStatus = !!(spbNo || poNo);
+
+  const statuses = useMemo(() => {
+    if (items.length === 0) return { belumDiPo: false, sudahDiPo: false };
+    const somePo = items.some((it) => it.no_po && it.no_po !== "-");
+    return { belumDiPo: !somePo, sudahDiPo: somePo };
+  }, [items]);
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", paddingBottom: 32 }}>
-      <Space align="center" style={{ marginBottom: 16 }}>
-        <Button
-          type="text"
-          size="large"
-          icon={<ArrowLeftOutlined />}
-          onClick={() => navigate("/monitoring-spb")}
-        />
-        <div>
-          <Title level={3} style={{ margin: 0 }}>
-            Detail SPB / PO
-          </Title>
-          <div style={{ marginTop: 4 }}>
-            {spbNo && (
-              <Text strong style={{ fontSize: 18 }}>
-                SPB: {spbNo} {spbTitle ? ` - ${spbTitle}` : ""}
-              </Text>
-            )}
-            {poNo && (
-              <Text strong style={{ fontSize: 18, display: "block", marginTop: 4 }}>
-                PO: {poNo}
-              </Text>
-            )}
-            {sjNo && (
-              <Text strong style={{ fontSize: 18, display: "block", marginTop: 4 }}>
-                Surat Jalan: {sjNo}
-              </Text>
-            )}
-          </div>
-        </div>
-      </Space>
+      <MonitoringDetailHeader
+        spbNo={spbNo}
+        spbTitle={spbTitle}
+        spbSourceFile={spbSourceFile}
+        uniquePos={uniquePos}
+        sjNo={sjNo}
+        onBack={() => navigate("/monitoring-spb")}
+      />
 
       {isLoading && (
         <div style={{ textAlign: "center", padding: 50 }}>
@@ -4514,7 +5829,11 @@ export const MonitoringSPBDetailPage = () => {
         </div>
       )}
       {!isLoading && error && (
-        <Result status="error" title="Gagal memuat detail" subTitle={error.message} />
+        <Result
+          status="error"
+          title="Gagal memuat detail"
+          subTitle={error.message}
+        />
       )}
       {!isLoading && !error && items.length === 0 && (
         <Empty description="Dokumen tidak ditemukan atau sudah dihapus" />
@@ -4523,40 +5842,19 @@ export const MonitoringSPBDetailPage = () => {
       {!isLoading && !error && items.length > 0 && (
         <>
           {showPoStatus && (
-            <Row gutter={[8, 8]} style={{ marginBottom: 16 }}>
-              <Col xs={12} md={12}>
-                <StatusCard title="Belum di PO" active={statuses.belumDiPo} />
-              </Col>
-              <Col xs={12} md={12}>
-                <StatusCard title="Sudah di PO" active={statuses.sudahDiPo} />
-              </Col>
-            </Row>
+            <MonitoringPoStatusRow
+              belumDiPo={statuses.belumDiPo}
+              sudahDiPo={statuses.sudahDiPo}
+            />
           )}
 
-          <Card
-            title={`Daftar Barang (${items.length})`}
-            variant="borderless"
-            style={{
-              borderRadius: isMobile ? 0 : 12,
-              ...(isMobile && {
-                width: "100vw",
-                position: "relative",
-                left: "50%",
-                transform: "translateX(-50%)",
-              }),
-            }}
-            styles={{ body: { padding: 0 } }}
-          >
-            <Table<MonitoringDetailItem>
-              dataSource={items}
-              columns={columns}
-              rowKey="key"
-              size="small"
-              tableLayout="fixed"
-              pagination={{ pageSize: 20, size: "small" }}
-              scroll={undefined}
-            />
-          </Card>
+          <MonitoringDetailTable
+            items={items}
+            isMobile={isMobile}
+            onViewItemDetail={(item) =>
+              navigate(`/monitoring-spb/item/${item.id}?type=${item.sumber}`)
+            }
+          />
         </>
       )}
     </div>
@@ -4565,224 +5863,22 @@ export const MonitoringSPBDetailPage = () => {
 
 export default MonitoringSPBDetailPage;
 
+
 ================================================================================
 FILE: ../src/features/spb/pages/MonitoringSPBItemDetailPage.tsx
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/pages/MonitoringSPBItemDetailPage.tsx
 ================================================================================
 
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Typography, Card, Table, Button, Spin, Space, Grid, Tag } from "antd";
-import { ArrowLeftOutlined } from "@ant-design/icons";
-import { useQuery } from "@tanstack/react-query";
-import { supabaseClient } from "../../../shared/lib/supabaseClient";
-import { TABLES } from "../../../shared/lib/constants";
-import type { SPBItemDetail } from "../../../shared/types";
-import { formatDate } from "../../../shared/lib/format";
+// src/features/spb/pages/MonitoringSPBItemDetailPage.tsx
 import type { ReactNode } from "react";
-import dayjs from "dayjs";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Button, Card, Grid, Space, Spin, Table, Typography } from "antd";
+import { ArrowLeftOutlined } from "@ant-design/icons";
+import { buildItemDetailRows } from "../components/ItemDetailRowsBuilder";
+import { useSPBItem } from "../hooks/useSPBItem";
+import type { DetailRow } from "../types";
 
 const { Title, Text } = Typography;
-
-interface DetailRow {
-  key: string;
-  field: string;
-  value: ReactNode;
-}
-
-const calcLamaProses = (
-  tglMulai: string | null | undefined,
-  tglDatang: string | null | undefined,
-  fallback?: string | number | null,
-): string => {
-  if (fallback && fallback !== "-") return String(fallback);
-  if (tglMulai && tglDatang) {
-    const start = dayjs(tglMulai);
-    const end = dayjs(tglDatang);
-    if (start.isValid() && end.isValid()) {
-      const diff = end.diff(start, "day");
-      return `${diff >= 0 ? diff : 0} Hari`;
-    }
-  }
-  return "-";
-};
-
-const getStatusColor = (status: string | null | undefined) => {
-  if (status === "Belum Diproses") return "purple"; // 🔧 Warna untuk Belum Diproses
-  if (status === "Belum PO" || status === "Belum Datang") return "orange";
-  if (status === "Sudah PO") return "blue";
-  if (status === "Datang Sesuai" || status === "Datang" || status === "Selesai") return "green";
-  if (status === "Datang Kurang") return "volcano";
-  if (status === "Datang Lebih") return "purple";
-  return "blue";
-};
-
-const useSPBItem = (id: string | undefined, type: string) => {
-  const enabled = !!id;
-  return useQuery<SPBItemDetail | null, Error>({
-    queryKey: ["spb-item", id, type],
-    queryFn: async () => {
-      if (!id) return null;
-
-      if (type === "po") {
-        const { data, error } = await supabaseClient
-          .from("po")
-          .select(`*`)
-          .eq("id", id)
-          .single();
-        if (error) throw error;
-        if (!data) return null;
-
-        const tglDatang = data.material_datang_tgl || null;
-        const arr = data.material_datang_qty ?? 0;
-        const satuanDatang = data.material_datang_satuan || data.satuan || "-";
-        const status = tglDatang ? "Datang" : "Sudah PO";
-
-        return {
-          ...data,
-          no_spb: "-",
-          tanggal_spb: null,
-          nama_barang: data.nama_barang_po || data.nama_barang || "-",
-          ukuran: data.ukuran || "-",
-          jumlah_permintaan: data.qty_permintaan ?? null,
-          satuan: data.satuan || data.material_datang_satuan || "-",
-          no_po: data.no_po || "-",
-          tanggal_po: data.tanggal_po || null,
-          supplier: data.nama_supplier || data.supplier || "-",
-          merk: data.merk || "-",
-          spesifikasi_teknis: data.spesifikasi_teknis || data.spesifikasi || "-",
-          lokasi_pemasangan: data.lokasi_pemasangan || "-",
-          rencana_pemasangan: data.rencana_pemasangan || "-",
-          tanggal_datang: tglDatang,
-          qty_datang: arr,
-          satuan_datang: satuanDatang,
-          lama_proses: calcLamaProses(data.tanggal_po, tglDatang, data.lama_proses),
-          kurang_lebih: data.kurang_lebih ?? "-",
-          keterangan: data.keterangan || "-",
-          status,
-        } as SPBItemDetail;
-      }
-
-      if (type === "sj") {
-        const { data, error } = await supabaseClient
-          .from("surat_jalan")
-          .select(`*, spb:spb!id_spb (no_spb, tgl_spb), po:po!id_po (no_po, tanggal_po, nama_supplier)`)
-          .eq("id", id)
-          .single();
-        if (error) throw error;
-        if (!data) return null;
-
-        const spbRel = Array.isArray(data.spb) ? data.spb[0] : data.spb;
-        const poRel = Array.isArray(data.po) ? data.po[0] : data.po;
-        const tgl = data.material_datang_tgl || null;
-        const arr = data.material_datang_qty ?? data.jumlah ?? 0;
-
-        return {
-          ...data,
-          no_surat_jalan: data.no_surat_jalan ?? "-",
-          no_spb: spbRel?.no_spb || "-",
-          tanggal_spb: spbRel?.tgl_spb || null,
-          no_po: poRel?.no_po || "-",
-          tanggal_po: poRel?.tanggal_po || null,
-          supplier: poRel?.nama_supplier || data.supplier || "-",
-          nama_barang: data.nama_barang || "-",
-          ukuran: data.ukuran || "-",
-          jumlah_permintaan: data.jumlah ?? null,
-          satuan: data.satuan || data.material_datang_satuan || "-",
-          merk: data.merk || "-",
-          spesifikasi_teknis: data.spesifikasi || data.spesifikasi_teknis || "-",
-          lokasi_pemasangan: data.lokasi_pemasangan || "-",
-          rencana_pemasangan: data.rencana_pemasangan || "-",
-          tanggal_datang: tgl,
-          qty_datang: arr,
-          satuan_datang: data.material_datang_satuan || data.satuan || "-",
-          lama_proses: calcLamaProses( data.tanggal_surat_jalan || poRel?.tanggal_po, tgl, data.lama_proses),
-          kurang_lebih: data.kurang_lebih ?? "-",
-          keterangan: data.keterangan || "-",
-          status: tgl ? "Datang" : "Belum Datang",
-        } as SPBItemDetail;
-      }
-
-      const { data, error } = await supabaseClient
-        .from(TABLES.spb)
-        .select(`*, po (no_po, tanggal_po, nama_supplier)`)
-        .eq("id", id)
-        .single();
-
-      if (error) throw error;
-      if (!data) return null;
-
-      let dataPo = Array.isArray(data.po) ? data.po[0] : data.po;
-
-      if (!dataPo && data.id) {
-        try {
-          const fallbackRes = await supabaseClient
-            .from("po")
-            .select("no_po, tanggal_po, nama_supplier")
-            .eq("id_spb", data.id)
-            .single();
-          if (fallbackRes?.data) {
-            dataPo = fallbackRes.data;
-          }
-        } catch {
-          //
-        }
-      }
-
-      const req = data.qty_permintaan ?? 0;
-      const arr = data.material_datang_qty ?? data.qty_datang ?? 0;
-      const tglDatang = data.material_datang_tgl || null;
-      const tglSpb = data.tgl_spb || data.tanggal_pembuatan_spb || null;
-      const tglPo = dataPo?.tanggal_po || null;
-      
-      // 🔧 Normalisasi status dari database
-      const rawStatus = String(data.status || "").toLowerCase().trim();
-
-      let status = "Belum PO";
-      if (tglDatang) {
-        if (req === arr) status = "Datang Sesuai";
-        else if (req < arr) status = "Datang Lebih";
-        else if (req > arr) status = "Datang Kurang";
-        else status = "Datang";
-      } else if (dataPo?.no_po && dataPo.no_po !== "-" && dataPo.no_po !== "null") {
-        status = "Sudah PO";
-      } else if (rawStatus === "belum di proses") {
-        status = "Belum Diproses"; // 🔧 PERBAIKAN
-      }
-
-      const diffQty = arr - req;
-      const kurangLebih =
-        data.kurang_lebih !== undefined && data.kurang_lebih !== null
-          ? data.kurang_lebih
-          : diffQty;
-
-      return {
-        ...data,
-        no_spb: data.no_spb || "-",
-        tanggal_spb: tglSpb,
-        nama_barang: data.nama_barang_spb || data.nama_barang || "-",
-        ukuran: data.ukuran || "-",
-        jumlah_permintaan: req,
-        satuan: data.satuan || "-",
-        no_po: dataPo?.no_po || "-",
-        tanggal_po: tglPo,
-        supplier: dataPo?.nama_supplier || dataPo?.supplier || data.supplier || "-",
-        merk: data.merk || "-",
-        spesifikasi_teknis: data.spesifikasi_teknis || "-",
-        lokasi_pemasangan: data.lokasi_pemasangan || "-",
-        rencana_pemasangan: data.rencana_pemasangan || "-",
-        tanggal_datang: tglDatang,
-        qty_datang: arr,
-        satuan_datang: data.material_datang_satuan || data.satuan_datang || data.satuan || "-",
-        lama_proses: calcLamaProses(tglPo || tglSpb, tglDatang, data.lama_proses),
-        kurang_lebih: kurangLebih,
-        keterangan: data.keterangan || "-",
-        status,
-      } as SPBItemDetail;
-    },
-    enabled,
-    retry: false,
-  });
-};
 
 export const MonitoringSPBItemDetailPage = () => {
   const navigate = useNavigate();
@@ -4795,84 +5891,7 @@ export const MonitoringSPBItemDetailPage = () => {
 
   const { data: item, isLoading, error } = useSPBItem(id, type);
 
-  const rows: DetailRow[] = item
-    ? [
-        { key: "1", field: "No SPB", value: item.no_spb || "-" },
-        {
-          key: "2",
-          field: "Tanggal SPB",
-          value: item.tanggal_spb ? formatDate(item.tanggal_spb) : "-",
-        },
-        {
-          key: "3",
-          field: "Nama Barang",
-          value: <Text strong>{item.nama_barang || "-"}</Text>,
-        },
-        { key: "4", field: "Ukuran", value: item.ukuran || "-" },
-        {
-          key: "5",
-          field: "Jumlah Permintaan",
-          value: item.jumlah_permintaan ?? "-",
-        },
-        { key: "6", field: "Satuan", value: item.satuan || "-" },
-        { key: "7", field: "No PO", value: item.no_po || "-" },
-        {
-          key: "8",
-          field: "Tanggal PO",
-          value: item.tanggal_po ? formatDate(item.tanggal_po) : "-",
-        },
-        { key: "9", field: "Supplier", value: item.supplier || "-" },
-        { key: "10", field: "Merk", value: item.merk || "-" },
-        {
-          key: "11",
-          field: "Spesifikasi Teknis",
-          value: item.spesifikasi_teknis || "-",
-        },
-        {
-          key: "12",
-          field: "Lokasi Pemasangan",
-          value: item.lokasi_pemasangan || "-",
-        },
-        type === "sj"
-          ? {
-              key: "13",
-              field: "No Surat Jalan",
-              value: String(item.no_surat_jalan ?? "-"),
-            }
-          : {
-              key: "13",
-              field: "Rencana Pemasangan",
-              value: item.rencana_pemasangan || "-",
-            },
-        {
-          key: "14",
-          field: "Tanggal Datang",
-          value: item.tanggal_datang ? formatDate(item.tanggal_datang) : "-",
-        },
-        { key: "15", field: "Qty Datang", value: item.qty_datang ?? 0 },
-        {
-          key: "16",
-          field: "Satuan (Datang)",
-          value: item.satuan_datang || "-",
-        },
-        { key: "17", field: "Lama Proses", value: item.lama_proses || "-" },
-        {
-          key: "18",
-          field: "Kurang/Lebih",
-          value: item.kurang_lebih ?? "-",
-        },
-        { key: "19", field: "Keterangan", value: item.keterangan || "-" },
-        {
-          key: "20",
-          field: "Status",
-          value: (
-            <Tag color={getStatusColor(item.status)}>
-              {item.status || "-"}
-            </Tag>
-          ),
-        },
-      ]
-    : [];
+  const rows: DetailRow[] = item ? buildItemDetailRows(item, type) : [];
 
   const columns = [
     {
@@ -4943,242 +5962,79 @@ export const MonitoringSPBItemDetailPage = () => {
 
 export default MonitoringSPBItemDetailPage;
 
+
 ================================================================================
 FILE: ../src/features/spb/pages/MonitoringSPBPage.tsx
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/pages/MonitoringSPBPage.tsx
 ================================================================================
 
-import { useState, useMemo, useEffect } from "react";
+// src/features/spb/pages/MonitoringSPBPage.tsx
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Typography,
-  Card,
-  Space,
-  Row,
-  Col,
-  Divider,
-  Spin,
-  Segmented,
-  Empty,
-  Alert,
-  Tag,
-  Grid,
-  Input,
-  Select,
-  Modal,
-  Button,
-  message,
-} from "antd";
+import { Alert, Col, Empty, Row, Spin } from "antd";
 import { useGetIdentity } from "@refinedev/core";
-import { useMonitoringSPB, updateDocumentTitle } from "../useMonitoringSPB";
-import type { SPBDocumentGroup, UserRole } from "../../../shared/types";
-import { formatFullDate, formatDate } from "../../../shared/lib/format";
 import { canEditData } from "../../../app/providers/accessControlProvider";
+import { getVerifiedUser } from "../../../shared/lib/authGuard";
+import type { SPBDocumentGroup, UserRole } from "../../../shared/types";
+import { canViewRestrictedSpb } from "../accessRules";
+import { EditDocumentTitleModal } from "../components/EditDocumentTitleModal";
+import { MonitoringSPBCard } from "../components/MonitoringSPBCard";
+import { MonitoringSPBHeader } from "../components/MonitoringSPBHeader";
+import { MonitoringSPBRecentList } from "../components/MonitoringSPBRecentList";
+import { MonitoringSPBToolbar } from "../components/MonitoringSPBToolbar";
+import { useEditDocumentTitle } from "../hooks/useEditDocumentTitle";
+import { useMonitoringSPBFilter } from "../hooks/useMonitoringSPBFilter";
+import { useMonitoringSPB } from "../useMonitoringSPB";
 import {
-  FileTextOutlined,
-  ArrowRightOutlined,
-  SearchOutlined,
-  EditOutlined,
-} from "@ant-design/icons";
-
-const { Title, Text } = Typography;
-
-type FilterType =
-  | "Semua"
-  | "Belum Diproses"
-  | "Belum di PO"
-  | "Sudah di PO"
-  | "Datang"
-  | "Selesai";
-
-type SearchMode = "no" | "barang";
-type SortBy = "status" | "number" | "oldest" | "newest";
-
-interface EditingTitleState {
-  type: "spb" | "po";
-  docNo: string;
-  currentTitle: string;
-}
-
-const getNumberFromStr = (spb: string | null, po: string | null) => {
-  const str = spb || po;
-  if (!str) return 999999;
-  const match = String(str).match(/\d+/);
-  return match ? parseInt(match[0], 10) : 999999;
-};
-
-const buildLocalTitleKey = (
-  type: "spb" | "po",
-  docNo: string,
-  title: string | null | undefined,
-) =>
-  type === "spb"
-    ? `SPB_${docNo}::${title ?? ""}`
-    : `PO_${docNo}`;
+  filterAndSortSpbDocuments,
+  getRecentSpbDocuments,
+} from "../utils/filterAndSortSpb";
 
 export default function MonitoringSPBPage() {
   const { data, isLoading, error, refetch } = useMonitoringSPB();
   const navigate = useNavigate();
-  const screens = Grid.useBreakpoint();
-  
+
   const { data: identity } = useGetIdentity<{ role: UserRole }>();
-  const userRole = identity?.role ?? "user";
+  const userRole = identity?.role ?? getVerifiedUser()?.role ?? "user";
   const allowEdit = canEditData(userRole);
+  const canViewRestricted = canViewRestrictedSpb();
 
-  // 🔧 PERBAIKAN: Membaca state awal dari localStorage agar tidak hilang saat pindah halaman
-  const [filter, setFilter] = useState<FilterType>(() => {
-    return (localStorage.getItem("spb_filter") as FilterType) || "Semua";
-  });
-  const [searchTerm, setSearchTerm] = useState(() => {
-    return localStorage.getItem("spb_searchTerm") || "";
-  });
-  const [searchMode, setSearchMode] = useState<SearchMode>(() => {
-    return (localStorage.getItem("spb_searchMode") as SearchMode) || "no";
-  });
-  const [sortBy, setSortBy] = useState<SortBy>(() => {
-    return (localStorage.getItem("spb_sortBy") as SortBy) || "status";
-  });
+  const {
+    filter,
+    setFilter,
+    searchTerm,
+    setSearchTerm,
+    searchMode,
+    setSearchMode,
+    sortBy,
+    setSortBy,
+  } = useMonitoringSPBFilter(canViewRestricted);
 
-  // 🔧 PERBAIKAN: Menyimpan setiap perubahan state ke localStorage
-  useEffect(() => {
-    localStorage.setItem("spb_filter", filter);
-    localStorage.setItem("spb_searchTerm", searchTerm);
-    localStorage.setItem("spb_searchMode", searchMode);
-    localStorage.setItem("spb_sortBy", sortBy);
-  }, [filter, searchTerm, searchMode, sortBy]);
+  const {
+    editingTitle,
+    titleInput,
+    setTitleInput,
+    savingTitle,
+    localTitles,
+    openEditModal,
+    closeEditModal,
+    handleSaveTitle,
+  } = useEditDocumentTitle(allowEdit, () => refetch?.());
 
-  const [editingTitle, setEditingTitle] = useState<EditingTitleState | null>(null);
-  const [titleInput, setTitleInput] = useState("");
-  const [savingTitle, setSavingTitle] = useState(false);
-  const [localTitles, setLocalTitles] = useState<Record<string, string>>({});
+  const recentItems = useMemo(() => getRecentSpbDocuments(data, 10), [data]);
 
-  const openEditModal = (
-    e: React.MouseEvent,
-    type: "spb" | "po",
-    docNo: string,
-    currentTitle?: string | null,
-  ) => {
-    if (!allowEdit) return;
-    e.stopPropagation();
-    const initial = currentTitle || "";
-    setEditingTitle({ type, docNo, currentTitle: initial });
-    setTitleInput(initial);
-  };
-
-  const handleSaveTitle = async () => {
-    if (!editingTitle) return;
-    setSavingTitle(true);
-    const { type, docNo, currentTitle } = editingTitle;
-    const trimmed = titleInput.trim();
-    const localKey = buildLocalTitleKey(type, docNo, currentTitle);
-
-    try {
-      await updateDocumentTitle(type, docNo, trimmed, currentTitle);
-      setLocalTitles((prev) => ({ ...prev, [localKey]: trimmed }));
-      setEditingTitle(null);
-      message.success(`Judul ${type.toUpperCase()} ${docNo} berhasil diperbarui`);
-      refetch?.();
-    } catch {
-      setLocalTitles((prev) => ({ ...prev, [localKey]: trimmed }));
-      setEditingTitle(null);
-    } finally {
-      setSavingTitle(false);
-    }
-  };
-
-  const recentItems = useMemo(() => {
-    return [...data]
-      .sort((a, b) => {
-        const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
-        const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
-        return dateB - dateA;
-      })
-      .slice(0, 10);
-  }, [data]);
-
-  const filteredAndSortedData = useMemo(() => {
-    const filtered = data.filter((item) => {
-      const searchLower = searchTerm.toLowerCase();
-      let matchesSearch = false;
-
-      const spbKey = item.spbNo
-        ? buildLocalTitleKey("spb", item.spbNo, item.spbTitle)
-        : null;
-      const poKey = item.poNo ? buildLocalTitleKey("po", item.poNo, item.poTitle) : null;
-
-      const spbTitle =
-        (spbKey && localTitles[spbKey] !== undefined
-          ? localTitles[spbKey]
-          : item.spbTitle) || "";
-      const poTitle =
-        (poKey && localTitles[poKey] !== undefined
-          ? localTitles[poKey]
-          : item.poTitle) || "";
-
-      if (searchMode === "no") {
-        const matchSpb = String(item.spbNo || "").toLowerCase().includes(searchLower);
-        const matchTitle = String(spbTitle).toLowerCase().includes(searchLower);
-        const matchPo = String(item.poNo || "").toLowerCase().includes(searchLower);
-        const matchPoTitle = String(poTitle).toLowerCase().includes(searchLower);
-        const matchSj = String(item.suratJalanNo || "").toLowerCase().includes(searchLower);
-
-        matchesSearch = !searchTerm || matchSpb || matchTitle || matchPo || matchPoTitle || matchSj;
-      } else {
-        matchesSearch = !searchTerm || !!item.itemNames?.some((name) => String(name).toLowerCase().includes(searchLower));
-      }
-
-      if (!matchesSearch) return false;
-
-      switch (filter) {
-        case "Belum Diproses":
-          return item.status === "Belum Diproses";
-        case "Belum di PO":
-          return (!item.poNo || item.poNo === "-") && item.status === "Belum PO";
-        case "Sudah di PO":
-          return !!item.poNo && item.poNo !== "-" && item.status !== "Datang" && item.status !== "Selesai";
-        case "Datang":
-          return item.status === "Datang" || item.status === "Selesai";
-        case "Selesai":
-          return item.status === "Selesai";
-        default:
-          return true;
-      }
-    });
-
-    const getStatusWeight = (status?: string) => {
-      if (status === "Belum Diproses") return 0.5;
-      if (status === "Sudah PO" || status === "Belum PO") return 1;
-      if (status === "Datang") return 2;
-      if (status === "Selesai") return 3;
-      return 4;
-    };
-
-    return filtered.sort((a, b) => {
-      if (sortBy === "status") {
-        const wA = getStatusWeight(a.status);
-        const wB = getStatusWeight(b.status);
-        if (wA !== wB) return wA - wB;
-        return getNumberFromStr(a.spbNo, a.poNo) - getNumberFromStr(b.spbNo, b.poNo);
-      }
-
-      if (sortBy === "number") {
-        const numA = getNumberFromStr(a.spbNo, a.poNo);
-        const numB = getNumberFromStr(b.spbNo, b.poNo);
-        if (numA !== numB) return numA - numB;
-        return getStatusWeight(a.status) - getStatusWeight(b.status);
-      }
-
-      if (sortBy === "oldest") {
-        const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
-        const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
-        return dateA - dateB;
-      }
-
-      const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
-      const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
-      return dateB - dateA;
-    });
-  }, [data, filter, searchTerm, searchMode, sortBy, localTitles]);
+  const filteredAndSortedData = useMemo(
+    () =>
+      filterAndSortSpbDocuments({
+        data,
+        filter,
+        searchTerm,
+        searchMode,
+        sortBy,
+        localTitles,
+      }),
+    [data, filter, searchTerm, searchMode, sortBy, localTitles],
+  );
 
   const handleCardClick = (item: SPBDocumentGroup) => {
     const params = new URLSearchParams();
@@ -5191,179 +6047,6 @@ export default function MonitoringSPBPage() {
       params.set("sj", String(item.suratJalanNo));
     }
     navigate(`/monitoring-spb/detail?${params.toString()}`);
-  };
-
-  const getStatusColor = (status?: string) => {
-    if (status === "Belum Diproses") return "purple";
-    if (status === "Belum PO") return "orange";
-    if (status === "Sudah PO") return "blue";
-    if (status === "Datang") return "green";
-    if (status === "Selesai") return "cyan";
-    return "default";
-  };
-
-  const renderCardContent = (item: SPBDocumentGroup) => {
-    const hasSPB = item.spbNo !== null && item.spbNo !== "NO_SPB";
-    const hasPO = item.poNo !== null && item.poNo !== "NO_PO" && item.poNo !== "-";
-    const hasSJ = !hasSPB && !hasPO && item.suratJalanNo;
-
-    const spbKey = hasSPB && item.spbNo ? buildLocalTitleKey("spb", item.spbNo, item.spbTitle) : null;
-    const poKey = hasPO && item.poNo ? buildLocalTitleKey("po", item.poNo, item.poTitle) : null;
-
-    const resolvedSpbTitle = spbKey && localTitles[spbKey] !== undefined ? localTitles[spbKey] : item.spbTitle;
-    const resolvedPoTitle = poKey && localTitles[poKey] !== undefined ? localTitles[poKey] : item.poTitle;
-
-    return (
-      <Card
-        hoverable
-        onClick={() => handleCardClick(item)}
-        style={{
-          borderRadius: 12,
-          height: "100%",
-          border: "1px solid #f0f0f0",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-          cursor: "pointer",
-          transition: "all 0.2s",
-        }}
-        styles={{ body: { padding: 16 } }}
-      >
-        <Space direction="vertical" style={{ width: "100%" }} size={2}>
-          {hasSPB && (
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <Text type="secondary" style={{ fontSize: 11 }}>No. SPB</Text>
-                {allowEdit && (
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<EditOutlined style={{ fontSize: 12 }} />}
-                    aria-label={`Edit judul SPB ${item.spbNo}`}
-                    data-testid={`edit-spb-title-${item.spbNo}`}
-                    title="Edit judul SPB"
-                    style={{ padding: "0 4px", height: 20, minWidth: 20, color: "#8c8c8c" }}
-                    onClick={(e) => openEditModal(e, "spb", String(item.spbNo), resolvedSpbTitle)}
-                  />
-                )}
-              </div>
-              <div style={{ fontWeight: 600, fontSize: 16, wordBreak: "break-word" }}>
-                {item.spbNo}
-                {resolvedSpbTitle && (
-                  <span style={{ fontSize: 14, fontWeight: 500, color: "#595959", marginLeft: 6 }}>
-                    - {resolvedSpbTitle}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {hasSPB && hasPO && <Divider style={{ margin: "8px 0" }} />}
-
-          {hasPO && (
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <Text type="secondary" style={{ fontSize: 11 }}>No. PO</Text>
-                {allowEdit && (
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<EditOutlined style={{ fontSize: 12 }} />}
-                    aria-label={`Edit judul PO ${item.poNo}`}
-                    data-testid={`edit-po-title-${item.poNo}`}
-                    title="Edit judul PO"
-                    style={{ padding: "0 4px", height: 20, minWidth: 20, color: "#8c8c8c" }}
-                    onClick={(e) => openEditModal(e, "po", String(item.poNo), resolvedPoTitle)}
-                  />
-                )}
-              </div>
-              <div style={{ fontWeight: 600, fontSize: 16, wordBreak: "break-word" }}>
-                {item.poNo}
-                {resolvedPoTitle && (
-                  <span style={{ fontSize: 14, fontWeight: 500, color: "#595959", marginLeft: 6 }}>
-                    - {resolvedPoTitle}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {hasSJ && (
-            <div>
-              <Text type="secondary" style={{ fontSize: 11 }}>No. Surat Jalan</Text>
-              <div style={{ fontWeight: 600, fontSize: 16, wordBreak: "break-word" }}>
-                {item.suratJalanNo}
-              </div>
-            </div>
-          )}
-
-          <div
-            style={{
-              marginTop: 12,
-              fontSize: 12,
-              color: "#8c8c8c",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <div>
-              <div>Total: {item.itemsCount} Barang</div>
-              <div style={{ marginTop: 4 }}>Tanggal: {item.date !== "-" ? formatDate(item.date) : "-"}</div>
-            </div>
-            <Tag color={getStatusColor(item.status)} style={{ margin: 0, fontWeight: 600 }}>
-              {item.status || "Belum PO"}
-            </Tag>
-          </div>
-
-          <div
-            style={{
-              marginTop: 12,
-              paddingTop: 12,
-              borderTop: "1px dashed #f0f0f0",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              color: "#1677ff",
-              fontSize: 12,
-              fontWeight: 500,
-            }}
-          >
-            <span>Lihat detail</span>
-            <ArrowRightOutlined />
-          </div>
-        </Space>
-      </Card>
-    );
-  };
-
-  const renderSmallCard = (item: SPBDocumentGroup) => {
-    const hasSPB = item.spbNo && item.spbNo !== "NO_SPB";
-    const hasPO = item.poNo && item.poNo !== "NO_PO" && item.poNo !== "-";
-
-    return (
-      <Card
-        key={item.id}
-        size="small"
-        hoverable
-        onClick={() => handleCardClick(item)}
-        style={{ borderRadius: 10, background: "#fafafa", cursor: "pointer" }}
-        styles={{ body: { padding: 12 } }}
-      >
-        <Space direction="vertical" size={0}>
-          <Text strong style={{ fontSize: 13, display: "block" }} ellipsis>
-            {hasSPB && hasPO
-              ? `SPB: ${item.spbNo} · PO: ${item.poNo}`
-              : hasSPB
-                ? `SPB: ${item.spbNo}`
-                : hasPO
-                  ? `PO: ${item.poNo}`
-                  : `SJ: ${item.suratJalanNo}`}
-          </Text>
-          <Text type="secondary" style={{ fontSize: 11 }}>
-            {item.date !== "-" ? formatDate(item.date) : "-"}
-          </Text>
-        </Space>
-      </Card>
-    );
   };
 
   if (isLoading) {
@@ -5386,112 +6069,44 @@ export default function MonitoringSPBPage() {
   }
 
   return (
-    <div style={{ width: "100%", maxWidth: "100%", overflowX: "hidden", paddingBottom: 32 }}>
+    <div
+      style={{
+        width: "100%",
+        maxWidth: "100%",
+        overflowX: "hidden",
+        paddingBottom: 32,
+      }}
+    >
       <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-        <div style={{ marginBottom: 24 }}>
-          <Space align="center">
-            <div
-              style={{
-                width: 42,
-                height: 42,
-                borderRadius: 10,
-                background: "#1677ff15",
-                color: "#1677ff",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 20,
-              }}
-            >
-              <FileTextOutlined />
-            </div>
-            <div>
-              <Title level={3} style={{ margin: 0 }}>Monitoring SPB</Title>
-              <Text type="secondary">
-                {data.length} Dokumen Terdaftar · Diperbarui {formatFullDate(new Date())}
-              </Text>
-            </div>
-          </Space>
-        </div>
+        <MonitoringSPBHeader totalDocuments={data.length} />
 
-        {recentItems.length > 0 && (
-          <div style={{ marginBottom: 32 }}>
-            <Text strong style={{ fontSize: 16, display: "block", marginBottom: 12 }}>
-              Baru ditambahkan
-            </Text>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: screens.md ? "repeat(5, 1fr)" : "repeat(2, 1fr)",
-                gap: 12,
-              }}
-            >
-              {recentItems.map(renderSmallCard)}
-            </div>
-          </div>
-        )}
+        <MonitoringSPBRecentList
+          items={recentItems}
+          onCardClick={handleCardClick}
+        />
 
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 16,
-            marginBottom: 20,
-            alignItems: "center",
-          }}
-        >
-          <Space.Compact style={{ width: "100%", maxWidth: 400 }}>
-            <Select<SearchMode>
-              value={searchMode}
-              onChange={setSearchMode}
-              style={{ width: 130 }}
-              aria-label="Mode Pencarian"
-            >
-              <Select.Option value="no">No / Judul</Select.Option>
-              <Select.Option value="barang">Nama Barang</Select.Option>
-            </Select>
-            <Input
-              placeholder={searchMode === "no" ? "Cari No SPB/PO/SJ..." : "Cari Nama Barang..."}
-              prefix={<SearchOutlined />}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              allowClear
-            />
-          </Space.Compact>
-
-          <Segmented<FilterType>
-            size="middle"
-            options={[
-              "Semua",
-              "Belum Diproses",
-              "Belum di PO",
-              "Sudah di PO",
-              "Datang",
-              "Selesai",
-            ]}
-            value={filter}
-            onChange={setFilter}
-            style={{ padding: 4, fontWeight: 500, overflowX: "auto" }}
-          />
-
-          <Select<SortBy>
-            value={sortBy}
-            onChange={setSortBy}
-            style={{ width: 150 }}
-            aria-label="Urutan Data"
-            options={[
-              { value: "status", label: "Urut: Status" },
-              { value: "number", label: "Urut: Nomor" },
-              { value: "oldest", label: "Urut: Paling Lama" },
-              { value: "newest", label: "Urut: Paling Baru" },
-            ]}
-          />
-        </div>
+        <MonitoringSPBToolbar
+          searchMode={searchMode}
+          onSearchModeChange={setSearchMode}
+          searchTerm={searchTerm}
+          onSearchTermChange={setSearchTerm}
+          filter={filter}
+          onFilterChange={setFilter}
+          sortBy={sortBy}
+          onSortByChange={setSortBy}
+          canViewRestricted={canViewRestricted}
+        />
 
         <Row gutter={[16, 16]}>
           {filteredAndSortedData.map((item) => (
             <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
-              {renderCardContent(item)}
+              <MonitoringSPBCard
+                item={item}
+                allowEdit={allowEdit}
+                localTitles={localTitles}
+                onCardClick={handleCardClick}
+                onEditTitle={openEditModal}
+              />
             </Col>
           ))}
         </Row>
@@ -5504,33 +6119,19 @@ export default function MonitoringSPBPage() {
       </div>
 
       {allowEdit && (
-        <Modal
-          title={
-            editingTitle
-              ? `Edit Judul ${editingTitle.type.toUpperCase()} ${editingTitle.docNo}`
-              : "Edit Judul"
-          }
-          open={!!editingTitle}
-          onCancel={() => setEditingTitle(null)}
-          onOk={handleSaveTitle}
-          okText="Simpan"
-          cancelText="Batal"
-          confirmLoading={savingTitle}
-          destroyOnHidden
-        >
-          <Input
-            placeholder="Masukkan judul baru..."
-            value={titleInput}
-            onChange={(e) => setTitleInput(e.target.value)}
-            onPressEnter={handleSaveTitle}
-            aria-label="Input Judul Dokumen"
-            autoFocus
-          />
-        </Modal>
+        <EditDocumentTitleModal
+          editingTitle={editingTitle}
+          titleInput={titleInput}
+          onTitleInputChange={setTitleInput}
+          savingTitle={savingTitle}
+          onCancel={closeEditModal}
+          onSave={handleSaveTitle}
+        />
       )}
     </div>
   );
 }
+
 
 ================================================================================
 FILE: ../src/features/spb/suratJalanRules.ts
@@ -5551,9 +6152,27 @@ export const IGNORED_SURAT_JALAN: readonly string[] = ["1", "2"];
 export const isIgnoredSuratJalan = (no: unknown): boolean =>
   IGNORED_SURAT_JALAN.includes(String(no ?? "").trim());
 
-/** true jika nilai kolom (mis. id_spb / id_po) benar-benar terisi. */
+/** true jika nilai kolom (mis. no_spb / no_po / judul) benar-benar terisi. */
 export const hasValue = (val: unknown): boolean =>
   val !== null && val !== undefined && String(val).trim() !== "";
+
+/**
+ * Normalisasi id FK (id_spb / id_po / id) menjadi number.
+ *
+ * Data id di DB sekarang bertipe number (bigint / integer). Namun untuk
+ * keamanan terhadap sisa data lama yang mungkin masih string, helper ini
+ * menyamakan keduanya menjadi number agar semua perbandingan konsisten.
+ *
+ * Nilai yang tidak valid, 0, atau negatif dianggap "tidak ada id".
+ * (id 0 tidak dipakai di database, sehingga aman dijadikan sentinel null.)
+ */
+export const toIdNumber = (val: unknown): number | null => {
+  if (val === null || val === undefined) return null;
+  if (typeof val === "string" && val.trim() === "") return null;
+  const n = Number(val);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return n;
+};
 
 /**
  * Normalisasi nomor dokumen (no_spb / no_po) dari DB.
@@ -5563,7 +6182,9 @@ export const cleanDocNo = (val: unknown): string | null => {
   if (val === null || val === undefined) return null;
   const s = String(val).trim();
   const lower = s.toLowerCase();
-  if (s === "" || s === "-" || lower === "null" || lower === "undefined") return null;
+  if (s === "" || s === "-" || lower === "null" || lower === "undefined") {
+    return null;
+  }
   return s;
 };
 
@@ -5574,10 +6195,15 @@ export type SjTarget = "spb" | "po" | "sj";
  *  - punya id_spb                -> card SPB
  *  - tanpa id_spb, punya id_po   -> card PO
  *  - tanpa id_spb dan id_po      -> card Surat Jalan
+ *
+ * Menggunakan `toIdNumber` agar "0", "0.0", " ", null semua dianggap kosong.
  */
-export const getSjTarget = (sj: { id_spb?: unknown; id_po?: unknown }): SjTarget => {
-  if (hasValue(sj.id_spb)) return "spb";
-  if (hasValue(sj.id_po)) return "po";
+export const getSjTarget = (sj: {
+  id_spb?: unknown;
+  id_po?: unknown;
+}): SjTarget => {
+  if (toIdNumber(sj.id_spb) !== null) return "spb";
+  if (toIdNumber(sj.id_po) !== null) return "po";
   return "sj";
 };
 
@@ -5609,14 +6235,16 @@ export const isKeteranganBarang = (row: any): boolean => {
 
 /**
  * Menentukan status dari satu baris item SPB (untuk konsumsi Chatbot).
+ * Menggunakan `toIdNumber` agar deteksi "sudah PO" tidak lagi bergantung pada
+ * tipe string/number dari kolom id_po.
  */
 export const resolveSpbItemStatus = (row: any): string => {
   if (!row) return "Belum PO";
-  
+
   const tgl = row.material_datang_tgl;
   const req = Number(row.qty_permintaan || 0);
   const arr = Number(row.material_datang_qty || 0);
-  const hasPo = !!(row.no_po || row.id_po);
+  const hasPo = !!cleanDocNo(row.no_po) || toIdNumber(row.id_po) !== null;
 
   if (tgl) {
     if (req === arr) return "Datang Sesuai";
@@ -5624,433 +6252,107 @@ export const resolveSpbItemStatus = (row: any): string => {
     return "Datang Kurang";
   }
   if (hasPo) return "Sudah PO";
-  
+
   const raw = String(row.status || "").toLowerCase().trim();
   if (raw === "belum di proses") return "Belum Diproses";
-  
+
   return "Belum PO";
 };
+
+================================================================================
+FILE: ../src/features/spb/types.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/types.ts
+================================================================================
+
+import type { ReactNode } from "react";
+import type { SPBItemDetail } from "../../shared/types";
+
+export type FilterType =
+  | "Semua"
+  | "Belum Diproses"
+  | "Belum di PO"
+  | "Sudah di PO"
+  | "Datang"
+  | "Selesai";
+
+export type SearchMode = "no" | "barang";
+
+export type SortBy = "status" | "number" | "oldest" | "newest";
+
+export interface EditingTitleState {
+  type: "spb" | "po";
+  docNo: string;
+  currentTitle: string;
+}
+
+export type ItemSource = "spb" | "po" | "sj";
+
+export type MonitoringDetailItem = SPBItemDetail & {
+  key: string;
+  sumber: ItemSource;
+  no_surat_jalan?: string | null;
+  spbSourceFile?: string | null;
+  poSourceFile?: string | null;
+};
+
+export interface DetailRow {
+  key: string;
+  field: string;
+  value: ReactNode;
+}
+
+export interface UniquePoInfo {
+  no: string;
+  file?: string | null;
+}
+
+
 
 ================================================================================
 FILE: ../src/features/spb/useMonitoringSPB.ts
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/useMonitoringSPB.ts
 ================================================================================
 
+// src/features/spb/useMonitoringSPB.ts
 import { useQuery } from "@tanstack/react-query";
-import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { USE_MOCK } from "../../shared/lib/config";
-import { requirePermission } from "../../shared/lib/authGuard";
 import type { SPBDocumentGroup } from "../../shared/types";
-import { cleanDocNo, getSjTarget, isIgnoredSuratJalan } from "./suratJalanRules";
+import { canViewRestrictedSpb } from "./accessRules";
+import { fetchMonitoringRawData, updateDocumentTitle } from "./api";
+import { groupMonitoringData } from "./utils/groupMonitoringData";
+import { getTitleOverrides, saveTitleOverride } from "./utils/titleOverrides";
 
-const TITLE_OVERRIDES_KEY = "spb-po-title-overrides";
-
-export const getTitleOverrides = (): Record<string, string> => {
-  try {
-    const raw = localStorage.getItem(TITLE_OVERRIDES_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-};
-
-export const saveTitleOverride = (key: string, title: string) => {
-  try {
-    const current = getTitleOverrides();
-    current[key] = title;
-    localStorage.setItem(TITLE_OVERRIDES_KEY, JSON.stringify(current));
-  } catch {
-    // ignore storage errors
-  }
-};
-
-const buildSpbOverrideKey = (docNo: string, originalTitle?: string | null) =>
-  `SPB_${docNo}::${originalTitle ?? ""}`;
-
-const buildPoOverrideKey = (docNo: string) => `PO_${docNo}`;
-
-export const updateDocumentTitle = async (
-  type: "spb" | "po",
-  docNo: string,
-  newTitle: string,
-  originalTitle?: string | null,
-) => {
-  // 🔒 Verifikasi: user harus login dan punya izin edit_data
-  requirePermission("edit_data", `Edit judul ${type.toUpperCase()}`);
-  const trimmed = newTitle.trim();
-
-  if (type === "spb") {
-    saveTitleOverride(buildSpbOverrideKey(docNo, originalTitle), trimmed);
-    let q = supabaseClient
-      .from("spb")
-      .update({ judul_spb: trimmed })
-      .eq("no_spb", docNo);
-    if (originalTitle) q = q.eq("judul_spb", originalTitle);
-    const { error } = await q;
-    if (error) throw error;
-  } else {
-    saveTitleOverride(buildPoOverrideKey(docNo), trimmed);
-    const { error } = await supabaseClient
-      .from("po")
-      .update({ judul_po: trimmed })
-      .eq("no_po", docNo);
-    if (error) throw error;
-  }
-};
-
-const getSortNumber = (val: unknown): number => {
-  if (val === null || val === undefined || val === "") return 999999;
-  const s = String(val);
-  const match = s.match(/\d+/);
-  return match ? parseInt(match[0], 10) : 999999;
-};
-
-const toStrOrNull = (val: unknown): string | null => {
-  if (val === null || val === undefined || val === "") return null;
-  return String(val);
-};
-
-const buildSpbGroupKey = (
-  spbNo: string | null,
-  spbTitle: string | null,
-  fallbackId: unknown,
-) =>
-  spbNo
-    ? `SPB_${spbNo}::${spbTitle ?? ""}`
-    : `SPB_ID_${fallbackId}`;
+export { getTitleOverrides, saveTitleOverride, updateDocumentTitle };
 
 export const useMonitoringSPB = () => {
+  const canViewRestricted = canViewRestrictedSpb();
+
   const { data, isLoading, error, refetch } = useQuery<SPBDocumentGroup[]>({
-    queryKey: ["monitoring-spb"],
+    queryKey: ["monitoring-spb", canViewRestricted],
     queryFn: async () => {
       if (USE_MOCK) return [];
 
       const overrides = getTitleOverrides();
+      const { allSpbData, poData, sjData } = await fetchMonitoringRawData();
 
-      const [spbRes, poRes, sjRes] = await Promise.all([
-        supabaseClient.from("spb").select(`
-          id, no_spb, judul_spb, tgl_spb, material_datang_tgl, id_po,
-          qty_permintaan, material_datang_qty, nama_barang_spb, status,
-          po:po!id_po (no_po, tanggal_po)
-        `),
-        supabaseClient.from("po").select(`
-          id, no_po, judul_po, tanggal_po, id_spb, material_datang_tgl, material_datang_qty, nama_barang_po
-        `),
-        supabaseClient.from("surat_jalan").select(`
-          id, no_surat_jalan, id_spb, id_po, nama_barang, 
-          material_datang_tgl, material_datang_qty,
-          spb:spb!id_spb (no_spb, judul_spb),
-          po:po!id_po (no_po)
-        `),
-      ]);
-
-      if (spbRes.error) throw spbRes.error;
-      if (poRes.error) throw poRes.error;
-      if (sjRes.error) throw sjRes.error;
-
-      const spbData = spbRes.data || [];
-      const poData = poRes.data || [];
-      const sjData = sjRes.data || [];
-
-      const poBySpbId = new Map<string, any[]>();
-      poData.forEach((p: any) => {
-        if (p.id_spb) {
-          const key = String(p.id_spb);
-          if (!poBySpbId.has(key)) poBySpbId.set(key, []);
-          poBySpbId.get(key)!.push(p);
-        }
-      });
-
-      const groups = new Map<
-        string,
-        {
-          data: SPBDocumentGroup;
-          hasAnyPO: boolean;
-          hasAnyArrival: boolean;
-          hasAnyBelumDiproses: boolean;
-          hasAnySudahDiproses: boolean;
-          latestTimestamp: number;
-          poSet: Set<string>;
-          completedItems: number;
-          itemNames: Set<string>;
-        }
-      >();
-
-      const updateLatestDate = (group: any, dateStr: string | null) => {
-        if (!dateStr) return;
-        const time = new Date(dateStr).getTime();
-        if (!isNaN(time) && time > group.latestTimestamp) {
-          group.latestTimestamp = time;
-          group.data.date = dateStr;
-        }
-      };
-
-      // PROSES 1: Kelompokkan berdasarkan SPB
-      spbData.forEach((row: any) => {
-        const spbNo = toStrOrNull(row.no_spb);
-        const spbTitleRaw = toStrOrNull(row.judul_spb);
-        const key = buildSpbGroupKey(spbNo, spbTitleRaw, row.id);
-        const overrideKey = spbNo
-          ? buildSpbOverrideKey(spbNo, spbTitleRaw)
-          : null;
-        const spbOverride = overrideKey ? overrides[overrideKey] : undefined;
-
-        if (!groups.has(key)) {
-          groups.set(key, {
-            data: {
-              id: key,
-              spbNo,
-              spbTitle:
-                spbOverride !== undefined ? spbOverride : (spbTitleRaw || null),
-              poNo: null,
-              poTitle: null,
-              date: "-",
-              itemsCount: 0,
-              sortNumber: getSortNumber(spbNo),
-              status: "Belum PO", // akan di-override di finalisasi
-            },
-            hasAnyPO: false,
-            hasAnyArrival: false,
-            hasAnyBelumDiproses: false,
-            hasAnySudahDiproses: false,
-            latestTimestamp: 0,
-            poSet: new Set<string>(),
-            completedItems: 0,
-            itemNames: new Set<string>(),
-          });
-        }
-
-        const group = groups.get(key)!;
-        if (!group.data.spbTitle && spbTitleRaw) {
-          group.data.spbTitle =
-            spbOverride !== undefined ? spbOverride : spbTitleRaw;
-        }
-        group.data.itemsCount += 1;
-
-        const itemName = toStrOrNull(row.nama_barang_spb);
-        if (itemName) group.itemNames.add(itemName);
-
-        updateLatestDate(group, row.tgl_spb);
-
-        // Cek status "belum di proses" / "sudah di proses"
-        const rowStatus = toStrOrNull(row.status)?.toLowerCase() || "";
-        if (rowStatus === "belum di proses") {
-          group.hasAnyBelumDiproses = true;
-        } else if (rowStatus === "sudah di proses") {
-          group.hasAnySudahDiproses = true;
-        }
-
-        const req = row.qty_permintaan || 0;
-        const arr = row.material_datang_qty || 0;
-        const isArrived = !!row.material_datang_tgl;
-
-        if (isArrived) {
-          group.hasAnyArrival = true;
-          updateLatestDate(group, row.material_datang_tgl);
-          if (arr >= req) group.completedItems += 1;
-        }
-
-        const joinedPo = Array.isArray(row.po) ? row.po[0] : row.po;
-        if (joinedPo && cleanDocNo(joinedPo.no_po)) {
-          group.poSet.add(String(cleanDocNo(joinedPo.no_po)));
-          group.hasAnyPO = true;
-          updateLatestDate(group, joinedPo.tanggal_po);
-        }
-
-        const linkedPos = poBySpbId.get(String(row.id)) || [];
-        linkedPos.forEach((p: any) => {
-          if (cleanDocNo(p.no_po)) {
-            group.poSet.add(String(cleanDocNo(p.no_po)));
-            group.hasAnyPO = true;
-            updateLatestDate(group, p.tanggal_po);
-          }
-        });
-      });
-
-      // PROSES 2: Cari PO yang TIDAK punya SPB
-      const existingSpbIds = new Set(spbData.map((s: any) => String(s.id)));
-
-      poData.forEach((p: any) => {
-        const isLinked =
-          (p.id_spb && existingSpbIds.has(String(p.id_spb))) ||
-          spbData.some((s: any) => s.id_po === p.id);
-
-        if (!isLinked) {
-          const poNo = cleanDocNo(p.no_po);
-          const key = poNo ? `PO_${poNo}` : `PO_ID_${p.id}`;
-          const poOverride = poNo
-            ? overrides[buildPoOverrideKey(poNo)]
-            : undefined;
-
-          if (!groups.has(key)) {
-            groups.set(key, {
-              data: {
-                id: key,
-                spbNo: null,
-                spbTitle: null,
-                poNo: poNo,
-                poTitle:
-                  poOverride !== undefined ? poOverride : (p.judul_po || null),
-                date: p.tanggal_po || "-",
-                itemsCount: 0,
-                sortNumber: getSortNumber(poNo),
-                status: "Sudah PO",
-              },
-              hasAnyPO: true,
-              hasAnyArrival: false,
-              hasAnyBelumDiproses: false,
-              hasAnySudahDiproses: true, // PO otomatis dianggap sudah diproses
-              latestTimestamp: 0,
-              poSet: new Set([poNo || ""]),
-              completedItems: 0,
-              itemNames: new Set<string>(),
-            });
-          }
-
-          const group = groups.get(key)!;
-          if (!group.data.poTitle && p.judul_po) {
-            group.data.poTitle =
-              poOverride !== undefined ? poOverride : p.judul_po;
-          }
-          group.data.itemsCount += 1;
-
-          const itemName = toStrOrNull(p.nama_barang_po);
-          if (itemName) group.itemNames.add(itemName);
-
-          updateLatestDate(group, p.tanggal_po);
-
-          if (p.material_datang_tgl) {
-            group.hasAnyArrival = true;
-            updateLatestDate(group, p.material_datang_tgl);
-            if ((p.material_datang_qty || 0) > 0) group.completedItems += 1;
-          }
-        }
-      });
-
-      // PROSES 3: Kelompokkan data dari Surat Jalan (no 3 dan seterusnya)
-      sjData.forEach((sj: any) => {
-        if (isIgnoredSuratJalan(sj.no_surat_jalan)) return;
-
-        const spbRel = Array.isArray(sj.spb) ? sj.spb[0] : sj.spb;
-        const poRel = Array.isArray(sj.po) ? sj.po[0] : sj.po;
-        const sjNo = toStrOrNull(sj.no_surat_jalan);
-        const target = getSjTarget(sj);
-
-        let targetKey: string;
-        let spbNo: string | null = null;
-        let spbTitle: string | null = null;
-        let poNo: string | null = null;
-
-        if (target === "spb") {
-          spbNo = cleanDocNo(spbRel?.no_spb);
-          spbTitle = toStrOrNull(spbRel?.judul_spb);
-          targetKey = buildSpbGroupKey(spbNo, spbTitle, sj.id_spb);
-        } else if (target === "po") {
-          poNo = cleanDocNo(poRel?.no_po);
-          targetKey = poNo ? `PO_${poNo}` : `PO_ID_${sj.id_po}`;
-        } else {
-          targetKey = `SJ_${sjNo}`;
-        }
-
-        if (!groups.has(targetKey)) {
-          groups.set(targetKey, {
-            data: {
-              id: targetKey,
-              spbNo,
-              spbTitle,
-              poNo,
-              poTitle: poNo
-                ? (overrides[buildPoOverrideKey(poNo)] ?? null)
-                : null,
-              suratJalanNo: target === "sj" ? sjNo : null,
-              date: "-",
-              itemsCount: 0,
-              sortNumber: getSortNumber(spbNo ?? poNo ?? sjNo),
-              status: "Sudah PO",
-            },
-            hasAnyPO: true,
-            hasAnyArrival: false,
-            hasAnyBelumDiproses: false,
-            hasAnySudahDiproses: true, // SJ otomatis dianggap sudah diproses
-            latestTimestamp: 0,
-            poSet: new Set<string>(poNo ? [poNo] : []),
-            completedItems: 0,
-            itemNames: new Set<string>(),
-          });
-        }
-
-        const group = groups.get(targetKey)!;
-        group.data.itemsCount += 1;
-
-        if (sj.nama_barang) group.itemNames.add(sj.nama_barang);
-
-        if (sj.material_datang_tgl) {
-          group.hasAnyArrival = true;
-          updateLatestDate(group, sj.material_datang_tgl);
-          if ((sj.material_datang_qty || 0) > 0) group.completedItems += 1;
-        }
-      });
-
-      // Finalisasi Status & Sorting
-      const result = Array.from(groups.values()).map((g) => {
-        const isSelesai =
-          g.data.itemsCount > 0 && g.completedItems >= g.data.itemsCount;
-        
-        let status = "Belum PO";
-        
-        if (isSelesai) {
-          status = "Selesai";
-        } else if (g.hasAnyArrival) {
-          status = "Datang";
-        } else if (g.hasAnyPO) {
-          status = "Sudah PO";
-        } else if (g.hasAnyBelumDiproses && !g.hasAnySudahDiproses) {
-          status = "Belum Diproses"; // <--- ATURAN BARU DI SINI
-        }
-
-        const combinedPo = Array.from(g.poSet).filter(Boolean).join(", ");
-        const firstPo = Array.from(g.poSet).filter(Boolean)[0];
-        const poTitle =
-          g.data.poTitle ??
-          (firstPo && overrides[buildPoOverrideKey(firstPo)] !== undefined
-            ? overrides[buildPoOverrideKey(firstPo)]
-            : null);
-
-        return {
-          ...g.data,
-          poNo: combinedPo || null,
-          poTitle,
-          status,
-          sortNumber:
-            getSortNumber(g.data.spbNo) + getSortNumber(combinedPo) * 0.01,
-          itemNames: Array.from(g.itemNames),
-        };
-      });
-
-      const getStatusWeight = (status: string) => {
-        if (status === "Belum Diproses") return 0; // Paling atas (opsional)
-        if (status === "Sudah PO") return 1;
-        if (status === "Belum PO") return 1;
-        if (status === "Datang") return 2;
-        if (status === "Selesai") return 3;
-        return 4;
-      };
-
-      return result.sort((a, b) => {
-        const weightA = getStatusWeight(a.status || "");
-        const weightB = getStatusWeight(b.status || "");
-        if (weightA !== weightB) return weightA - weightB;
-
-        const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
-        const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
-        if (dateA === dateB) return a.sortNumber - b.sortNumber;
-        return dateB - dateA;
+      return groupMonitoringData({
+        allSpbData,
+        poData,
+        sjData,
+        canViewRestricted,
+        overrides,
       });
     },
   });
 
-  return { data: data ?? [], isLoading, error: error as Error | null, refetch };
+  return {
+    data: data ?? [],
+    isLoading,
+    error: error as Error | null,
+    refetch,
+  };
 };
+
 
 ================================================================================
 FILE: ../src/features/spb/useMonitoringSPBDetail.ts
@@ -6059,209 +6361,15 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/useMonitoringSPB
 
 // src/features/spb/useMonitoringSPBDetail.ts
 import { useQuery } from "@tanstack/react-query";
-import { supabaseClient } from "../../shared/lib/supabaseClient";
-import type { SPBItemDetail } from "../../shared/types";
-import { cleanDocNo, hasValue, isIgnoredSuratJalan } from "./suratJalanRules";
+import { canViewRestrictedSpb } from "./accessRules";
+import {
+  fetchDetailByPo,
+  fetchDetailBySpb,
+  fetchDetailBySuratJalan,
+} from "./api";
+import type { ItemSource, MonitoringDetailItem } from "./types";
 
-export type ItemSource = "spb" | "po" | "sj";
-
-export type MonitoringDetailItem = SPBItemDetail & {
-  key: string;
-  sumber: ItemSource;
-  no_surat_jalan?: string | null;
-};
-
-type Row = Record<string, any>;
-
-const SPB_SELECT = `*, po:po!id_po (no_po, tanggal_po)`;
-const SJ_SELECT = `*, spb:spb!id_spb (no_spb, judul_spb), po:po!id_po (no_po)`;
-
-const first = (v: unknown): Row | null => {
-  const x = Array.isArray(v) ? v[0] : v;
-  return x && typeof x === "object" ? (x as Row) : null;
-};
-
-const numOrZero = (v: unknown): number => {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : 0;
-};
-
-const sortById = (rows: Row[]): Row[] =>
-  [...rows].sort((a, b) => numOrZero(a.id) - numOrZero(b.id));
-
-const unique = <T,>(arr: T[]): T[] => Array.from(new Set(arr));
-
-const unwrap = (res: { data: unknown; error: unknown }): Row[] => {
-  if (res.error) throw res.error;
-  return (res.data as Row[] | null) ?? [];
-};
-
-const spbStatus = (req: number, arr: number, tglDatang: string | null, hasPo: boolean) => {
-  if (tglDatang) {
-    if (req === arr) return "Datang Sesuai";
-    if (req < arr) return "Datang Lebih";
-    return "Datang Kurang";
-  }
-  return hasPo ? "Sudah PO" : "Belum PO";
-};
-
-const mapSpbRow = (row: Row, fallbackPo: Row | null): MonitoringDetailItem => {
-  const joinedPo = first(row.po);
-  const poNo = cleanDocNo(joinedPo?.no_po) ?? cleanDocNo(fallbackPo?.no_po);
-  const req = numOrZero(row.qty_permintaan);
-  const arr = numOrZero(row.material_datang_qty);
-  const tgl: string | null = row.material_datang_tgl || null;
-
-  // 🔧 Normalisasi status dari database (jaga-jaga ada spasi atau beda kapital)
-  const rawStatus = String(row.status || "").toLowerCase().trim();
-
-  let status = spbStatus(req, arr, tgl, !!poNo);
-  
-  // 🔧 PERBAIKAN: Jika belum PO tapi dari DB statusnya "belum di proses"
-  if (status === "Belum PO" && rawStatus === "belum di proses") {
-    status = "Belum Diproses";
-  }
-
-  return {
-    key: `spb-${row.id}`,
-    sumber: "spb",
-    id: row.id,
-    no_spb: cleanDocNo(row.no_spb) ?? "-",
-    judul_spb: row.judul_spb ?? null,
-    tanggal_spb: row.tgl_spb ?? null,
-    nama_barang: row.nama_barang_spb || "-",
-    ukuran: row.ukuran ?? null,
-    spesifikasi_teknis: row.spesifikasi_teknis ?? null,
-    jumlah_permintaan: req,
-    satuan: row.satuan ?? null,
-    no_po: poNo ?? "-",
-    tanggal_po: joinedPo?.tanggal_po ?? fallbackPo?.tanggal_po ?? null,
-    tanggal_datang: tgl,
-    qty_datang: arr,
-    status,
-  };
-};
-
-const mapPoRow = (row: Row): MonitoringDetailItem => {
-  const tgl: string | null = row.material_datang_tgl || null;
-  return {
-    key: `po-${row.id}`,
-    sumber: "po",
-    id: row.id,
-    no_spb: "-",
-    nama_barang: row.nama_barang_po || "-",
-    jumlah_permintaan: null,
-    satuan: row.material_datang_satuan ?? row.satuan ?? null,
-    no_po: cleanDocNo(row.no_po) ?? "-",
-    tanggal_po: row.tanggal_po ?? null,
-    tanggal_datang: tgl,
-    qty_datang: numOrZero(row.material_datang_qty),
-    status: tgl ? "Datang" : "Sudah PO",
-  };
-};
-
-const mapSjRow = (row: Row): MonitoringDetailItem => {
-  const spb = first(row.spb);
-  const po = first(row.po);
-  const tgl: string | null = row.material_datang_tgl || null;
-  return {
-    key: `sj-${row.id}`,
-    sumber: "sj",
-    id: row.id,
-    no_surat_jalan: row.no_surat_jalan != null ? String(row.no_surat_jalan) : null,
-    no_spb: cleanDocNo(spb?.no_spb) ?? "-",
-    judul_spb: spb?.judul_spb ?? null,
-    nama_barang: row.nama_barang || "-",
-    jumlah_permintaan: null,
-    satuan: row.material_datang_satuan ?? row.satuan ?? null,
-    no_po: cleanDocNo(po?.no_po) ?? "-",
-    tanggal_po: null,
-    tanggal_datang: tgl,
-    qty_datang: numOrZero(row.material_datang_qty),
-    status: tgl ? "Datang" : "Belum Datang",
-  };
-};
-
-const fetchBySpb = async (
-  spbNo: string,
-  judulSpb: string | null = null,
-): Promise<MonitoringDetailItem[]> => {
-  let spbQuery = supabaseClient
-    .from("spb")
-    .select(SPB_SELECT)
-    .eq("no_spb", spbNo);
-  if (judulSpb) spbQuery = spbQuery.eq("judul_spb", judulSpb);
-
-  const spbRows = sortById(unwrap(await spbQuery));
-  if (spbRows.length === 0) return [];
-
-  const spbIds = spbRows.map((r) => r.id);
-
-  const [poRes, sjRes] = await Promise.all([
-    supabaseClient.from("po").select("id, no_po, tanggal_po, id_spb").in("id_spb", spbIds),
-    supabaseClient.from("surat_jalan").select(SJ_SELECT).in("id_spb", spbIds),
-  ]);
-
-  const poBySpbId = new Map<string, Row>();
-  unwrap(poRes).forEach((p) => {
-    const key = String(p.id_spb);
-    if (cleanDocNo(p.no_po) && !poBySpbId.has(key)) poBySpbId.set(key, p);
-  });
-
-  const spbItems = spbRows.map((r) => mapSpbRow(r, poBySpbId.get(String(r.id)) ?? null));
-  const sjItems = sortById(unwrap(sjRes))
-    .filter((sj) => !isIgnoredSuratJalan(sj.no_surat_jalan))
-    .map(mapSjRow);
-
-  return [...spbItems, ...sjItems];
-};
-
-const fetchByPo = async (poNo: string): Promise<MonitoringDetailItem[]> => {
-  const poRows = sortById(
-    unwrap(await supabaseClient.from("po").select("*").eq("no_po", poNo)),
-  );
-  if (poRows.length === 0) return [];
-
-  const poIds = poRows.map((p) => p.id);
-  const parentSpbIds = unique(poRows.map((p) => p.id_spb).filter(hasValue));
-
-  const [parentSpbRes, spbPointingRes, sjRes] = await Promise.all([
-    parentSpbIds.length > 0
-      ? supabaseClient.from("spb").select("id").in("id", parentSpbIds)
-      : Promise.resolve({ data: [], error: null }),
-    supabaseClient.from("spb").select("id, id_po").in("id_po", poIds),
-    supabaseClient.from("surat_jalan").select(SJ_SELECT).in("id_po", poIds).is("id_spb", null),
-  ]);
-
-  const existingParentSpb = new Set(unwrap(parentSpbRes).map((s) => String(s.id)));
-  const poIdsUsedBySpb = new Set(unwrap(spbPointingRes).map((s) => String(s.id_po)));
-
-  const isLinkedToSpb = (p: Row) =>
-    (hasValue(p.id_spb) && existingParentSpb.has(String(p.id_spb))) ||
-    poIdsUsedBySpb.has(String(p.id));
-
-  const poItems = poRows.filter((p) => !isLinkedToSpb(p)).map(mapPoRow);
-  const sjItems = sortById(unwrap(sjRes))
-    .filter((sj) => !isIgnoredSuratJalan(sj.no_surat_jalan))
-    .map(mapSjRow);
-
-  return [...poItems, ...sjItems];
-};
-
-const fetchBySuratJalan = async (sjNo: string): Promise<MonitoringDetailItem[]> => {
-  if (isIgnoredSuratJalan(sjNo)) return [];
-
-  const rows = unwrap(
-    await supabaseClient
-      .from("surat_jalan")
-      .select(SJ_SELECT)
-      .eq("no_surat_jalan", sjNo)
-      .is("id_spb", null)
-      .is("id_po", null),
-  );
-
-  return sortById(rows).map(mapSjRow);
-};
+export type { ItemSource, MonitoringDetailItem };
 
 export const useMonitoringSPBDetail = (
   spbNo: string | null,
@@ -6270,13 +6378,21 @@ export const useMonitoringSPBDetail = (
   judulSpb: string | null = null,
 ) => {
   const enabled = !!(spbNo || poNo || sjNo);
+  const canViewRestricted = canViewRestrictedSpb();
 
   const { data, isLoading, error } = useQuery<MonitoringDetailItem[]>({
-    queryKey: ["monitoring-spb-detail", spbNo, poNo, sjNo, judulSpb],
+    queryKey: [
+      "monitoring-spb-detail",
+      spbNo,
+      poNo,
+      sjNo,
+      judulSpb,
+      canViewRestricted,
+    ],
     queryFn: async () => {
-      if (spbNo) return fetchBySpb(spbNo, judulSpb);
-      if (poNo) return fetchByPo(poNo);
-      if (sjNo) return fetchBySuratJalan(sjNo);
+      if (spbNo) return fetchDetailBySpb(spbNo, judulSpb, canViewRestricted);
+      if (poNo) return fetchDetailByPo(poNo);
+      if (sjNo) return fetchDetailBySuratJalan(sjNo);
       return [];
     },
     enabled,
@@ -6291,6 +6407,7 @@ export const useMonitoringSPBDetail = (
   };
 };
 
+
 ================================================================================
 FILE: ../src/features/spb/useSPBItemDetail.ts
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/useSPBItemDetail.ts
@@ -6300,6 +6417,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import type { SPBItemDetail } from "../../shared/types";
+import { canViewRestrictedSpb, isRestrictedSpbStatus } from "./accessRules";
 
 export const useSPBItemDetail = (itemId: string | null) => {
   const enabled = !!itemId;
@@ -6324,6 +6442,9 @@ export const useSPBItemDetail = (itemId: string | null) => {
 
       if (error) throw error;
       if (!data) return null;
+
+      // 🔒 SPB "belum di proses" hanya untuk user yang login
+      if (isRestrictedSpbStatus(data.status) && !canViewRestrictedSpb()) return null;
 
       const dataPo = Array.isArray(data.po) ? data.po[0] : data.po;
 
@@ -6359,6 +6480,1020 @@ export const useSPBItemDetail = (itemId: string | null) => {
     error: error as Error | null,
   };
 };
+
+
+================================================================================
+FILE: ../src/features/spb/utils/filterAndSortSpb.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/utils/filterAndSortSpb.ts
+================================================================================
+
+// src/features/spb/utils/filterAndSortSpb.ts
+import type { SPBDocumentGroup } from "../../../shared/types";
+import type { FilterType, SearchMode, SortBy } from "../types";
+import { getNumberFromStr } from "./statusHelpers";
+import { buildLocalTitleKey } from "./titleOverrides";
+
+const getFilterStatusWeight = (status?: string): number => {
+  if (status === "Belum Diproses") return 0.5;
+  if (status === "Sudah PO" || status === "Belum PO") return 1;
+  if (status === "Datang") return 2;
+  if (status === "Selesai") return 3;
+  return 4;
+};
+
+export interface FilterAndSortParams {
+  data: SPBDocumentGroup[];
+  filter: FilterType;
+  searchTerm: string;
+  searchMode: SearchMode;
+  sortBy: SortBy;
+  localTitles: Record<string, string>;
+}
+
+/**
+ * Menyaring dan mengurutkan daftar dokumen SPB/PO/SJ pada halaman Monitoring SPB.
+ */
+export const filterAndSortSpbDocuments = ({
+  data,
+  filter,
+  searchTerm,
+  searchMode,
+  sortBy,
+  localTitles,
+}: FilterAndSortParams): SPBDocumentGroup[] => {
+  const searchLower = searchTerm.toLowerCase();
+
+  const filtered = data.filter((item) => {
+    let matchesSearch = false;
+
+    const spbKey = item.spbNo
+      ? buildLocalTitleKey("spb", item.spbNo, item.spbTitle)
+      : null;
+    const poKey = item.poNo
+      ? buildLocalTitleKey("po", item.poNo, item.poTitle)
+      : null;
+
+    const spbTitle =
+      (spbKey && localTitles[spbKey] !== undefined
+        ? localTitles[spbKey]
+        : item.spbTitle) || "";
+    const poTitle =
+      (poKey && localTitles[poKey] !== undefined
+        ? localTitles[poKey]
+        : item.poTitle) || "";
+
+    if (searchMode === "no") {
+      const matchSpb = String(item.spbNo || "")
+        .toLowerCase()
+        .includes(searchLower);
+      const matchTitle = String(spbTitle).toLowerCase().includes(searchLower);
+      const matchPo = String(item.poNo || "")
+        .toLowerCase()
+        .includes(searchLower);
+      const matchPoTitle = String(poTitle).toLowerCase().includes(searchLower);
+      const matchSj = String(item.suratJalanNo || "")
+        .toLowerCase()
+        .includes(searchLower);
+
+      matchesSearch =
+        !searchTerm ||
+        matchSpb ||
+        matchTitle ||
+        matchPo ||
+        matchPoTitle ||
+        matchSj;
+    } else {
+      matchesSearch =
+        !searchTerm ||
+        !!item.itemNames?.some((name) =>
+          String(name).toLowerCase().includes(searchLower),
+        );
+    }
+
+    if (!matchesSearch) return false;
+
+    switch (filter) {
+      case "Belum Diproses":
+        return item.status === "Belum Diproses";
+      case "Belum di PO":
+        return (!item.poNo || item.poNo === "-") && item.status === "Belum PO";
+      case "Sudah di PO":
+        return !!item.poNo && item.poNo !== "-" && item.status !== "Selesai";
+      case "Datang":
+        return item.status === "Datang" || item.status === "Selesai";
+      case "Selesai":
+        return item.status === "Selesai";
+      default:
+        return true;
+    }
+  });
+
+  return filtered.sort((a, b) => {
+    if (sortBy === "status") {
+      const wA = getFilterStatusWeight(a.status);
+      const wB = getFilterStatusWeight(b.status);
+      if (wA !== wB) return wA - wB;
+      return (
+        getNumberFromStr(a.spbNo, a.poNo) - getNumberFromStr(b.spbNo, b.poNo)
+      );
+    }
+
+    if (sortBy === "number") {
+      const numA = getNumberFromStr(a.spbNo, a.poNo);
+      const numB = getNumberFromStr(b.spbNo, b.poNo);
+      if (numA !== numB) return numA - numB;
+      return getFilterStatusWeight(a.status) - getFilterStatusWeight(b.status);
+    }
+
+    if (sortBy === "oldest") {
+      const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
+      const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
+      return dateA - dateB;
+    }
+
+    const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
+    const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
+    return dateB - dateA;
+  });
+};
+
+/**
+ * Mengambil maksimal 10 dokumen terbaru berdasarkan tanggal.
+ */
+export const getRecentSpbDocuments = (
+  data: SPBDocumentGroup[],
+  limit = 10,
+): SPBDocumentGroup[] => {
+  return [...data]
+    .sort((a, b) => {
+      const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
+      const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
+      return dateB - dateA;
+    })
+    .slice(0, limit);
+};
+
+
+
+================================================================================
+FILE: ../src/features/spb/utils/groupMonitoringData.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/utils/groupMonitoringData.ts
+================================================================================
+
+// src/features/spb/utils/groupMonitoringData.ts
+import type { SPBDocumentGroup } from "../../../shared/types";
+import {
+  filterVisibleSpbRows,
+  isRestrictedSpbStatus,
+  toSafeExternalUrl,
+} from "../accessRules";
+import {
+  cleanDocNo,
+  getSjTarget,
+  isIgnoredSuratJalan,
+  toIdNumber,
+} from "../suratJalanRules";
+import { getSortNumber, toStrOrNull } from "./statusHelpers";
+import { buildPoOverrideKey, buildSpbOverrideKey } from "./titleOverrides";
+
+interface InternalGroup {
+  data: SPBDocumentGroup;
+  hasAnyPO: boolean;
+  hasAnyArrival: boolean;
+  hasAnyBelumDiproses: boolean;
+  hasAnySudahDiproses: boolean;
+  latestTimestamp: number;
+  poSet: Set<string>;
+  completedItems: number;
+  itemNames: Set<string>;
+  firstItemName: string | null;
+}
+
+const buildSpbGroupKey = (
+  spbNo: string | null,
+  spbTitle: string | null,
+  fallbackId: unknown,
+): string =>
+  spbNo
+    ? `SPB_${spbNo}::${spbTitle ?? ""}`
+    : `SPB_ID_${fallbackId ?? "UNKNOWN"}`;
+
+/**
+ * Judul fallback untuk PO agar card PO tidak pernah kosong walau judul_po NULL di DB.
+ *
+ * Urutan prioritas:
+ *   1. Override manual dari user (localStorage)
+ *   2. Kolom judul_po dari DB
+ *   3. Judul SPB pasangannya (jika PO ini menempel ke SPB)
+ *   4. Nama barang pertama di PO ini
+ *   5. "PO {no_po}" sebagai penutup
+ */
+export const resolvePoTitle = (
+  poNo: string | null,
+  rawPoTitle: string | null,
+  overrideValue: string | undefined,
+  spbTitle: string | null,
+  firstItemName: string | null,
+): string | null => {
+  if (overrideValue !== undefined) return overrideValue;
+  if (rawPoTitle) return rawPoTitle;
+  if (spbTitle) return spbTitle;
+  if (firstItemName) return firstItemName;
+  if (poNo) return `PO ${poNo}`;
+  return null;
+};
+
+const updateLatestDate = (group: InternalGroup, dateStr: string | null) => {
+  if (!dateStr) return;
+  const time = new Date(dateStr).getTime();
+  if (!isNaN(time) && time > group.latestTimestamp) {
+    group.latestTimestamp = time;
+    group.data.date = dateStr;
+  }
+};
+
+const getGroupStatusWeight = (status: string): number => {
+  if (status === "Belum Diproses") return 0;
+  if (status === "Sudah PO" || status === "Belum PO") return 1;
+  if (status === "Datang") return 2;
+  if (status === "Selesai") return 3;
+  return 4;
+};
+
+export interface GroupMonitoringInput {
+  allSpbData: any[];
+  poData: any[];
+  sjData: any[];
+  canViewRestricted: boolean;
+  overrides: Record<string, string>;
+}
+
+/**
+ * Mengelompokkan baris mentah SPB, PO, dan Surat Jalan menjadi daftar card `SPBDocumentGroup[]`.
+ */
+export const groupMonitoringData = ({
+  allSpbData,
+  poData,
+  sjData,
+  canViewRestricted,
+  overrides,
+}: GroupMonitoringInput): SPBDocumentGroup[] => {
+  // 1. Terapkan aturan akses: sembunyikan SPB "belum di proses" untuk user belum login
+  const spbData = filterVisibleSpbRows(allSpbData, canViewRestricted);
+  const hiddenSpbIds = new Set<number>();
+  if (!canViewRestricted) {
+    allSpbData.forEach((s: any) => {
+      if (isRestrictedSpbStatus(s.status)) {
+        const id = toIdNumber(s.id);
+        if (id !== null) hiddenSpbIds.add(id);
+      }
+    });
+  }
+
+  // 2. Normalisasi judul SPB per no_spb
+  const titleBySpbNo = new Map<string, string>();
+  spbData.forEach((row: any) => {
+    const no = toStrOrNull(row.no_spb);
+    const t = toStrOrNull(row.judul_spb);
+    if (no && t && !titleBySpbNo.has(no)) titleBySpbNo.set(no, t);
+  });
+
+  // 3. Index id SPB & PO (number-keyed)
+  const spbById = new Map<number, any>();
+  spbData.forEach((s: any) => {
+    const id = toIdNumber(s.id);
+    if (id !== null) spbById.set(id, s);
+  });
+
+  const poBySpbId = new Map<number, any[]>();
+  const poById = new Map<number, any>();
+  poData.forEach((p: any) => {
+    const poIdNum = toIdNumber(p.id);
+    if (poIdNum !== null) poById.set(poIdNum, p);
+    const idSpb = toIdNumber(p.id_spb);
+    if (idSpb !== null) {
+      if (!poBySpbId.has(idSpb)) poBySpbId.set(idSpb, []);
+      poBySpbId.get(idSpb)!.push(p);
+    }
+  });
+
+  const groups = new Map<string, InternalGroup>();
+
+  // 4. Proses baris SPB
+  spbData.forEach((row: any) => {
+    const spbNo = toStrOrNull(row.no_spb);
+    const rawTitle = toStrOrNull(row.judul_spb);
+    const spbTitleRaw =
+      rawTitle ?? (spbNo ? titleBySpbNo.get(spbNo) ?? null : null);
+    const key = buildSpbGroupKey(spbNo, spbTitleRaw, row.id);
+
+    const overrideKey = spbNo ? buildSpbOverrideKey(spbNo, spbTitleRaw) : null;
+    const spbOverride = overrideKey ? overrides[overrideKey] : undefined;
+
+    if (!groups.has(key)) {
+      groups.set(key, {
+        data: {
+          id: key,
+          spbNo,
+          spbTitle:
+            spbOverride !== undefined ? spbOverride : spbTitleRaw || null,
+          poNo: null,
+          poTitle: null,
+          date: "-",
+          itemsCount: 0,
+          sortNumber: getSortNumber(spbNo),
+          status: "Belum PO",
+        },
+        hasAnyPO: false,
+        hasAnyArrival: false,
+        hasAnyBelumDiproses: false,
+        hasAnySudahDiproses: false,
+        latestTimestamp: 0,
+        poSet: new Set<string>(),
+        completedItems: 0,
+        itemNames: new Set<string>(),
+        firstItemName: null,
+      });
+    }
+
+    const group = groups.get(key)!;
+    if (!group.data.spbTitle && spbTitleRaw) {
+      group.data.spbTitle =
+        spbOverride !== undefined ? spbOverride : spbTitleRaw;
+    }
+    if (!group.data.spbSourceFile) {
+      group.data.spbSourceFile = toSafeExternalUrl(row.source_file);
+    }
+    const parentPoId = toIdNumber(row.id_po);
+    if (!group.data.poSourceFile && parentPoId !== null) {
+      group.data.poSourceFile = toSafeExternalUrl(
+        poById.get(parentPoId)?.source_file,
+      );
+    }
+    group.data.itemsCount += 1;
+
+    const itemName = toStrOrNull(row.nama_barang_spb);
+    if (itemName) {
+      group.itemNames.add(itemName);
+      if (!group.firstItemName) group.firstItemName = itemName;
+    }
+
+    updateLatestDate(group, row.tgl_spb);
+
+    const rowStatus = toStrOrNull(row.status)?.toLowerCase() || "";
+    if (rowStatus === "belum di proses") {
+      group.hasAnyBelumDiproses = true;
+    } else if (rowStatus === "sudah di proses") {
+      group.hasAnySudahDiproses = true;
+    }
+
+    const req = row.qty_permintaan || 0;
+    const arr = row.material_datang_qty || 0;
+    const isArrived = !!row.material_datang_tgl;
+
+    if (isArrived) {
+      group.hasAnyArrival = true;
+      updateLatestDate(group, row.material_datang_tgl);
+      if (arr >= req) group.completedItems += 1;
+    }
+
+    const joinedPo = Array.isArray(row.po) ? row.po[0] : row.po;
+    if (joinedPo && cleanDocNo(joinedPo.no_po)) {
+      group.poSet.add(String(cleanDocNo(joinedPo.no_po)));
+      group.hasAnyPO = true;
+      updateLatestDate(group, joinedPo.tanggal_po);
+    }
+
+    const spbIdNum = toIdNumber(row.id);
+    const linkedPos =
+      spbIdNum !== null ? poBySpbId.get(spbIdNum) || [] : [];
+    linkedPos.forEach((p: any) => {
+      if (cleanDocNo(p.no_po)) {
+        if (!group.data.poSourceFile) {
+          group.data.poSourceFile = toSafeExternalUrl(p.source_file);
+        }
+        group.poSet.add(String(cleanDocNo(p.no_po)));
+        group.hasAnyPO = true;
+        updateLatestDate(group, p.tanggal_po);
+      }
+    });
+  });
+
+  // 5. Proses PO (murni atau orphan)
+  poData.forEach((p: any) => {
+    const idSpb = toIdNumber(p.id_spb);
+    const poId = toIdNumber(p.id);
+
+    if (idSpb !== null && hiddenSpbIds.has(idSpb)) return;
+
+    const linkedViaIdSpb = idSpb !== null && spbById.has(idSpb);
+    const linkedViaSpbIdPo =
+      poId !== null &&
+      spbData.some((s: any) => toIdNumber(s.id_po) === poId);
+
+    if (linkedViaIdSpb || linkedViaSpbIdPo) return;
+
+    const poNo = cleanDocNo(p.no_po);
+    const key = poNo ? `PO_${poNo}` : `PO_ID_${p.id}`;
+
+    if (!groups.has(key)) {
+      groups.set(key, {
+        data: {
+          id: key,
+          spbNo: null,
+          spbTitle: null,
+          poNo,
+          poTitle: null,
+          date: p.tanggal_po || "-",
+          itemsCount: 0,
+          sortNumber: getSortNumber(poNo),
+          status: "Sudah PO",
+        },
+        hasAnyPO: true,
+        hasAnyArrival: false,
+        hasAnyBelumDiproses: false,
+        hasAnySudahDiproses: true,
+        latestTimestamp: 0,
+        poSet: new Set([poNo || ""]),
+        completedItems: 0,
+        itemNames: new Set<string>(),
+        firstItemName: null,
+      });
+    }
+
+    const group = groups.get(key)!;
+    if (!group.data.poSourceFile) {
+      group.data.poSourceFile = toSafeExternalUrl(p.source_file);
+    }
+    if (!group.data.poTitle) {
+      const rawPoTitle = toStrOrNull(p.judul_po);
+      if (rawPoTitle) group.data.poTitle = rawPoTitle;
+    }
+    group.data.itemsCount += 1;
+
+    const itemName = toStrOrNull(p.nama_barang_po);
+    if (itemName) {
+      group.itemNames.add(itemName);
+      if (!group.firstItemName) group.firstItemName = itemName;
+    }
+
+    updateLatestDate(group, p.tanggal_po);
+
+    if (p.material_datang_tgl) {
+      group.hasAnyArrival = true;
+      updateLatestDate(group, p.material_datang_tgl);
+      if ((p.material_datang_qty || 0) > 0) group.completedItems += 1;
+    }
+  });
+
+  // 6. Proses Surat Jalan (no 3+)
+  sjData.forEach((sj: any) => {
+    if (isIgnoredSuratJalan(sj.no_surat_jalan)) return;
+
+    const spbRel = Array.isArray(sj.spb) ? sj.spb[0] : sj.spb;
+    const poRel = Array.isArray(sj.po) ? sj.po[0] : sj.po;
+    const sjNo = toStrOrNull(sj.no_surat_jalan);
+    const target = getSjTarget(sj);
+    const idSpb = toIdNumber(sj.id_spb);
+
+    if (idSpb !== null && hiddenSpbIds.has(idSpb)) return;
+
+    let targetKey: string;
+    let spbNo: string | null = null;
+    let spbTitle: string | null = null;
+    let poNo: string | null = null;
+
+    if (target === "spb") {
+      const parentSpb = idSpb !== null ? spbById.get(idSpb) : null;
+      spbNo = cleanDocNo(parentSpb?.no_spb) ?? cleanDocNo(spbRel?.no_spb);
+      const rawTitle =
+        toStrOrNull(parentSpb?.judul_spb) ?? toStrOrNull(spbRel?.judul_spb);
+      spbTitle =
+        rawTitle ?? (spbNo ? titleBySpbNo.get(spbNo) ?? null : null);
+      targetKey = buildSpbGroupKey(spbNo, spbTitle, sj.id_spb);
+    } else if (target === "po") {
+      poNo = cleanDocNo(poRel?.no_po);
+      targetKey = poNo ? `PO_${poNo}` : `PO_ID_${sj.id_po}`;
+    } else {
+      targetKey = `SJ_${sjNo}`;
+    }
+
+    if (!groups.has(targetKey)) {
+      groups.set(targetKey, {
+        data: {
+          id: targetKey,
+          spbNo,
+          spbTitle,
+          poNo,
+          poTitle: poNo
+            ? resolvePoTitle(
+                poNo,
+                null,
+                overrides[buildPoOverrideKey(poNo)],
+                null,
+                null,
+              )
+            : null,
+          suratJalanNo: target === "sj" ? sjNo : null,
+          date: "-",
+          itemsCount: 0,
+          sortNumber: getSortNumber(spbNo ?? poNo ?? sjNo),
+          status: "Sudah PO",
+        },
+        hasAnyPO: true,
+        hasAnyArrival: false,
+        hasAnyBelumDiproses: false,
+        hasAnySudahDiproses: true,
+        latestTimestamp: 0,
+        poSet: new Set<string>(poNo ? [poNo] : []),
+        completedItems: 0,
+        itemNames: new Set<string>(),
+        firstItemName: null,
+      });
+    }
+
+    const group = groups.get(targetKey)!;
+    group.data.itemsCount += 1;
+
+    if (sj.nama_barang) {
+      const sjName = String(sj.nama_barang);
+      group.itemNames.add(sjName);
+      if (!group.firstItemName) group.firstItemName = sjName;
+    }
+
+    if (sj.material_datang_tgl) {
+      group.hasAnyArrival = true;
+      updateLatestDate(group, sj.material_datang_tgl);
+      if ((sj.material_datang_qty || 0) > 0) group.completedItems += 1;
+    }
+  });
+
+  // 7. Finalisasi status + judul PO fallback + sorting
+  const result = Array.from(groups.values()).map((g) => {
+    const isSelesai =
+      g.data.itemsCount > 0 && g.completedItems >= g.data.itemsCount;
+
+    let status = "Belum PO";
+    if (isSelesai) status = "Selesai";
+    else if (g.hasAnyArrival) status = "Datang";
+    else if (g.hasAnyPO) status = "Sudah PO";
+    else if (g.hasAnyBelumDiproses && !g.hasAnySudahDiproses) {
+      status = "Belum Diproses";
+    }
+
+    const combinedPo = Array.from(g.poSet).filter(Boolean).join(", ");
+    const firstPo = Array.from(g.poSet).filter(Boolean)[0];
+
+    const poTitle = g.data.poNo
+      ? resolvePoTitle(
+          firstPo ?? null,
+          g.data.poTitle ?? null,
+          firstPo && overrides[buildPoOverrideKey(firstPo)] !== undefined
+            ? overrides[buildPoOverrideKey(firstPo)]
+            : undefined,
+          g.data.spbTitle ?? null,
+          g.firstItemName,
+        )
+      : null;
+
+    return {
+      ...g.data,
+      poNo: combinedPo || null,
+      poTitle,
+      status,
+      sortNumber:
+        getSortNumber(g.data.spbNo) + getSortNumber(combinedPo) * 0.01,
+      itemNames: Array.from(g.itemNames),
+    };
+  });
+
+  return result.sort((a, b) => {
+    const weightA = getGroupStatusWeight(a.status || "");
+    const weightB = getGroupStatusWeight(b.status || "");
+    if (weightA !== weightB) return weightA - weightB;
+
+    const dateA = a.date !== "-" ? new Date(a.date).getTime() : 0;
+    const dateB = b.date !== "-" ? new Date(b.date).getTime() : 0;
+    if (dateA === dateB) return a.sortNumber - b.sortNumber;
+    return dateB - dateA;
+  });
+};
+
+
+
+================================================================================
+FILE: ../src/features/spb/utils/mapDetailRows.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/utils/mapDetailRows.ts
+================================================================================
+
+// src/features/spb/utils/mapDetailRows.ts
+import type { SPBItemDetail } from "../../../shared/types";
+import { cleanDocNo } from "../suratJalanRules";
+import type { MonitoringDetailItem } from "../types";
+import { calcLamaProses } from "./statusHelpers";
+
+export type Row = Record<string, any>;
+
+export const first = (v: unknown): Row | null => {
+  const x = Array.isArray(v) ? v[0] : v;
+  return x && typeof x === "object" ? (x as Row) : null;
+};
+
+export const numOrZero = (v: unknown): number => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+};
+
+export const sortById = (rows: Row[]): Row[] =>
+  [...rows].sort((a, b) => numOrZero(a.id) - numOrZero(b.id));
+
+export const unique = <T>(arr: T[]): T[] => Array.from(new Set(arr));
+
+export const unwrap = (res: { data: unknown; error: unknown }): Row[] => {
+  if (res.error) throw res.error;
+  return (res.data as Row[] | null) ?? [];
+};
+
+const spbStatus = (
+  req: number,
+  arr: number,
+  tglDatang: string | null,
+  hasPo: boolean,
+): string => {
+  if (tglDatang) {
+    if (req === arr) return "Datang Sesuai";
+    if (req < arr) return "Datang Lebih";
+    return "Datang Kurang";
+  }
+  return hasPo ? "Sudah PO" : "Belum PO";
+};
+
+export const mapSpbRow = (
+  row: Row,
+  fallbackPo: Row | null,
+): MonitoringDetailItem => {
+  const joinedPo = first(row.po);
+  const poNo = cleanDocNo(joinedPo?.no_po) ?? cleanDocNo(fallbackPo?.no_po);
+  const req = numOrZero(row.qty_permintaan);
+  const arr = numOrZero(row.material_datang_qty);
+  const tgl: string | null = row.material_datang_tgl || null;
+  const rawStatus = String(row.status || "").toLowerCase().trim();
+
+  let status = spbStatus(req, arr, tgl, !!poNo);
+  if (status === "Belum PO" && rawStatus === "belum di proses") {
+    status = "Belum Diproses";
+  }
+
+  return {
+    key: `spb-${row.id}`,
+    sumber: "spb",
+    id: row.id,
+    no_spb: cleanDocNo(row.no_spb) ?? "-",
+    judul_spb: row.judul_spb ?? null,
+    tanggal_spb: row.tgl_spb ?? null,
+    nama_barang: row.nama_barang_spb || "-",
+    ukuran: row.ukuran ?? null,
+    spesifikasi_teknis: row.spesifikasi_teknis ?? null,
+    jumlah_permintaan: req,
+    satuan: row.satuan ?? null,
+    no_po: poNo ?? "-",
+    tanggal_po: joinedPo?.tanggal_po ?? fallbackPo?.tanggal_po ?? null,
+    tanggal_datang: tgl,
+    qty_datang: arr,
+    status,
+    spbSourceFile: row.source_file,
+    poSourceFile: joinedPo?.source_file ?? fallbackPo?.source_file,
+  };
+};
+
+export const mapPoRow = (row: Row): MonitoringDetailItem => {
+  const tgl: string | null = row.material_datang_tgl || null;
+  return {
+    key: `po-${row.id}`,
+    sumber: "po",
+    id: row.id,
+    no_spb: "-",
+    nama_barang: row.nama_barang_po || "-",
+    jumlah_permintaan: null,
+    satuan: row.material_datang_satuan ?? row.satuan ?? null,
+    no_po: cleanDocNo(row.no_po) ?? "-",
+    tanggal_po: row.tanggal_po ?? null,
+    tanggal_datang: tgl,
+    qty_datang: numOrZero(row.material_datang_qty),
+    status: tgl ? "Datang" : "Sudah PO",
+    poSourceFile: row.source_file,
+  };
+};
+
+export const mapSjRow = (row: Row): MonitoringDetailItem => {
+  const spb = first(row.spb);
+  const po = first(row.po);
+  const tgl: string | null = row.material_datang_tgl || null;
+  return {
+    key: `sj-${row.id}`,
+    sumber: "sj",
+    id: row.id,
+    no_surat_jalan:
+      row.no_surat_jalan != null ? String(row.no_surat_jalan) : null,
+    no_spb: cleanDocNo(spb?.no_spb) ?? "-",
+    judul_spb: spb?.judul_spb ?? null,
+    nama_barang: row.nama_barang || "-",
+    jumlah_permintaan: null,
+    satuan: row.material_datang_satuan ?? row.satuan ?? null,
+    no_po: cleanDocNo(po?.no_po) ?? "-",
+    tanggal_po: null,
+    tanggal_datang: tgl,
+    qty_datang: numOrZero(row.material_datang_qty),
+    status: tgl ? "Datang" : "Belum Datang",
+    spbSourceFile: spb?.source_file,
+    poSourceFile: po?.source_file,
+  };
+};
+
+/**
+ * Memetakan baris tunggal dari tabel `po` menjadi `SPBItemDetail`.
+ */
+export const mapSinglePoItem = (data: Row): SPBItemDetail => {
+  const tglDatang = data.material_datang_tgl || null;
+  const arr = data.material_datang_qty ?? 0;
+  const satuanDatang = data.material_datang_satuan || data.satuan || "-";
+  const status = tglDatang ? "Datang" : "Sudah PO";
+
+  return {
+    ...data,
+    no_spb: "-",
+    tanggal_spb: null,
+    nama_barang: data.nama_barang_po || data.nama_barang || "-",
+    ukuran: data.ukuran || "-",
+    jumlah_permintaan: data.qty_permintaan ?? null,
+    satuan: data.satuan || data.material_datang_satuan || "-",
+    no_po: data.no_po || "-",
+    tanggal_po: data.tanggal_po || null,
+    supplier: data.nama_supplier || data.supplier || "-",
+    merk: data.merk || "-",
+    spesifikasi_teknis: data.spesifikasi_teknis || data.spesifikasi || "-",
+    lokasi_pemasangan: data.lokasi_pemasangan || "-",
+    rencana_pemasangan: data.rencana_pemasangan || "-",
+    tanggal_datang: tglDatang,
+    qty_datang: arr,
+    satuan_datang: satuanDatang,
+    lama_proses: calcLamaProses(data.tanggal_po, tglDatang, data.lama_proses),
+    kurang_lebih: data.kurang_lebih ?? "-",
+    keterangan: data.keterangan || "-",
+    status,
+    poSourceFile: data.source_file,
+  } as SPBItemDetail;
+};
+
+/**
+ * Memetakan baris tunggal dari tabel `surat_jalan` menjadi `SPBItemDetail`.
+ */
+export const mapSingleSjItem = (data: Row): SPBItemDetail => {
+  const spbRel = Array.isArray(data.spb) ? data.spb[0] : data.spb;
+  const poRel = Array.isArray(data.po) ? data.po[0] : data.po;
+  const tgl = data.material_datang_tgl || null;
+  const arr = data.material_datang_qty ?? data.jumlah ?? 0;
+
+  return {
+    ...data,
+    no_surat_jalan: data.no_surat_jalan ?? "-",
+    no_spb: spbRel?.no_spb || "-",
+    tanggal_spb: spbRel?.tgl_spb || null,
+    no_po: poRel?.no_po || "-",
+    tanggal_po: poRel?.tanggal_po || null,
+    supplier: poRel?.nama_supplier || data.supplier || "-",
+    nama_barang: data.nama_barang || "-",
+    ukuran: data.ukuran || "-",
+    jumlah_permintaan: data.jumlah ?? null,
+    satuan: data.satuan || data.material_datang_satuan || "-",
+    merk: data.merk || "-",
+    spesifikasi_teknis: data.spesifikasi || data.spesifikasi_teknis || "-",
+    lokasi_pemasangan: data.lokasi_pemasangan || "-",
+    rencana_pemasangan: data.rencana_pemasangan || "-",
+    tanggal_datang: tgl,
+    qty_datang: arr,
+    satuan_datang: data.material_datang_satuan || data.satuan || "-",
+    lama_proses: calcLamaProses(
+      data.tanggal_surat_jalan || poRel?.tanggal_po,
+      tgl,
+      data.lama_proses,
+    ),
+    kurang_lebih: data.kurang_lebih ?? "-",
+    keterangan: data.keterangan || "-",
+    status: tgl ? "Datang" : "Belum Datang",
+    spbSourceFile: spbRel?.source_file,
+    poSourceFile: poRel?.source_file,
+  } as SPBItemDetail;
+};
+
+/**
+ * Memetakan baris tunggal dari tabel `spb` (+ relasi `po`) menjadi `SPBItemDetail`.
+ */
+export const mapSingleSpbItem = (
+  data: Row,
+  dataPo: Row | null | undefined,
+): SPBItemDetail => {
+  const req = data.qty_permintaan ?? 0;
+  const arr = data.material_datang_qty ?? data.qty_datang ?? 0;
+  const tglDatang = data.material_datang_tgl || null;
+  const tglSpb = data.tgl_spb || data.tanggal_pembuatan_spb || null;
+  const tglPo = dataPo?.tanggal_po || null;
+  const rawStatus = String(data.status || "").toLowerCase().trim();
+
+  let status = "Belum PO";
+  if (tglDatang) {
+    if (req === arr) status = "Datang Sesuai";
+    else if (req < arr) status = "Datang Lebih";
+    else if (req > arr) status = "Datang Kurang";
+    else status = "Datang";
+  } else if (
+    dataPo?.no_po &&
+    dataPo.no_po !== "-" &&
+    dataPo.no_po !== "null"
+  ) {
+    status = "Sudah PO";
+  } else if (rawStatus === "belum di proses") {
+    status = "Belum Diproses";
+  }
+
+  const diffQty = arr - req;
+  const kurangLebih =
+    data.kurang_lebih !== undefined && data.kurang_lebih !== null
+      ? data.kurang_lebih
+      : diffQty;
+
+  return {
+    ...data,
+    no_spb: data.no_spb || "-",
+    tanggal_spb: tglSpb,
+    nama_barang: data.nama_barang_spb || data.nama_barang || "-",
+    ukuran: data.ukuran || "-",
+    jumlah_permintaan: req,
+    satuan: data.satuan || "-",
+    no_po: dataPo?.no_po || "-",
+    tanggal_po: tglPo,
+    supplier:
+      dataPo?.nama_supplier || dataPo?.supplier || data.supplier || "-",
+    merk: data.merk || "-",
+    spesifikasi_teknis: data.spesifikasi_teknis || "-",
+    lokasi_pemasangan: data.lokasi_pemasangan || "-",
+    rencana_pemasangan: data.rencana_pemasangan || "-",
+    tanggal_datang: tglDatang,
+    qty_datang: arr,
+    satuan_datang:
+      data.material_datang_satuan || data.satuan_datang || data.satuan || "-",
+    lama_proses: calcLamaProses(tglPo || tglSpb, tglDatang, data.lama_proses),
+    kurang_lebih: kurangLebih,
+    keterangan: data.keterangan || "-",
+    status,
+    spbSourceFile: data.source_file,
+    poSourceFile: dataPo?.source_file,
+  } as SPBItemDetail;
+};
+
+
+
+================================================================================
+FILE: ../src/features/spb/utils/statusHelpers.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/utils/statusHelpers.ts
+================================================================================
+
+// src/features/spb/utils/statusHelpers.ts
+import dayjs from "dayjs";
+
+export const getSortNumber = (val: unknown): number => {
+  if (val === null || val === undefined || val === "") return 999999;
+  const s = String(val);
+  const match = s.match(/\d+/);
+  return match ? parseInt(match[0], 10) : 999999;
+};
+
+export const getNumberFromStr = (
+  spb: string | null,
+  po: string | null,
+): number => {
+  const str = spb || po;
+  if (!str) return 999999;
+  const match = String(str).match(/\d+/);
+  return match ? parseInt(match[0], 10) : 999999;
+};
+
+export const toStrOrNull = (val: unknown): string | null => {
+  if (val === null || val === undefined || val === "") return null;
+  const s = String(val).trim();
+  if (!s || s.toLowerCase() === "null" || s.toLowerCase() === "undefined") {
+    return null;
+  }
+  return s;
+};
+
+/**
+ * Warna Tag status untuk Card utama Monitoring SPB.
+ */
+export const getCardStatusColor = (status?: string | null): string => {
+  if (status === "Belum Diproses") return "purple";
+  if (status === "Belum PO") return "orange";
+  if (status === "Sudah PO") return "blue";
+  if (status === "Datang") return "green";
+  if (status === "Selesai") return "cyan";
+  return "default";
+};
+
+/**
+ * Warna Tag status untuk halaman Detail SPB / PO.
+ */
+export const getDetailStatusColor = (status?: string | null): string => {
+  if (status === "Belum PO") return "orange";
+  if (status === "Sudah PO") return "blue";
+  if (status === "Datang Sesuai" || status === "Datang") return "green";
+  if (status === "Datang Kurang") return "volcano";
+  if (status === "Datang Lebih") return "purple";
+  return "default";
+};
+
+/**
+ * Warna Tag status untuk halaman Rincian Barang (Item Detail).
+ */
+export const getItemDetailStatusColor = (status?: string | null): string => {
+  if (status === "Belum Diproses") return "purple";
+  if (status === "Belum PO" || status === "Belum Datang") return "orange";
+  if (status === "Sudah PO") return "blue";
+  if (
+    status === "Datang Sesuai" ||
+    status === "Datang" ||
+    status === "Selesai"
+  ) {
+    return "green";
+  }
+  if (status === "Datang Kurang") return "volcano";
+  if (status === "Datang Lebih") return "purple";
+  return "blue";
+};
+
+/**
+ * Menghitung selisih hari (lama proses) antara tanggal mulai dan tanggal datang.
+ */
+export const calcLamaProses = (
+  tglMulai: string | null | undefined,
+  tglDatang: string | null | undefined,
+  fallback?: string | number | null,
+): string => {
+  if (fallback && fallback !== "-") return String(fallback);
+  if (tglMulai && tglDatang) {
+    const start = dayjs(tglMulai);
+    const end = dayjs(tglDatang);
+    if (start.isValid() && end.isValid()) {
+      const diff = end.diff(start, "day");
+      return `${diff >= 0 ? diff : 0} Hari`;
+    }
+  }
+  return "-";
+};
+
+
+
+================================================================================
+FILE: ../src/features/spb/utils/titleOverrides.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/utils/titleOverrides.ts
+================================================================================
+
+// src/features/spb/utils/titleOverrides.ts
+
+const TITLE_OVERRIDES_KEY = "spb-po-title-overrides";
+
+export const getTitleOverrides = (): Record<string, string> => {
+  try {
+    const raw = localStorage.getItem(TITLE_OVERRIDES_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+};
+
+export const saveTitleOverride = (key: string, title: string): void => {
+  try {
+    const current = getTitleOverrides();
+    current[key] = title;
+    localStorage.setItem(TITLE_OVERRIDES_KEY, JSON.stringify(current));
+  } catch {
+    // ignore storage errors
+  }
+};
+
+export const buildSpbOverrideKey = (
+  docNo: string,
+  originalTitle?: string | null,
+): string => `SPB_${docNo}::${originalTitle ?? ""}`;
+
+export const buildPoOverrideKey = (docNo: string): string => `PO_${docNo}`;
+
+export const buildLocalTitleKey = (
+  type: "spb" | "po",
+  docNo: string,
+  title: string | null | undefined,
+): string =>
+  type === "spb" ? `SPB_${docNo}::${title ?? ""}` : `PO_${docNo}`;
+
 
 
 ================================================================================
@@ -8084,12 +9219,9 @@ interface IdentityUser {
   role: UserRole;
 }
 
-const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
-  const [openMenu, setOpenMenu] = useState(false);
+/** Peran user saat ini (reaktif terhadap login/logout). */
+const useCurrentUser = () => {
   const { data: identity } = useGetIdentity<IdentityUser>();
-  const { mutate: logout } = useLogout();
-  const navigate = useNavigate();
-
   const [stored, setStored] = useState(() => getStoredUser());
 
   useEffect(() => {
@@ -8103,6 +9235,20 @@ const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
   }, []);
 
   const role: UserRole = identity?.role ?? stored?.role ?? "user";
+  return { identity, stored, role };
+};
+
+/** Chatbot hanya dirender untuk Super User. */
+const SuperUserChatbot = () => {
+  const { role } = useCurrentUser();
+  return isSuperUser(role) ? <ChatbotWidget /> : null;
+};
+
+const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
+  const [openMenu, setOpenMenu] = useState(false);
+  const { identity, stored, role } = useCurrentUser();
+  const { mutate: logout } = useLogout();
+  const navigate = useNavigate();
   const roleDef = getRoleDefinition(role);
   const isSuper = isSuperUser(role);
   const isLoggedIn = isAuthenticatedRole(role);
@@ -8269,7 +9415,7 @@ export const AdminLayout = ({ children }: PropsWithChildren) => (
   >
     <GlobalSearch />
     {children}
-    <ChatbotWidget />
+    <SuperUserChatbot />
   </ThemedLayoutV2>
 );
 
@@ -8897,7 +10043,6 @@ export interface AccountRequest {
   id: string;
   name: string;
   email: string;
-  password?: string;
   role: UserRole;
   status: "pending" | "approved" | "rejected";
   createdAt: string;
@@ -9022,6 +10167,10 @@ export interface SPBDocumentGroup {
   spbTitle?: string | null;
   poNo: string | null;
   poTitle?: string | null;
+  /** Link file asli SPB (kolom spb.source_file), publik. */
+  spbSourceFile?: string | null;
+  /** Link file asli PO (kolom po.source_file), publik. */
+  poSourceFile?: string | null;
   suratJalanNo?: string | null;
   date: string;
   itemsCount: number;
@@ -9056,6 +10205,10 @@ export interface SPBItemDetail {
   status?: string | null;
   tanggal_pembuatan_spb?: string | null;
   no_surat_jalan?: string | number | null;
+  
+  // Tambahan baru untuk link file
+  spbSourceFile?: string | null;
+  poSourceFile?: string | null;
 }
 
 export interface ChatMessage {

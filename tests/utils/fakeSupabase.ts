@@ -18,13 +18,87 @@ export interface QueryCall {
     | "update"
     | "delete"
     | "order"
-    | "limit";
+    | "limit"
+    | "range";
   args: unknown[];
 }
 
 type Filter = (row: Row) => boolean;
 
 const sameValue = (a: unknown, b: unknown) => String(a) === String(b);
+
+/**
+ * Emulasi Supabase Auth di memori: user, sesi aktif, dan RPC persetujuan akun
+ * (meniru `approve_account` / `reject_account` / `set_account_role` di migrasi SQL,
+ * termasuk pemeriksaan "caller harus superuser" dari app_metadata sesi).
+ */
+export interface FakeAuthUser {
+  id: string;
+  password: string;
+  app_metadata: Row;
+  user_metadata: Row;
+}
+
+export const fakeAuth = {
+  users: {} as Record<string, FakeAuthUser>,
+  session: null as null | { user: Row },
+
+  reset() {
+    this.users = {};
+    this.session = null;
+  },
+
+  /** Tambah user siap pakai. role undefined = belum disetujui (tanpa app_metadata.role). */
+  addUser(email: string, password: string, opts: { role?: string; name?: string } = {}) {
+    const key = email.trim().toLowerCase();
+    this.users[key] = {
+      id: `uid-${key}`,
+      password,
+      app_metadata: opts.role ? { role: opts.role } : {},
+      user_metadata: opts.name ? { name: opts.name } : {},
+    };
+  },
+
+  toPublicUser(email: string) {
+    const u = this.users[email];
+    return {
+      id: u.id,
+      email,
+      app_metadata: { ...u.app_metadata },
+      user_metadata: { ...u.user_metadata },
+      identities: [{ id: u.id }],
+    };
+  },
+};
+
+const callerIsSuperuser = () => fakeAuth.session?.user?.app_metadata?.role === "superuser";
+
+const findRequest = (id: string) =>
+  (fakeDb.tables.account_requests ?? []).find((r) => String(r.id) === String(id));
+
+const fakeRpc = (name: string, args: Row) => {
+  const forbidden = { data: null, error: { message: "forbidden" } };
+  if (["approve_account", "reject_account", "set_account_role"].includes(name)) {
+    if (!callerIsSuperuser()) return Promise.resolve(forbidden);
+    const req = findRequest(args.p_request_id);
+    if (!req) return Promise.resolve({ data: null, error: { message: "request not found" } });
+    const email = String(req.email).toLowerCase();
+    const user = fakeAuth.users[email];
+
+    if (name === "reject_account") {
+      req.status = "rejected";
+      if (user) delete user.app_metadata.role;
+    } else {
+      const role = String(args.p_role || "admin").trim().toLowerCase();
+      const safeRole = ["", "user", "superuser"].includes(role) ? "admin" : role;
+      req.role = safeRole;
+      if (name === "approve_account") req.status = "approved";
+      if (user) user.app_metadata.role = safeRole;
+    }
+    return Promise.resolve({ data: null, error: null });
+  }
+  return Promise.resolve({ data: null, error: { message: `rpc ${name} tidak dikenal` } });
+};
 
 export const fakeDb = {
   tables: {
@@ -48,6 +122,7 @@ export const fakeDb = {
     };
     this.calls = [];
     this.errors = {};
+    fakeAuth.reset();
   },
 
   /** Jumlah query .select() yang dikirim ke sebuah tabel. */
@@ -58,15 +133,61 @@ export const fakeDb = {
 
 export const fakeSupabaseClient = {
   auth: {
-    getSession: () => Promise.resolve({ data: { session: null }, error: null }),
-    getUser: () => Promise.resolve({ data: { user: null }, error: null }),
-    signInWithPassword: () =>
-      Promise.resolve({ data: { user: null, session: null }, error: { message: "Invalid login" } }),
-    signOut: () => Promise.resolve({ error: null }),
+    getSession: () =>
+      Promise.resolve({ data: { session: fakeAuth.session }, error: null }),
+    getUser: () =>
+      Promise.resolve({ data: { user: fakeAuth.session?.user ?? null }, error: null }),
+    signInWithPassword: ({ email, password }: { email: string; password: string }) => {
+      const key = String(email).trim().toLowerCase();
+      const u = fakeAuth.users[key];
+      if (!u || u.password !== password) {
+        return Promise.resolve({
+          data: { user: null, session: null },
+          error: { message: "Invalid login credentials" },
+        });
+      }
+      const user = fakeAuth.toPublicUser(key);
+      fakeAuth.session = { user };
+      return Promise.resolve({ data: { user, session: { user } }, error: null });
+    },
+    signUp: ({
+      email,
+      password,
+      options,
+    }: {
+      email: string;
+      password: string;
+      options?: { data?: Row };
+    }) => {
+      const key = String(email).trim().toLowerCase();
+      if (fakeAuth.users[key]) {
+        // Perilaku Supabase: email sudah ada -> identities kosong (anti-enumerasi)
+        return Promise.resolve({
+          data: { user: { id: fakeAuth.users[key].id, identities: [] }, session: null },
+          error: null,
+        });
+      }
+      fakeAuth.users[key] = {
+        id: `uid-${key}`,
+        password,
+        app_metadata: {},
+        user_metadata: { ...(options?.data ?? {}) },
+      };
+      return Promise.resolve({
+        data: { user: fakeAuth.toPublicUser(key), session: null },
+        error: null,
+      });
+    },
+    signOut: () => {
+      fakeAuth.session = null;
+      return Promise.resolve({ error: null });
+    },
     onAuthStateChange: () => ({
       data: { subscription: { unsubscribe: () => {} } },
     }),
   },
+
+  rpc: (name: string, args: Row = {}) => fakeRpc(name, args),
 
   from(table: string) {
     const filters: Filter[] = [];
@@ -74,6 +195,7 @@ export const fakeSupabaseClient = {
     let insertPayload: Row[] = [];
     let updatePatch: Row = {};
     let executedResult: { data: Row[] | null; error: any } | null = null;
+    let rangeWindow: [number, number] | null = null;
 
     const log = (method: QueryCall["method"], args: unknown[]) =>
       fakeDb.calls.push({ table, method, args });
@@ -138,8 +260,10 @@ export const fakeSupabaseClient = {
         return executedResult;
       }
 
+      const matched = rows.filter((r) => filters.every((f) => f(r)));
       executedResult = {
-        data: rows.filter((r) => filters.every((f) => f(r))),
+        // .range(from, to) bersifat inklusif seperti PostgREST
+        data: rangeWindow ? matched.slice(rangeWindow[0], rangeWindow[1] + 1) : matched,
         error: null,
       };
       return executedResult;
@@ -189,6 +313,11 @@ export const fakeSupabaseClient = {
       },
       limit(...args: unknown[]) {
         log("limit", args);
+        return builder;
+      },
+      range(from: number, to: number) {
+        log("range", [from, to]);
+        rangeWindow = [from, to];
         return builder;
       },
       single() {

@@ -1436,7 +1436,7 @@ vi.mock("@/shared/lib/supabaseClient", async () => {
   return { supabaseClient: m.fakeSupabaseClient };
 });
 
-import { fakeDb } from "../../utils/fakeSupabase";
+import { fakeDb, fakeAuth, fakeSupabaseClient } from "../../utils/fakeSupabase";
 import {
   authProvider,
   setStoredUser,
@@ -1454,6 +1454,7 @@ import {
   resetAccountRequests,
   registerAccountRequest,
   getAccountRequests,
+  approveAccountRequest,
 } from "@/features/auth/accountRequests";
 import { NotificationsPage } from "@/features/auth/pages/NotificationsPage";
 
@@ -1513,10 +1514,12 @@ describe("Hierarki Role (Super User > Supervisor > Admin > Custom Role) & Perset
     expect(canManageRoles("kepala_gudang")).toBe(false);
   });
 
-  it("Akun bawaan Supervisor dapat login dan memiliki role 'supervisor'", async () => {
+  it("Supervisor (role dari app_metadata Supabase) dapat login dan memiliki role 'supervisor'", async () => {
+    fakeAuth.addUser("supervisor@perusahaan.com", "Passw0rd!123", { role: "supervisor" });
+
     const loginRes = await authProvider.login({
-      email: "supervisor@admin.com",
-      password: "superv123",
+      email: "supervisor@perusahaan.com",
+      password: "Passw0rd!123",
     });
     expect(loginRes.success).toBe(true);
 
@@ -1524,6 +1527,63 @@ describe("Hierarki Role (Super User > Supervisor > Admin > Custom Role) & Perset
     expect(identity.role).toBe("supervisor");
     expect(canManageBarang(identity.role)).toBe(true);
     expect(canApproveAccounts(identity.role)).toBe(false);
+  });
+
+  it("Akun hardcode lama tidak lagi bisa login", async () => {
+    for (const [email, password] of [
+      ["superuser@admin.com", "super123"],
+      ["supervisor@admin.com", "superv123"],
+      ["admin@admin.com", "admin123"],
+    ]) {
+      const res = await authProvider.login({ email, password });
+      expect(res.success).toBe(false);
+    }
+    expect(((await authProvider.getIdentity?.()) as any).role).toBe("user");
+  });
+
+  it("Pesan gagal login generik (tidak membocorkan apakah email terdaftar)", async () => {
+    fakeAuth.addUser("ada@perusahaan.com", "Passw0rd!123", { role: "admin" });
+    const wrongPass = await authProvider.login({ email: "ada@perusahaan.com", password: "salah-salah" });
+    const unknown = await authProvider.login({ email: "tidakada@perusahaan.com", password: "salah-salah" });
+    expect(wrongPass.error?.message).toBe(unknown.error?.message);
+  });
+
+  it("Role di user_metadata (bisa diubah user sendiri) TIDAK dipercaya", async () => {
+    fakeAuth.addUser("nakal@perusahaan.com", "Passw0rd!123");
+    fakeAuth.users["nakal@perusahaan.com"].user_metadata.role = "superuser";
+
+    const res = await authProvider.login({ email: "nakal@perusahaan.com", password: "Passw0rd!123" });
+    expect(res.success).toBe(false);
+    expect(((await authProvider.getIdentity?.()) as any).role).toBe("user");
+  });
+
+  it("check() hanya authenticated bila ada sesi Supabase dengan role valid", async () => {
+    expect((await authProvider.check?.())?.authenticated).toBe(false);
+
+    fakeAuth.addUser("admin@perusahaan.com", "Passw0rd!123", { role: "admin" });
+    await authProvider.login({ email: "admin@perusahaan.com", password: "Passw0rd!123" });
+    expect((await authProvider.check?.())?.authenticated).toBe(true);
+
+    // Cache localStorage dipalsukan tanpa sesi -> tetap ditolak & cache dibersihkan
+    await fakeSupabaseClient.auth.signOut();
+    setStoredUser({ id: "x", email: "palsu@x.com", name: "Palsu", role: "superuser" });
+    expect((await authProvider.check?.())?.authenticated).toBe(false);
+    expect(localStorage.getItem("mock-auth-user")).toBeNull();
+  });
+
+  it("Pendaftaran menolak password pendek dan tidak pernah menyimpan password di tabel/cache", async () => {
+    await expect(
+      registerAccountRequest({ name: "Cici", email: "cici@proyek.com", password: "pendek" }),
+    ).rejects.toThrow(/minimal 8/i);
+
+    await registerAccountRequest({
+      name: "Cici",
+      email: "cici@proyek.com",
+      password: "password123",
+    });
+    expect(fakeDb.tables.account_requests).toHaveLength(1);
+    expect(fakeDb.tables.account_requests[0]).not.toHaveProperty("password");
+    expect(localStorage.getItem("account-registration-requests")).not.toContain("password123");
   });
 
   it("User buat akun -> masuk ke Notifikasi Super User -> Super User klik Izinkan -> Akun Admin jadi & bisa login", async () => {
@@ -1541,9 +1601,10 @@ describe("Hierarki Role (Super User > Supervisor > Admin > Custom Role) & Perset
     expect(loginBefore.success).toBe(false);
     expect(loginBefore.error?.message).toMatch(/menunggu persetujuan Super User/i);
 
+    fakeAuth.addUser("super@perusahaan.com", "Passw0rd!123", { role: "superuser" });
     const superLogin = await authProvider.login({
-      email: "superuser@admin.com",
-      password: "super123",
+      email: "super@perusahaan.com",
+      password: "Passw0rd!123",
     });
     expect(superLogin.success).toBe(true);
     const superIdentity = (await authProvider.getIdentity?.()) as any;
@@ -1555,7 +1616,6 @@ describe("Hierarki Role (Super User > Supervisor > Admin > Custom Role) & Perset
     expect(screen.getByText("budi@proyek.com")).toBeInTheDocument();
     expect(screen.getByText("Menunggu Persetujuan")).toBeInTheDocument();
 
-    // 🔧 PERBAIKAN: Gunakan exact match string, bukan regex
     const approveBtn = screen.getByRole("button", {
       name: "Izinkan budi@proyek.com",
     });
@@ -1583,16 +1643,16 @@ describe("Hierarki Role (Super User > Supervisor > Admin > Custom Role) & Perset
       password: "password123",
     });
 
+    fakeAuth.addUser("super@perusahaan.com", "Passw0rd!123", { role: "superuser" });
     await authProvider.login({
-      email: "superuser@admin.com",
-      password: "super123",
+      email: "super@perusahaan.com",
+      password: "Passw0rd!123",
     });
 
     render(<NotificationsPage />, { wrapper: Wrapper });
 
     expect(await screen.findByText("Andi Pratama")).toBeInTheDocument();
 
-    // 🔧 PERBAIKAN: Gunakan exact match string
     const rejectBtn = screen.getByRole("button", {
       name: "Tidak Izinkan andi@proyek.com",
     });
@@ -1607,10 +1667,47 @@ describe("Hierarki Role (Super User > Supervisor > Admin > Custom Role) & Perset
       password: "password123",
     });
     expect(loginRejected.success).toBe(false);
-    expect(loginRejected.error?.message).toMatch(/tidak diizinkan/i);
+    expect(loginRejected.error?.message).toMatch(/menunggu persetujuan|belum diberi role/i);
 
     const list = await getAccountRequests();
     expect(list.find((r) => r.email === "andi@proyek.com")?.status).toBe("rejected");
+  });
+
+  it("Admin tidak bisa menyetujui akun: ditolak di klien DAN di server (RPC)", async () => {
+    await registerAccountRequest({
+      name: "Dedi",
+      email: "dedi@proyek.com",
+      password: "password123",
+    });
+    const reqId = fakeDb.tables.account_requests[0].id as string;
+
+    fakeAuth.addUser("admin@perusahaan.com", "Passw0rd!123", { role: "admin" });
+    await authProvider.login({ email: "admin@perusahaan.com", password: "Passw0rd!123" });
+
+    await expect(approveAccountRequest(reqId, "admin")).rejects.toThrow();
+
+    // Meski guard klien dilewati, server tetap menolak karena JWT bukan superuser
+    const direct = await fakeSupabaseClient.rpc("approve_account", {
+      p_request_id: reqId,
+      p_role: "superuser",
+    });
+    expect(direct.error?.message).toBe("forbidden");
+    expect(fakeAuth.users["dedi@proyek.com"].app_metadata.role).toBeUndefined();
+  });
+
+  it("Persetujuan tidak bisa mengangkat role menjadi superuser", async () => {
+    await registerAccountRequest({
+      name: "Eko",
+      email: "eko@proyek.com",
+      password: "password123",
+    });
+    const reqId = fakeDb.tables.account_requests[0].id as string;
+
+    fakeAuth.addUser("super@perusahaan.com", "Passw0rd!123", { role: "superuser" });
+    await authProvider.login({ email: "super@perusahaan.com", password: "Passw0rd!123" });
+
+    await approveAccountRequest(reqId, "superuser");
+    expect(fakeAuth.users["eko@proyek.com"].app_metadata.role).toBe("admin");
   });
 
   it("Halaman Notifikasi menolak akses jika dibuka oleh User/Unlogin, Admin, maupun Supervisor", async () => {
@@ -1819,6 +1916,73 @@ describe("ChatbotWidget Full-Screen PC & Asisten Gudang", () => {
     expect(await screen.findByText(/Urutan hierarki login/i)).toBeInTheDocument();
   });
 });
+
+================================================================================
+FILE: test/unit/auth/spb-access-rules.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/auth/spb-access-rules.test.ts
+================================================================================
+
+import { describe, it, expect, beforeEach } from "vitest";
+import {
+  filterVisibleSpbRows,
+  isRestrictedSpbStatus,
+  toSafeExternalUrl,
+  canViewRestrictedSpb,
+} from "@/features/spb/accessRules";
+import { STORAGE_KEY } from "@/app/providers/authProvider";
+
+describe("accessRules - SPB 'belum di proses'", () => {
+  beforeEach(() => localStorage.clear());
+
+  it("mengenali status terbatas (trim + case-insensitive)", () => {
+    expect(isRestrictedSpbStatus("belum di proses")).toBe(true);
+    expect(isRestrictedSpbStatus("  Belum Di Proses ")).toBe(true);
+    expect(isRestrictedSpbStatus("sudah di proses")).toBe(false);
+    expect(isRestrictedSpbStatus(null)).toBe(false);
+  });
+
+  it("user belum login tidak menerima baris 'belum di proses'", () => {
+    const rows = [
+      { id: 1, status: "belum di proses" },
+      { id: 2, status: "sudah di proses" },
+      { id: 3, status: null },
+    ];
+    expect(filterVisibleSpbRows(rows, false).map((r) => r.id)).toEqual([2, 3]);
+  });
+
+  it("user login menerima semua baris", () => {
+    const rows = [{ id: 1, status: "belum di proses" }, { id: 2, status: "x" }];
+    expect(filterVisibleSpbRows(rows, true)).toHaveLength(2);
+  });
+
+  it("canViewRestrictedSpb mengikuti status login", () => {
+    expect(canViewRestrictedSpb()).toBe(false);
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ id: "1", email: "a@a.com", name: "A", role: "admin" }),
+    );
+    expect(canViewRestrictedSpb()).toBe(true);
+  });
+});
+
+describe("toSafeExternalUrl", () => {
+  it("menerima https (mis. Google Drive)", () => {
+    expect(toSafeExternalUrl("https://drive.google.com/file/d/abc/view")).toBe(
+      "https://drive.google.com/file/d/abc/view",
+    );
+  });
+
+  it("menolak skema berbahaya & nilai kosong", () => {
+    expect(toSafeExternalUrl("javascript:alert(1)")).toBeNull();
+    expect(toSafeExternalUrl("data:text/html,<script>")).toBeNull();
+    expect(toSafeExternalUrl("http://insecure.example.com")).toBeNull();
+    expect(toSafeExternalUrl("bukan url")).toBeNull();
+    expect(toSafeExternalUrl("")).toBeNull();
+    expect(toSafeExternalUrl(null)).toBeNull();
+  });
+});
+
+
 
 ================================================================================
 FILE: test/unit/hooks/suratJalanRules.test.ts
@@ -2581,6 +2745,127 @@ describe("CRUD Barang untuk Admin dan Super User (serta pembatasan User/Unlogin)
 
 
 ================================================================================
+FILE: test/unit/pages/monitoring-spb-access.test.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/pages/monitoring-spb-access.test.tsx
+================================================================================
+
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
+import { App as AntdApp, ConfigProvider } from "antd";
+import type { ReactNode } from "react";
+
+vi.mock("@/features/spb/useMonitoringSPB", () => ({
+  useMonitoringSPB: vi.fn(),
+  updateDocumentTitle: vi.fn().mockResolvedValue(undefined),
+}));
+
+import { useMonitoringSPB } from "@/features/spb/useMonitoringSPB";
+import MonitoringSPBPage from "@/features/spb/pages/MonitoringSPBPage";
+import { STORAGE_KEY } from "@/app/providers/authProvider";
+
+function Wrapper({ children }: { children: ReactNode }) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return (
+    <ConfigProvider>
+      <AntdApp>
+        <QueryClientProvider client={qc}>
+          <MemoryRouter>{children}</MemoryRouter>
+        </QueryClientProvider>
+      </AntdApp>
+    </ConfigProvider>
+  );
+}
+
+const data = [
+  {
+    id: "SPB_1",
+    spbNo: "SPB-01",
+    spbTitle: "Proyek A",
+    poNo: "PO-01",
+    poTitle: "Besi",
+    spbSourceFile: "https://drive.google.com/file/d/spb1/view",
+    poSourceFile: "https://drive.google.com/file/d/po1/view",
+    date: "2026-10-20",
+    itemsCount: 2,
+    sortNumber: 1,
+    status: "Sudah PO",
+    itemNames: ["Besi"],
+  },
+  {
+    id: "SPB_2",
+    spbNo: "SPB-02",
+    spbTitle: "Proyek B",
+    poNo: null,
+    poTitle: null,
+    spbSourceFile: "javascript:alert(1)",
+    date: "2026-10-21",
+    itemsCount: 1,
+    sortNumber: 2,
+    status: "Belum PO",
+    itemNames: ["Pasir"],
+  },
+];
+
+describe("MonitoringSPBPage - akses publik vs login", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.mocked(useMonitoringSPB).mockReturnValue({
+      data: data as any,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+  });
+
+  it("ikon file SPB & PO tampil untuk user belum login dan membuka tab baru dengan aman", () => {
+    render(<MonitoringSPBPage />, { wrapper: Wrapper });
+
+    const spbLink = screen.getByTestId("source-file-spb-SPB-01");
+    expect(spbLink).toHaveAttribute("href", "https://drive.google.com/file/d/spb1/view");
+    expect(spbLink).toHaveAttribute("target", "_blank");
+    expect(spbLink.getAttribute("rel")).toContain("noopener");
+    expect(spbLink.getAttribute("rel")).toContain("noreferrer");
+
+    expect(screen.getByTestId("source-file-po-PO-01")).toHaveAttribute(
+      "href",
+      "https://drive.google.com/file/d/po1/view",
+    );
+  });
+
+  it("tidak merender link jika source_file tidak aman (javascript:)", () => {
+    render(<MonitoringSPBPage />, { wrapper: Wrapper });
+    expect(screen.queryByTestId("source-file-spb-SPB-02")).not.toBeInTheDocument();
+  });
+
+  it("filter 'Belum Diproses' tidak tersedia untuk user belum login", () => {
+    render(<MonitoringSPBPage />, { wrapper: Wrapper });
+    expect(screen.queryByText("Belum Diproses")).not.toBeInTheDocument();
+    expect(screen.getByText("Belum di PO")).toBeInTheDocument();
+  });
+
+  it("filter 'Belum Diproses' tersedia untuk user yang login", () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ id: "1", email: "a@a.com", name: "A", role: "admin" }),
+    );
+    render(<MonitoringSPBPage />, { wrapper: Wrapper });
+    expect(screen.getByText("Belum Diproses")).toBeInTheDocument();
+  });
+
+  it("filter tersimpan 'Belum Diproses' diabaikan saat belum login", () => {
+    localStorage.setItem("spb_filter", "Belum Diproses");
+    render(<MonitoringSPBPage />, { wrapper: Wrapper });
+    // Kembali ke 'Semua' -> kedua card tetap tampil
+    expect(screen.getByText("SPB-01")).toBeInTheDocument();
+    expect(screen.getByText("SPB-02")).toBeInTheDocument();
+  });
+});
+
+
+
+================================================================================
 FILE: test/unit/pages/monitoring-spb-item-detail-sj.test.tsx
 PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/pages/monitoring-spb-item-detail-sj.test.tsx
 ================================================================================
@@ -3105,6 +3390,10 @@ describe("MonitoringSPBPage - Fitur Pencarian, Filter, Sorting, dan Edit Judul",
   });
 
   it("menampilkan ikon pensil kecil pada card SPB dan PO serta dapat mengedit judulnya", async () => {
+    localStorage.setItem(
+      "mock-auth-user",
+      JSON.stringify({ id: "admin-1", email: "admin@perusahaan.com", name: "Admin", role: "admin" }),
+    );
     render(<MonitoringSPBPage />, { wrapper: Wrapper });
 
     const editSpbBtn = screen.getByTestId("edit-spb-title-SPB-01");
@@ -3239,13 +3528,87 @@ export interface QueryCall {
     | "update"
     | "delete"
     | "order"
-    | "limit";
+    | "limit"
+    | "range";
   args: unknown[];
 }
 
 type Filter = (row: Row) => boolean;
 
 const sameValue = (a: unknown, b: unknown) => String(a) === String(b);
+
+/**
+ * Emulasi Supabase Auth di memori: user, sesi aktif, dan RPC persetujuan akun
+ * (meniru `approve_account` / `reject_account` / `set_account_role` di migrasi SQL,
+ * termasuk pemeriksaan "caller harus superuser" dari app_metadata sesi).
+ */
+export interface FakeAuthUser {
+  id: string;
+  password: string;
+  app_metadata: Row;
+  user_metadata: Row;
+}
+
+export const fakeAuth = {
+  users: {} as Record<string, FakeAuthUser>,
+  session: null as null | { user: Row },
+
+  reset() {
+    this.users = {};
+    this.session = null;
+  },
+
+  /** Tambah user siap pakai. role undefined = belum disetujui (tanpa app_metadata.role). */
+  addUser(email: string, password: string, opts: { role?: string; name?: string } = {}) {
+    const key = email.trim().toLowerCase();
+    this.users[key] = {
+      id: `uid-${key}`,
+      password,
+      app_metadata: opts.role ? { role: opts.role } : {},
+      user_metadata: opts.name ? { name: opts.name } : {},
+    };
+  },
+
+  toPublicUser(email: string) {
+    const u = this.users[email];
+    return {
+      id: u.id,
+      email,
+      app_metadata: { ...u.app_metadata },
+      user_metadata: { ...u.user_metadata },
+      identities: [{ id: u.id }],
+    };
+  },
+};
+
+const callerIsSuperuser = () => fakeAuth.session?.user?.app_metadata?.role === "superuser";
+
+const findRequest = (id: string) =>
+  (fakeDb.tables.account_requests ?? []).find((r) => String(r.id) === String(id));
+
+const fakeRpc = (name: string, args: Row) => {
+  const forbidden = { data: null, error: { message: "forbidden" } };
+  if (["approve_account", "reject_account", "set_account_role"].includes(name)) {
+    if (!callerIsSuperuser()) return Promise.resolve(forbidden);
+    const req = findRequest(args.p_request_id);
+    if (!req) return Promise.resolve({ data: null, error: { message: "request not found" } });
+    const email = String(req.email).toLowerCase();
+    const user = fakeAuth.users[email];
+
+    if (name === "reject_account") {
+      req.status = "rejected";
+      if (user) delete user.app_metadata.role;
+    } else {
+      const role = String(args.p_role || "admin").trim().toLowerCase();
+      const safeRole = ["", "user", "superuser"].includes(role) ? "admin" : role;
+      req.role = safeRole;
+      if (name === "approve_account") req.status = "approved";
+      if (user) user.app_metadata.role = safeRole;
+    }
+    return Promise.resolve({ data: null, error: null });
+  }
+  return Promise.resolve({ data: null, error: { message: `rpc ${name} tidak dikenal` } });
+};
 
 export const fakeDb = {
   tables: {
@@ -3269,6 +3632,7 @@ export const fakeDb = {
     };
     this.calls = [];
     this.errors = {};
+    fakeAuth.reset();
   },
 
   /** Jumlah query .select() yang dikirim ke sebuah tabel. */
@@ -3279,15 +3643,61 @@ export const fakeDb = {
 
 export const fakeSupabaseClient = {
   auth: {
-    getSession: () => Promise.resolve({ data: { session: null }, error: null }),
-    getUser: () => Promise.resolve({ data: { user: null }, error: null }),
-    signInWithPassword: () =>
-      Promise.resolve({ data: { user: null, session: null }, error: { message: "Invalid login" } }),
-    signOut: () => Promise.resolve({ error: null }),
+    getSession: () =>
+      Promise.resolve({ data: { session: fakeAuth.session }, error: null }),
+    getUser: () =>
+      Promise.resolve({ data: { user: fakeAuth.session?.user ?? null }, error: null }),
+    signInWithPassword: ({ email, password }: { email: string; password: string }) => {
+      const key = String(email).trim().toLowerCase();
+      const u = fakeAuth.users[key];
+      if (!u || u.password !== password) {
+        return Promise.resolve({
+          data: { user: null, session: null },
+          error: { message: "Invalid login credentials" },
+        });
+      }
+      const user = fakeAuth.toPublicUser(key);
+      fakeAuth.session = { user };
+      return Promise.resolve({ data: { user, session: { user } }, error: null });
+    },
+    signUp: ({
+      email,
+      password,
+      options,
+    }: {
+      email: string;
+      password: string;
+      options?: { data?: Row };
+    }) => {
+      const key = String(email).trim().toLowerCase();
+      if (fakeAuth.users[key]) {
+        // Perilaku Supabase: email sudah ada -> identities kosong (anti-enumerasi)
+        return Promise.resolve({
+          data: { user: { id: fakeAuth.users[key].id, identities: [] }, session: null },
+          error: null,
+        });
+      }
+      fakeAuth.users[key] = {
+        id: `uid-${key}`,
+        password,
+        app_metadata: {},
+        user_metadata: { ...(options?.data ?? {}) },
+      };
+      return Promise.resolve({
+        data: { user: fakeAuth.toPublicUser(key), session: null },
+        error: null,
+      });
+    },
+    signOut: () => {
+      fakeAuth.session = null;
+      return Promise.resolve({ error: null });
+    },
     onAuthStateChange: () => ({
       data: { subscription: { unsubscribe: () => {} } },
     }),
   },
+
+  rpc: (name: string, args: Row = {}) => fakeRpc(name, args),
 
   from(table: string) {
     const filters: Filter[] = [];
@@ -3295,6 +3705,7 @@ export const fakeSupabaseClient = {
     let insertPayload: Row[] = [];
     let updatePatch: Row = {};
     let executedResult: { data: Row[] | null; error: any } | null = null;
+    let rangeWindow: [number, number] | null = null;
 
     const log = (method: QueryCall["method"], args: unknown[]) =>
       fakeDb.calls.push({ table, method, args });
@@ -3359,8 +3770,10 @@ export const fakeSupabaseClient = {
         return executedResult;
       }
 
+      const matched = rows.filter((r) => filters.every((f) => f(r)));
       executedResult = {
-        data: rows.filter((r) => filters.every((f) => f(r))),
+        // .range(from, to) bersifat inklusif seperti PostgREST
+        data: rangeWindow ? matched.slice(rangeWindow[0], rangeWindow[1] + 1) : matched,
         error: null,
       };
       return executedResult;
@@ -3410,6 +3823,11 @@ export const fakeSupabaseClient = {
       },
       limit(...args: unknown[]) {
         log("limit", args);
+        return builder;
+      },
+      range(from: number, to: number) {
+        log("range", [from, to]);
+        rangeWindow = [from, to];
         return builder;
       },
       single() {
