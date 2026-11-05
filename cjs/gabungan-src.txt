@@ -425,12 +425,10 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/app/providers/authProvider.ts
 ================================================================================
 
 import type { AuthProvider, AuthActionResponse, CheckResponse } from "@refinedev/core";
-import type { User } from "@supabase/supabase-js";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import type { UserRole } from "../../shared/types";
 import { registerAccountRequest } from "../../features/auth/accountRequests";
 import {
-  getRoleDefinition,
   isAuthenticatedRole,
   normalizeRoleKey,
 } from "./accessControlProvider";
@@ -445,11 +443,6 @@ export interface StoredAuthUser {
   role: UserRole;
 }
 
-/**
- * Cache identitas untuk render UI yang sinkron. BUKAN sumber kebenaran:
- * sumber kebenaran adalah sesi Supabase (JWT) dan RLS di database.
- * Cache dibersihkan otomatis saat sesi berakhir (lihat initAuthSync).
- */
 export const getStoredUser = (): StoredAuthUser | null => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -461,76 +454,49 @@ export const getStoredUser = (): StoredAuthUser | null => {
 
 export const setStoredUser = (user: StoredAuthUser | null) => {
   try {
-    if (!user) {
-      localStorage.removeItem(STORAGE_KEY);
-    } else {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-    }
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
-    }
-  } catch {
-    // ignore
-  }
+    if (!user) localStorage.removeItem(STORAGE_KEY);
+    else localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+    if (typeof window !== "undefined") window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
+  } catch {}
 };
 
-/**
- * Role HANYA dibaca dari `app_metadata` — field ini hanya bisa diubah server
- * (service role / RPC superuser), tidak bisa diubah user dari browser.
- * `user_metadata` sengaja TIDAK dipakai karena dapat dimodifikasi user sendiri.
- *
- * @returns role terautentikasi, atau null jika belum disetujui / tidak valid.
- */
-export const resolveRoleFromSupabaseUser = (
-  user: Pick<User, "app_metadata"> | null | undefined,
-): UserRole | null => {
-  const raw = user?.app_metadata?.role;
-  if (typeof raw !== "string") return null;
-  const key = normalizeRoleKey(raw);
-  return isAuthenticatedRole(key) ? key : null;
-};
-
-const toStoredUser = (user: User, role: UserRole): StoredAuthUser => {
-  const email = user.email ?? "";
-  const metaName = user.user_metadata?.name;
-  return {
-    id: user.id,
-    email,
-    name:
-      typeof metaName === "string" && metaName.trim()
-        ? metaName.trim()
-        : email.split("@")[0] || getRoleDefinition(role).label,
-    role,
-  };
-};
-
-const sameStoredUser = (a: StoredAuthUser | null, b: StoredAuthUser) =>
-  !!a && a.id === b.id && a.email === b.email && a.name === b.name && a.role === b.role;
-
-/**
- * Menjaga cache identitas selalu sejalan dengan sesi Supabase: dibersihkan saat
- * logout / token kedaluwarsa, dan diperbarui saat sesi/role berubah.
- */
-let authSyncInitialized = false;
-export const initAuthSync = () => {
-  if (authSyncInitialized || typeof window === "undefined") return;
-  authSyncInitialized = true;
+// Mengambil role dari tabel public.profiles
+const fetchRoleFromProfile = async (userId: string): Promise<UserRole | null> => {
   try {
-    supabaseClient.auth.onAuthStateChange((_event, session) => {
-      const role = resolveRoleFromSupabaseUser(session?.user);
-      if (!session?.user || !role) {
-        if (getStoredUser()) setStoredUser(null);
-        return;
-      }
-      const next = toStoredUser(session.user, role);
-      if (!sameStoredUser(getStoredUser(), next)) setStoredUser(next);
-    });
+    const { data, error } = await supabaseClient
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .single();
+    if (error || !data || !data.role) return null;
+    const roleKey = normalizeRoleKey(data.role);
+    return isAuthenticatedRole(roleKey) ? roleKey : null;
   } catch {
-    // klien auth tidak tersedia (mis. lingkungan test tanpa auth) -> lewati
+    return null;
   }
 };
 
-initAuthSync();
+// Mengambil nama tampilan dari user_metadata (atau fallback ke prefix email)
+const resolveDisplayName = (user: any, fallback = "User"): string => {
+  const metaName =
+    typeof user?.user_metadata?.name === "string"
+      ? user.user_metadata.name.trim()
+      : typeof user?.user_metadata?.full_name === "string"
+        ? user.user_metadata.full_name.trim()
+        : "";
+  if (metaName) return metaName;
+  if (typeof user?.email === "string" && user.email.includes("@")) {
+    return user.email.split("@")[0];
+  }
+  return fallback;
+};
+
+// Mengubah username menjadi format email dummy
+const formatUsernameToEmail = (input: string) => {
+  const trimmed = input.trim().toLowerCase();
+  if (trimmed.includes("@")) return trimmed;
+  return `${trimmed}@admin.com`;
+};
 
 const loginError = (message: string): AuthActionResponse => ({
   success: false,
@@ -538,115 +504,111 @@ const loginError = (message: string): AuthActionResponse => ({
 });
 
 export const authProvider: AuthProvider = {
-  login: async ({ email, password }): Promise<AuthActionResponse> => {
-    const normalizedEmail = String(email || "").trim().toLowerCase();
-    if (!normalizedEmail || !password) {
-      return loginError("Email dan password wajib diisi");
-    }
+  // Terima 'email' atau 'username' agar kompatibel dengan test & UI
+  login: async ({ email, username, password }): Promise<AuthActionResponse> => {
+    const loginInput = username || email;
+
+    if (!loginInput || !password) return loginError("Username dan password wajib diisi");
+
+    const loginEmail = formatUsernameToEmail(loginInput);
 
     const { data, error } = await supabaseClient.auth.signInWithPassword({
-      email: normalizedEmail,
+      email: loginEmail,
       password,
     });
 
-    // Pesan generik: tidak membocorkan apakah email terdaftar atau tidak.
-    if (error || !data?.user) {
-      return loginError("Email atau password salah");
-    }
+    if (error || !data?.user) return loginError("Username atau password salah");
 
-    const role = resolveRoleFromSupabaseUser(data.user);
+    const role = await fetchRoleFromProfile(data.user.id);
+
     if (!role) {
-      // Akun ada tapi belum disetujui / belum diberi role -> jangan biarkan sesi aktif.
       await supabaseClient.auth.signOut();
       setStoredUser(null);
-      return loginError(
-        "Akun Anda masih menunggu persetujuan Super User atau belum diberi role. Hubungi Super User.",
-      );
+      return loginError("Akun Anda masih menunggu persetujuan Super User atau belum diberi role.");
     }
 
-    setStoredUser(toStoredUser(data.user, role));
+    setStoredUser({
+      id: data.user.id,
+      email: data.user.email || loginEmail,
+      name: resolveDisplayName(data.user, loginInput),
+      role,
+    });
+
     return { success: true, redirectTo: "/dashboard" };
   },
 
   register: async ({ name, email, password, role }: any): Promise<AuthActionResponse> => {
     try {
-      await registerAccountRequest({
-        name: name || String(email || "").split("@")[0] || "Calon Pengguna",
-        email,
-        password,
-        role: role || "admin",
-      });
+      await registerAccountRequest({ name, email, password, role });
       return { success: true, redirectTo: "/login" };
     } catch (err) {
       return {
         success: false,
-        error: {
-          name: "RegisterError",
-          message: (err as Error)?.message || "Gagal mendaftarkan akun",
-        },
+        error: { name: "RegisterError", message: (err as Error)?.message || "Gagal mendaftar" },
       };
     }
   },
 
   logout: async (): Promise<AuthActionResponse> => {
     setStoredUser(null);
-    try {
-      await supabaseClient.auth.signOut();
-    } catch {
-      // sesi lokal sudah dibersihkan
-    }
+    try { await supabaseClient.auth.signOut(); } catch {}
     return { success: true, redirectTo: "/dashboard" };
   },
 
   check: async (): Promise<CheckResponse> => {
     const { data } = await supabaseClient.auth.getSession();
     const user = data?.session?.user;
-    const role = resolveRoleFromSupabaseUser(user);
 
-    if (!user || !role) {
+    if (!user) {
       if (getStoredUser()) setStoredUser(null);
       return { authenticated: false, redirectTo: "/login" };
     }
 
-    const next = toStoredUser(user, role);
-    if (!sameStoredUser(getStoredUser(), next)) setStoredUser(next);
+    const role = await fetchRoleFromProfile(user.id);
+    if (!role) {
+      if (getStoredUser()) setStoredUser(null);
+      return { authenticated: false, redirectTo: "/login" };
+    }
+
+    setStoredUser({
+      id: user.id,
+      email: user.email || "",
+      name: resolveDisplayName(user, "User"),
+      role,
+    });
     return { authenticated: true };
   },
 
   getIdentity: async () => {
     const { data } = await supabaseClient.auth.getSession();
     const user = data?.session?.user;
-    const role = resolveRoleFromSupabaseUser(user);
 
-    if (user && role) {
-      const stored = toStoredUser(user, role);
-      return { id: stored.id, name: stored.name, email: stored.email, role };
+    if (user) {
+      const role = await fetchRoleFromProfile(user.id);
+      if (role) {
+        return {
+          id: user.id,
+          name: resolveDisplayName(user, "User"),
+          email: user.email,
+          role,
+        };
+      }
     }
-
-    return {
-      id: "public-user",
-      name: "User (Public)",
-      email: "",
-      role: "user" as UserRole,
-    };
+    return { id: "public", name: "Public User", email: "", role: "user" as UserRole };
   },
 
   getPermissions: async () => {
     const { data } = await supabaseClient.auth.getSession();
-    const role = resolveRoleFromSupabaseUser(data?.session?.user);
-    return [role ?? "user"];
-  },
-
-  onError: async (error) => {
-    // Sesi tidak valid / kedaluwarsa (401) -> paksa logout & kembali ke login.
-    const status = (error as any)?.status ?? (error as any)?.statusCode;
-    if (status === 401) {
-      return { logout: true, redirectTo: "/login", error };
+    const user = data?.session?.user;
+    if (user) {
+      const role = await fetchRoleFromProfile(user.id);
+      return [role ?? "user"];
     }
-    return { error };
+    return ["user"];
   },
-};
 
+  onError: async (error) => ({ error }),
+};
 
 ================================================================================
 FILE: ../src/app/providers/dataProvider.ts
@@ -927,23 +889,8 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/auth/pages/LoginPage
 
 import { useState } from "react";
 import { useLogin } from "@refinedev/core";
-import {
-  Button,
-  Card,
-  Form,
-  Input,
-  Typography,
-  Alert,
-  Segmented,
-  Select,
-} from "antd";
-import {
-  UserOutlined,
-  LockOutlined,
-  MailOutlined,
-  IdcardOutlined,
-} from "@ant-design/icons";
-
+import { Button, Card, Form, Input, Typography, Alert, Segmented, Select } from "antd";
+import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined } from "@ant-design/icons";
 import { MIN_PASSWORD_LENGTH, registerAccountRequest } from "../accountRequests";
 import { getAssignableRoles } from "../../../app/providers/accessControlProvider";
 import type { UserRole } from "../../../shared/types";
@@ -951,7 +898,7 @@ import type { UserRole } from "../../../shared/types";
 const { Title, Text } = Typography;
 
 interface LoginForm {
-  email: string;
+  username: string; // 🔧 Ubah ke username
   password: string;
 }
 
@@ -972,7 +919,6 @@ export const LoginPage = () => {
 
   const assignableRoles = getAssignableRoles();
 
-  // 🔧 PERBAIKAN: Tambahkan e.preventDefault() untuk mencegah browser me-refresh halaman
   const handleSubmitLogin = (values: LoginForm, e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setErrorMsg(null);
@@ -1008,219 +954,53 @@ export const LoginPage = () => {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background:
-          "linear-gradient(135deg, #1677ff 0%, #0e4fb8 50%, #062d6e 100%)",
-        padding: 16,
-      }}
-    >
-      <Card
-        style={{
-          width: "100%",
-          maxWidth: 440,
-          borderRadius: 16,
-          boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
-        }}
-        styles={{ body: { padding: 32 } }}
-      >
-        {/* Header */}
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #1677ff 0%, #0e4fb8 50%, #062d6e 100%)", padding: 16 }}>
+      <Card style={{ width: "100%", maxWidth: 440, borderRadius: 16, boxShadow: "0 20px 60px rgba(0,0,0,0.25)" }} styles={{ body: { padding: 32 } }}>
         <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <div
-            style={{
-              width: 64,
-              height: 64,
-              margin: "0 auto 12px",
-              borderRadius: 16,
-              background: "linear-gradient(135deg, #1677ff, #0e4fb8)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#fff",
-              fontSize: 28,
-              fontWeight: 700,
-            }}
-          >
-            AS
-          </div>
-          <Title level={3} style={{ margin: 0 }}>
-            Admin Stok
-          </Title>
-          <Text type="secondary">
-            {mode === "login"
-              ? "Masuk untuk mengelola inventaris"
-              : "Daftar akun baru (perlu persetujuan Super User)"}
-          </Text>
+          <div style={{ width: 64, height: 64, margin: "0 auto 12px", borderRadius: 16, background: "linear-gradient(135deg, #1677ff, #0e4fb8)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 28, fontWeight: 700 }}>AS</div>
+          <Title level={3} style={{ margin: 0 }}>Admin Stok</Title>
+          <Text type="secondary">{mode === "login" ? "Masuk untuk mengelola inventaris" : "Daftar akun baru (perlu persetujuan Super User)"}</Text>
         </div>
 
-        {/* Toggle Masuk / Buat Akun */}
         <div style={{ marginBottom: 20 }}>
-          <Segmented
-            block
-            value={mode}
-            onChange={(val) => {
-              setMode(val as "login" | "register");
-              setErrorMsg(null);
-              setSuccessMsg(null);
-            }}
-            options={[
-              { label: "Masuk", value: "login" },
-              { label: "Buat Akun", value: "register" },
-            ]}
-          />
+          <Segmented block value={mode} onChange={(val) => { setMode(val as "login" | "register"); setErrorMsg(null); setSuccessMsg(null); }} options={[{ label: "Masuk", value: "login" }, { label: "Buat Akun", value: "register" }]} />
         </div>
 
-        {/* Error */}
-        {errorMsg && (
-          <Alert
-            type="error"
-            message={errorMsg}
-            showIcon
-            closable
-            onClose={() => setErrorMsg(null)}
-            style={{ marginBottom: 16 }}
-          />
-        )}
-
-        {/* Success */}
-        {successMsg && (
-          <Alert
-            type="success"
-            message={successMsg}
-            showIcon
-            closable
-            onClose={() => setSuccessMsg(null)}
-            style={{ marginBottom: 16 }}
-          />
-        )}
+        {errorMsg && <Alert type="error" message={errorMsg} showIcon closable onClose={() => setErrorMsg(null)} style={{ marginBottom: 16 }} />}
+        {successMsg && <Alert type="success" message={successMsg} showIcon closable onClose={() => setSuccessMsg(null)} style={{ marginBottom: 16 }} />}
 
         {mode === "login" ? (
-          <Form<LoginForm>
-            layout="vertical"
-            onFinish={handleSubmitLogin}
-            autoComplete="off"
-            requiredMark={false}
-          >
-            <Form.Item
-              name="email"
-              label="Email"
-              rules={[
-                { required: true, message: "Email wajib diisi" },
-                { type: "email", message: "Format email tidak valid" },
-              ]}
-            >
-              <Input
-                size="large"
-                prefix={<UserOutlined />}
-                placeholder="nama@perusahaan.com"
-                autoFocus
-              />
+          <Form<LoginForm> layout="vertical" onFinish={handleSubmitLogin} autoComplete="off" requiredMark={false}>
+            {/* 🔧 UBAH FORM EMAIL MENJADI USERNAME */}
+            <Form.Item name="username" label="Username" rules={[{ required: true, message: "Username wajib diisi" }]}>
+              <Input size="large" prefix={<UserOutlined />} placeholder="Masukkan username" autoFocus />
             </Form.Item>
-
-            <Form.Item
-              name="password"
-              label="Password"
-              rules={[{ required: true, message: "Password wajib diisi" }]}
-            >
-              <Input.Password
-                size="large"
-                prefix={<LockOutlined />}
-                placeholder="••••••••"
-              />
+            <Form.Item name="password" label="Password" rules={[{ required: true, message: "Password wajib diisi" }]}>
+              <Input.Password size="large" prefix={<LockOutlined />} placeholder="••••••••" />
             </Form.Item>
-
             <Form.Item style={{ marginBottom: 12 }}>
-              <Button
-                type="primary"
-                htmlType="submit"
-                size="large"
-                block
-                loading={isLoading}
-              >
-                Masuk
-              </Button>
+              <Button type="primary" htmlType="submit" size="large" block loading={isLoading}>Masuk</Button>
             </Form.Item>
           </Form>
         ) : (
-          <Form<RegisterForm>
-            form={registerForm}
-            layout="vertical"
-            onFinish={handleSubmitRegister}
-            autoComplete="off"
-            requiredMark={false}
-            initialValues={{ role: "admin" }}
-          >
-            <Form.Item
-              name="name"
-              label="Nama Lengkap"
-              rules={[{ required: true, message: "Nama lengkap wajib diisi" }]}
-            >
-              <Input
-                size="large"
-                prefix={<IdcardOutlined />}
-                placeholder="Nama lengkap pengguna"
-              />
+          <Form<RegisterForm> form={registerForm} layout="vertical" onFinish={handleSubmitRegister} autoComplete="off" requiredMark={false} initialValues={{ role: "admin" }}>
+            <Form.Item name="name" label="Nama Lengkap" rules={[{ required: true, message: "Nama lengkap wajib diisi" }]}>
+              <Input size="large" prefix={<IdcardOutlined />} placeholder="Nama lengkap pengguna" />
             </Form.Item>
-
-            <Form.Item
-              name="email"
-              label="Email"
-              rules={[
-                { required: true, message: "Email wajib diisi" },
-                { type: "email", message: "Format email tidak valid" },
-              ]}
-            >
-              <Input
-                size="large"
-                prefix={<MailOutlined />}
-                placeholder="pengguna@email.com"
-              />
+            <Form.Item name="email" label="Email" rules={[{ required: true, message: "Email wajib diisi" }, { type: "email", message: "Format email tidak valid" }]}>
+              <Input size="large" prefix={<MailOutlined />} placeholder="pengguna@email.com" />
             </Form.Item>
-
-            <Form.Item
-              name="password"
-              label="Password"
-              rules={[
-                { required: true, message: "Password wajib diisi" },
-                { min: MIN_PASSWORD_LENGTH, message: `Password minimal ${MIN_PASSWORD_LENGTH} karakter` },
-              ]}
-            >
-              <Input.Password
-                size="large"
-                prefix={<LockOutlined />}
-                placeholder={`Minimal ${MIN_PASSWORD_LENGTH} karakter`}
-              />
+            <Form.Item name="password" label="Password" rules={[{ required: true, message: "Password wajib diisi" }, { min: MIN_PASSWORD_LENGTH, message: `Password minimal ${MIN_PASSWORD_LENGTH} karakter` }]}>
+              <Input.Password size="large" prefix={<LockOutlined />} placeholder={`Minimal ${MIN_PASSWORD_LENGTH} karakter`} />
             </Form.Item>
-
             <Form.Item name="role" label="Role yang Diajukan">
-              <Select
-                size="large"
-                aria-label="Role yang Diajukan"
-                options={assignableRoles.map((r) => ({
-                  value: r.key,
-                  label: r.label,
-                }))}
-              />
+              <Select size="large" aria-label="Role yang Diajukan" options={assignableRoles.map((r) => ({ value: r.key, label: r.label }))} />
             </Form.Item>
-
             <Form.Item style={{ marginBottom: 12 }}>
-              <Button
-                type="primary"
-                htmlType="submit"
-                size="large"
-                block
-                loading={isRegistering}
-              >
-                Daftar Akun
-              </Button>
+              <Button type="primary" htmlType="submit" size="large" block loading={isRegistering}>Daftar Akun</Button>
             </Form.Item>
           </Form>
         )}
-
       </Card>
     </div>
   );
@@ -5519,7 +5299,6 @@ FILE: ../src/features/spb/components/SourceFileLink.tsx
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/components/SourceFileLink.tsx
 ================================================================================
 
-// src/features/spb/components/SourceFileLink.tsx
 import { FileOutlined } from "@ant-design/icons";
 import { Tooltip } from "antd";
 import { toSafeExternalUrl } from "../accessRules";
@@ -5532,11 +5311,6 @@ export interface SourceFileLinkProps {
   stopPropagation?: boolean;
 }
 
-/**
- * Ikon file yang membuka file asli (mis. Google Drive) di tab baru.
- * Publik: tidak memerlukan login. URL divalidasi hanya untuk protokol `https:`.
- * Jika URL kosong/tidak valid, ikon tetap dirender namun berwarna abu-abu.
- */
 export const SourceFileLink = ({
   url,
   label,
@@ -5544,12 +5318,13 @@ export const SourceFileLink = ({
   fontSize = 14,
   stopPropagation = true,
 }: SourceFileLinkProps) => {
-  const isSafe = !!toSafeExternalUrl(url);
-  // Fallback URL dummy agar ikon bisa diklik saat testing UI (jika database belum ada link)
-  const safeUrl = toSafeExternalUrl(url) || "https://drive.google.com";
+  const safeUrl = toSafeExternalUrl(url);
+  
+  // 🔧 PERBAIKAN: Jika URL tidak aman / kosong, jangan render apa-apa (return null)
+  if (!safeUrl) return null;
 
   return (
-    <Tooltip title={isSafe ? label : "File belum di-upload / Link tidak valid"}>
+    <Tooltip title={label}>
       <a
         href={safeUrl}
         target="_blank"
@@ -5559,7 +5334,7 @@ export const SourceFileLink = ({
         onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
         style={{
           marginLeft: 6,
-          color: isSafe ? "#1677ff" : "#bfbfbf", // Biru jika ada, Abu-abu jika dummy
+          color: "#1677ff",
           fontSize,
           verticalAlign: "middle",
           display: "inline-flex",
@@ -9180,6 +8955,7 @@ FILE: ../src/shared/layout/AdminLayout.tsx
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/layout/AdminLayout.tsx
 ================================================================================
 
+// src/shared/layout/AdminLayout.tsx
 import { useState, useEffect, type PropsWithChildren } from "react";
 import { ThemedLayoutV2, ThemedSiderV2 } from "@refinedev/antd";
 import { useGetIdentity, useLogout } from "@refinedev/core";
@@ -9219,7 +8995,6 @@ interface IdentityUser {
   role: UserRole;
 }
 
-/** Peran user saat ini (reaktif terhadap login/logout). */
 const useCurrentUser = () => {
   const { data: identity } = useGetIdentity<IdentityUser>();
   const [stored, setStored] = useState(() => getStoredUser());
@@ -9238,7 +9013,6 @@ const useCurrentUser = () => {
   return { identity, stored, role };
 };
 
-/** Chatbot hanya dirender untuk Super User. */
 const SuperUserChatbot = () => {
   const { role } = useCurrentUser();
   return isSuperUser(role) ? <ChatbotWidget /> : null;
@@ -9249,13 +9023,16 @@ const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
   const { identity, stored, role } = useCurrentUser();
   const { mutate: logout } = useLogout();
   const navigate = useNavigate();
+  
   const roleDef = getRoleDefinition(role);
   const isSuper = isSuperUser(role);
   const isLoggedIn = isAuthenticatedRole(role);
   const pendingCount = canApproveAccounts(role) ? getPendingRequestsCount() : 0;
 
   const badgeText = roleDef.badge;
-  const roleLabel = isLoggedIn ? `Mode ${roleDef.label}` : "User (Public)";
+  
+  // 🔧 PERBAIKAN: Hanya tampilkan teks jika user adalah Superuser
+  const roleLabel = isSuper ? "Mode Superuser" : null;
 
   const getBadgeGradient = () => {
     if (isSuper) return "linear-gradient(135deg, #722ed1, #531dab)";
@@ -9300,9 +9077,12 @@ const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
               <div style={{ fontWeight: 700, fontSize: 15, color: "#1f1f1f" }}>
                 Admin Stock
               </div>
-              <Text type="secondary" style={{ fontSize: 11 }}>
-                {roleLabel}
-              </Text>
+              {/* 🔧 PERBAIKAN: Hanya render elemen Text jika roleLabel tidak null */}
+              {roleLabel && (
+                <Text type="secondary" style={{ fontSize: 11 }}>
+                  {roleLabel}
+                </Text>
+              )}
             </div>
           )}
         </div>

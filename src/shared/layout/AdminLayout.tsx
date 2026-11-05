@@ -1,3 +1,4 @@
+// src/shared/layout/AdminLayout.tsx
 import { useState, useEffect, type PropsWithChildren } from "react";
 import { ThemedLayoutV2, ThemedSiderV2 } from "@refinedev/antd";
 import { useGetIdentity, useLogout } from "@refinedev/core";
@@ -37,7 +38,6 @@ interface IdentityUser {
   role: UserRole;
 }
 
-/** Peran user saat ini (reaktif terhadap login/logout). */
 const useCurrentUser = () => {
   const { data: identity } = useGetIdentity<IdentityUser>();
   const [stored, setStored] = useState(() => getStoredUser());
@@ -56,7 +56,6 @@ const useCurrentUser = () => {
   return { identity, stored, role };
 };
 
-/** Chatbot hanya dirender untuk Super User. */
 const SuperUserChatbot = () => {
   const { role } = useCurrentUser();
   return isSuperUser(role) ? <ChatbotWidget /> : null;
@@ -67,13 +66,16 @@ const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
   const { identity, stored, role } = useCurrentUser();
   const { mutate: logout } = useLogout();
   const navigate = useNavigate();
+  
   const roleDef = getRoleDefinition(role);
   const isSuper = isSuperUser(role);
   const isLoggedIn = isAuthenticatedRole(role);
   const pendingCount = canApproveAccounts(role) ? getPendingRequestsCount() : 0;
 
   const badgeText = roleDef.badge;
-  const roleLabel = isLoggedIn ? `Mode ${roleDef.label}` : "User (Public)";
+  
+  // 🔧 PERBAIKAN: Hanya tampilkan teks jika user adalah Superuser
+  const roleLabel = isSuper ? "Mode Superuser" : null;
 
   const getBadgeGradient = () => {
     if (isSuper) return "linear-gradient(135deg, #722ed1, #531dab)";
@@ -118,9 +120,12 @@ const CustomLogoWithDropdown = ({ collapsed }: { collapsed?: boolean }) => {
               <div style={{ fontWeight: 700, fontSize: 15, color: "#1f1f1f" }}>
                 Admin Stock
               </div>
-              <Text type="secondary" style={{ fontSize: 11 }}>
-                {roleLabel}
-              </Text>
+              {/* 🔧 PERBAIKAN: Hanya render elemen Text jika roleLabel tidak null */}
+              {roleLabel && (
+                <Text type="secondary" style={{ fontSize: 11 }}>
+                  {roleLabel}
+                </Text>
+              )}
             </div>
           )}
         </div>

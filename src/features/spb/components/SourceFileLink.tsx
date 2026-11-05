@@ -1,4 +1,3 @@
-// src/features/spb/components/SourceFileLink.tsx
 import { FileOutlined } from "@ant-design/icons";
 import { Tooltip } from "antd";
 import { toSafeExternalUrl } from "../accessRules";
@@ -11,11 +10,6 @@ export interface SourceFileLinkProps {
   stopPropagation?: boolean;
 }
 
-/**
- * Ikon file yang membuka file asli (mis. Google Drive) di tab baru.
- * Publik: tidak memerlukan login. URL divalidasi hanya untuk protokol `https:`.
- * Jika URL kosong/tidak valid, ikon tetap dirender namun berwarna abu-abu.
- */
 export const SourceFileLink = ({
   url,
   label,
@@ -23,12 +17,13 @@ export const SourceFileLink = ({
   fontSize = 14,
   stopPropagation = true,
 }: SourceFileLinkProps) => {
-  const isSafe = !!toSafeExternalUrl(url);
-  // Fallback URL dummy agar ikon bisa diklik saat testing UI (jika database belum ada link)
-  const safeUrl = toSafeExternalUrl(url) || "https://drive.google.com";
+  const safeUrl = toSafeExternalUrl(url);
+  
+  // 🔧 PERBAIKAN: Jika URL tidak aman / kosong, jangan render apa-apa (return null)
+  if (!safeUrl) return null;
 
   return (
-    <Tooltip title={isSafe ? label : "File belum di-upload / Link tidak valid"}>
+    <Tooltip title={label}>
       <a
         href={safeUrl}
         target="_blank"
@@ -38,7 +33,7 @@ export const SourceFileLink = ({
         onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
         style={{
           marginLeft: 6,
-          color: isSafe ? "#1677ff" : "#bfbfbf", // Biru jika ada, Abu-abu jika dummy
+          color: "#1677ff",
           fontSize,
           verticalAlign: "middle",
           display: "inline-flex",
