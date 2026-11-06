@@ -89,7 +89,9 @@ export const filterAndSortSpbDocuments = ({
       case "Belum di PO":
         return (!item.poNo || item.poNo === "-") && item.status === "Belum PO";
       case "Sudah di PO":
-        return !!item.poNo && item.poNo !== "-" && item.status !== "Selesai";
+        // 🔧 PERBAIKAN: Hanya tampilkan yang statusnya murni "Sudah PO"
+        // Jangan tampilkan yang sudah "Datang" atau "Selesai"
+        return item.status === "Sudah PO";
       case "Datang":
         return item.status === "Datang" || item.status === "Selesai";
       case "Selesai":
@@ -143,4 +145,3 @@ export const getRecentSpbDocuments = (
     })
     .slice(0, limit);
 };
-

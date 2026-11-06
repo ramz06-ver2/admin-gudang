@@ -65,7 +65,7 @@ describe("useMonitoringSPB - penempatan Surat Jalan (no 3 dst)", () => {
     expect(await loadCards()).toEqual([]);
   });
 
-  it("punya id_spb -> masuk ke card SPB, tidak membuat card terpisah", async () => {
+  it("punya id_spb -> tidak membuat card SJ terpisah dan card SPB hanya berisi barang dari tabel spb", async () => {
     fakeDb.tables.spb = [{ id: 1, no_spb: "63#R1", judul_spb: "Listrik", tgl_spb: "2026-09-01", nama_barang_spb: "Kabel" }];
     fakeDb.tables.surat_jalan = [
       { id: 10, no_surat_jalan: "3", id_spb: 1, id_po: null, nama_barang: "Kabel NYM", spb: { no_spb: "63#R1", judul_spb: "Listrik" } },
@@ -74,9 +74,8 @@ describe("useMonitoringSPB - penempatan Surat Jalan (no 3 dst)", () => {
     const cards = await loadCards();
 
     expect(cards).toHaveLength(1);
-    // 🔧 PERBAIKAN: ID diubah ke format baru
-    expect(cards[0]).toMatchObject({ id: "SPB_63#R1::Listrik", spbNo: "63#R1", itemsCount: 2 });
-    expect(cards[0].itemNames).toEqual(expect.arrayContaining(["Kabel", "Kabel NYM"]));
+    expect(cards[0]).toMatchObject({ id: "SPB_63#R1::Listrik", spbNo: "63#R1", itemsCount: 1 });
+    expect(cards[0].itemNames).toEqual(["Kabel"]);
   });
 
   it("tanpa id_spb tetapi punya id_po -> masuk ke card PO", async () => {
@@ -134,9 +133,9 @@ describe("useMonitoringSPB - penempatan Surat Jalan (no 3 dst)", () => {
     const cards = await loadCards();
     const total = cards.reduce((sum, c) => sum + c.itemsCount, 0);
 
-    expect(total).toBe(5);
-    // 🔧 PERBAIKAN: Karena judul kosong, IDnya menjadi SPB_63#R1::
-    expect(cards.find((c) => c.id === "SPB_63#R1::")!.itemsCount).toBe(2);
+    expect(total).toBe(4);
+    // Card SPB hanya berisi barang dari tabel spb (tidak menduplikasi SJ yang punya id_spb)
+    expect(cards.find((c) => c.id === "SPB_63#R1::")!.itemsCount).toBe(1);
     expect(cards.find((c) => c.id === "PO_34")!.itemsCount).toBe(2);
     expect(cards.find((c) => c.id === "SJ_3")!.itemsCount).toBe(1);
   });

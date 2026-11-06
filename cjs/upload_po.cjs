@@ -61,6 +61,7 @@ const ALLOWED_COLUMNS = [
     "keterangan",
     "created_at",
     "judul_po",
+    "source_file",
 ];
 
 // ========================================

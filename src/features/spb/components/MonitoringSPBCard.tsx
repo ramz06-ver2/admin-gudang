@@ -21,6 +21,7 @@ export interface MonitoringSPBCardProps {
     docNo: string,
     currentTitle?: string | null,
   ) => void;
+  isMobile?: boolean; // 🔧 TAMBAHKAN PROP INI
 }
 
 export const MonitoringSPBCard = ({
@@ -29,6 +30,7 @@ export const MonitoringSPBCard = ({
   localTitles,
   onCardClick,
   onEditTitle,
+  isMobile = false, // 🔧 DEFAULT VALUE
 }: MonitoringSPBCardProps) => {
   const hasSPB = item.spbNo !== null && item.spbNo !== "NO_SPB";
   const hasPO =
@@ -123,11 +125,14 @@ export const MonitoringSPBCard = ({
                   - {resolvedSpbTitle}
                 </span>
               )}
-              <SourceFileLink
-                url={item.spbSourceFile}
-                label={`Buka file asli SPB ${item.spbNo}`}
-                testId={`source-file-spb-${item.spbNo}`}
-              />
+              {/* 🔧 PERBAIKAN: Sembunyikan logo file di mobile */}
+              {!isMobile && (
+                <SourceFileLink
+                  url={item.spbSourceFile}
+                  label={`Buka file asli SPB ${item.spbNo}`}
+                  testId={`source-file-spb-${item.spbNo}`}
+                />
+              )}
             </div>
           </div>
         )}
@@ -189,11 +194,14 @@ export const MonitoringSPBCard = ({
                   - {resolvedPoTitle}
                 </span>
               )}
-              <SourceFileLink
-                url={item.poSourceFile}
-                label={`Buka file asli PO ${item.poNo}`}
-                testId={`source-file-po-${item.poNo}`}
-              />
+              {/* 🔧 PERBAIKAN: Sembunyikan logo file di mobile */}
+              {!isMobile && (
+                <SourceFileLink
+                  url={item.poSourceFile}
+                  label={`Buka file asli PO ${item.poNo}`}
+                  testId={`source-file-po-${item.poNo}`}
+                />
+              )}
             </div>
           </div>
         )}

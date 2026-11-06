@@ -26,6 +26,24 @@ export const unwrap = (res: { data: unknown; error: unknown }): Row[] => {
   return (res.data as Row[] | null) ?? [];
 };
 
+// 🔧 HELPER BARU: Menghitung status kedatangan (Sesuai / Kurang / Lebih)
+const resolveArrivalStatus = (
+  req: number | null | undefined,
+  arr: number,
+  tglDatang: string | null,
+  fallbackStatus: string,
+): string => {
+  if (!tglDatang) return fallbackStatus;
+
+  if (req !== undefined && req !== null) {
+    const r = Number(req);
+    if (r === arr) return "Datang Sesuai";
+    if (r < arr) return "Datang Lebih";
+    return "Datang Kurang";
+  }
+  return "Datang"; // Fallback jika tidak ada data permintaan
+};
+
 const spbStatus = (
   req: number,
   arr: number,
@@ -80,6 +98,9 @@ export const mapSpbRow = (
 
 export const mapPoRow = (row: Row): MonitoringDetailItem => {
   const tgl: string | null = row.material_datang_tgl || null;
+  const arr = numOrZero(row.material_datang_qty);
+  const status = tgl ? "Datang" : "Sudah PO";
+
   return {
     key: `po-${row.id}`,
     sumber: "po",
@@ -91,16 +112,23 @@ export const mapPoRow = (row: Row): MonitoringDetailItem => {
     no_po: cleanDocNo(row.no_po) ?? "-",
     tanggal_po: row.tanggal_po ?? null,
     tanggal_datang: tgl,
-    qty_datang: numOrZero(row.material_datang_qty),
-    status: tgl ? "Datang" : "Sudah PO",
+    qty_datang: arr,
+    status,
     poSourceFile: row.source_file,
   };
 };
 
+// 🔧 PERBAIKAN: mapSjRow sekarang menghitung status berdasarkan qty_permintaan dari SPB
 export const mapSjRow = (row: Row): MonitoringDetailItem => {
   const spb = first(row.spb);
   const po = first(row.po);
   const tgl: string | null = row.material_datang_tgl || null;
+  const arr = numOrZero(row.material_datang_qty ?? row.jumlah);
+  const req =
+    spb?.qty_permintaan !== undefined && spb?.qty_permintaan !== null
+      ? numOrZero(spb.qty_permintaan)
+      : null;
+
   return {
     key: `sj-${row.id}`,
     sumber: "sj",
@@ -110,13 +138,13 @@ export const mapSjRow = (row: Row): MonitoringDetailItem => {
     no_spb: cleanDocNo(spb?.no_spb) ?? "-",
     judul_spb: spb?.judul_spb ?? null,
     nama_barang: row.nama_barang || "-",
-    jumlah_permintaan: null,
+    jumlah_permintaan: req,
     satuan: row.material_datang_satuan ?? row.satuan ?? null,
     no_po: cleanDocNo(po?.no_po) ?? "-",
     tanggal_po: null,
     tanggal_datang: tgl,
-    qty_datang: numOrZero(row.material_datang_qty),
-    status: tgl ? "Datang" : "Belum Datang",
+    qty_datang: arr,
+    status: resolveArrivalStatus(req, arr, tgl, "Belum Datang"),
     spbSourceFile: spb?.source_file,
     poSourceFile: po?.source_file,
   };
@@ -126,18 +154,19 @@ export const mapSjRow = (row: Row): MonitoringDetailItem => {
  * Memetakan baris tunggal dari tabel `po` menjadi `SPBItemDetail`.
  */
 export const mapSinglePoItem = (data: Row): SPBItemDetail => {
+  const spbRel = first(data.spb); // 🔧 Ambil relasi SPB
   const tglDatang = data.material_datang_tgl || null;
   const arr = data.material_datang_qty ?? 0;
   const satuanDatang = data.material_datang_satuan || data.satuan || "-";
-  const status = tglDatang ? "Datang" : "Sudah PO";
+  const req = spbRel?.qty_permintaan ?? null;
 
   return {
     ...data,
-    no_spb: "-",
+    no_spb: spbRel?.no_spb || "-",
     tanggal_spb: null,
     nama_barang: data.nama_barang_po || data.nama_barang || "-",
     ukuran: data.ukuran || "-",
-    jumlah_permintaan: data.qty_permintaan ?? null,
+    jumlah_permintaan: req !== null ? Number(req) : null, // 🔧 Tampilkan qty permintaan
     satuan: data.satuan || data.material_datang_satuan || "-",
     no_po: data.no_po || "-",
     tanggal_po: data.tanggal_po || null,
@@ -152,7 +181,7 @@ export const mapSinglePoItem = (data: Row): SPBItemDetail => {
     lama_proses: calcLamaProses(data.tanggal_po, tglDatang, data.lama_proses),
     kurang_lebih: data.kurang_lebih ?? "-",
     keterangan: data.keterangan || "-",
-    status,
+    status: resolveArrivalStatus(req, Number(arr), tglDatang, "Sudah PO"),
     poSourceFile: data.source_file,
   } as SPBItemDetail;
 };
@@ -161,10 +190,11 @@ export const mapSinglePoItem = (data: Row): SPBItemDetail => {
  * Memetakan baris tunggal dari tabel `surat_jalan` menjadi `SPBItemDetail`.
  */
 export const mapSingleSjItem = (data: Row): SPBItemDetail => {
-  const spbRel = Array.isArray(data.spb) ? data.spb[0] : data.spb;
-  const poRel = Array.isArray(data.po) ? data.po[0] : data.po;
+  const spbRel = first(data.spb);
+  const poRel = first(data.po);
   const tgl = data.material_datang_tgl || null;
   const arr = data.material_datang_qty ?? data.jumlah ?? 0;
+  const req = spbRel?.qty_permintaan ?? null; // 🔧 Ambil qty permintaan
 
   return {
     ...data,
@@ -176,7 +206,7 @@ export const mapSingleSjItem = (data: Row): SPBItemDetail => {
     supplier: poRel?.nama_supplier || data.supplier || "-",
     nama_barang: data.nama_barang || "-",
     ukuran: data.ukuran || "-",
-    jumlah_permintaan: data.jumlah ?? null,
+    jumlah_permintaan: req !== null ? Number(req) : null, // 🔧 Tampilkan qty permintaan
     satuan: data.satuan || data.material_datang_satuan || "-",
     merk: data.merk || "-",
     spesifikasi_teknis: data.spesifikasi || data.spesifikasi_teknis || "-",
@@ -192,7 +222,7 @@ export const mapSingleSjItem = (data: Row): SPBItemDetail => {
     ),
     kurang_lebih: data.kurang_lebih ?? "-",
     keterangan: data.keterangan || "-",
-    status: tgl ? "Datang" : "Belum Datang",
+    status: resolveArrivalStatus(req, Number(arr), tgl, "Belum Datang"),
     spbSourceFile: spbRel?.source_file,
     poSourceFile: poRel?.source_file,
   } as SPBItemDetail;
@@ -262,4 +292,3 @@ export const mapSingleSpbItem = (
     poSourceFile: dataPo?.source_file,
   } as SPBItemDetail;
 };
-

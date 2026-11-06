@@ -24,16 +24,11 @@ import {
   saveTitleOverride,
 } from "./utils/titleOverrides";
 
-// PostgREST (Supabase) default max-rows = 1000.
 const PAGE_SIZE = 1000;
 
 const SPB_SELECT = `*, po:po!id_po (no_po, tanggal_po, source_file)`;
-const SJ_SELECT = `*, spb:spb!id_spb (no_spb, judul_spb, source_file), po:po!id_po (no_po, source_file)`;
+const SJ_SELECT = `*, spb:spb!id_spb (no_spb, judul_spb, source_file, qty_permintaan), po:po!id_po (no_po, source_file)`;
 
-/**
- * Mengambil seluruh baris dari sebuah tabel dengan pagination `.range()`
- * untuk menghindari batas default 1000 baris PostgREST.
- */
 export const fetchAllRows = async (
   table: string,
   select: string,
@@ -58,9 +53,6 @@ export const fetchAllRows = async (
   return all;
 };
 
-/**
- * Mengambil semua baris mentah (SPB, PO, Surat Jalan) untuk halaman Monitoring SPB.
- */
 export const fetchMonitoringRawData = async () => {
   const [allSpbData, poData, sjData] = await Promise.all([
     fetchAllRows(
@@ -87,9 +79,6 @@ export const fetchMonitoringRawData = async () => {
   return { allSpbData, poData, sjData };
 };
 
-/**
- * Memperbarui judul dokumen SPB atau PO di database & menyimpan override lokal.
- */
 export const updateDocumentTitle = async (
   type: "spb" | "po",
   docNo: string,
@@ -119,34 +108,98 @@ export const updateDocumentTitle = async (
 };
 
 /**
- * Mengambil daftar barang detail berdasarkan nomor SPB.
+ * Validasi ketat baris SPB agar di card/detail Monitoring SPB hanya muncul data
+ * dari tabel `spb` dengan `no_spb` dan `judul_spb` yang sesuai:
+ * - Jika ada data dari nomor SPB lain (meskipun judulnya sama) -> lempar Error.
+ * - Jika nomor SPB sama tetapi judulnya berbeda (baik antar-baris di DB maupun terhadap judul yang diminta) -> lempar Error.
+ */
+export const validateStrictSpbRows = (
+  rows: Row[],
+  spbNo: string,
+  judulSpb: string | null = null,
+): void => {
+  const expectedNo = cleanDocNo(spbNo);
+  const expectedTitle = cleanDocNo(judulSpb);
+
+  for (const row of rows) {
+    if (row.sumber && row.sumber !== "spb") {
+      throw new Error(
+        `Data tidak konsisten: Ditemukan data bukan dari tabel SPB (sumber: ${row.sumber}) pada SPB ${spbNo}.`,
+      );
+    }
+
+    const rowNo = cleanDocNo(row.no_spb);
+    const rowTitle = cleanDocNo(row.judul_spb);
+
+    // 1. Jika data berasal dari nomor SPB lain (termasuk yang judulnya sama)
+    if (rowNo !== expectedNo) {
+      if (expectedTitle && rowTitle === expectedTitle) {
+        throw new Error(
+          `Data tidak konsisten: Ditemukan data dari nomor SPB lain (${row.no_spb ?? "-"}) dengan judul yang sama ("${row.judul_spb ?? judulSpb}").`,
+        );
+      }
+      throw new Error(
+        `Data tidak konsisten: Ditemukan data dari nomor SPB lain (${row.no_spb ?? "-"}) pada SPB ${spbNo}.`,
+      );
+    }
+  }
+
+  // 2. Jika nomor SPB sama tetapi memiliki lebih dari satu judul berbeda di database
+  const uniqueTitles = new Set(rows.map((r) => cleanDocNo(r.judul_spb)));
+  if (uniqueTitles.size > 1) {
+    throw new Error(
+      `Data tidak konsisten: SPB ${spbNo} memiliki lebih dari satu judul yang berbeda di database (${Array.from(uniqueTitles).join(", ")}). Mohon periksa kembali data SPB.`,
+    );
+  }
+
+  // 3. Jika nomor SPB sama tetapi judul di database berbeda dengan judul yang diminta
+  if (expectedTitle && rows.length > 0) {
+    for (const row of rows) {
+      const rowTitle = cleanDocNo(row.judul_spb);
+      if (rowTitle !== expectedTitle) {
+        throw new Error(
+          `Data tidak konsisten: Nomor SPB ${spbNo} memiliki judul "${row.judul_spb ?? "-"}" yang berbeda dengan judul yang diminta ("${judulSpb}").`,
+        );
+      }
+    }
+  }
+};
+
+/**
+ * Mengambil daftar barang detail berdasarkan nomor SPB dengan validasi STRICT.
+ * Hanya mengembalikan baris dari tabel `spb` dengan `no_spb` dan `judul_spb` yang cocok.
  */
 export const fetchDetailBySpb = async (
   spbNo: string,
   judulSpb: string | null = null,
   canViewRestricted = false,
 ): Promise<MonitoringDetailItem[]> => {
-  let spbQuery = supabaseClient
+  // 1. Ambil semua baris dengan no_spb tersebut dari tabel spb
+  const spbQuery = supabaseClient
     .from("spb")
     .select(SPB_SELECT)
     .eq("no_spb", spbNo);
-  if (judulSpb) spbQuery = spbQuery.eq("judul_spb", judulSpb);
 
-  const spbRows = filterVisibleSpbRows(
-    sortById(unwrap(await spbQuery)),
-    canViewRestricted,
-  );
-  if (spbRows.length === 0) return [];
+  const allSpbRows = sortById(unwrap(await spbQuery));
 
-  const spbIds = spbRows.map((r) => r.id);
+  // 2. Validasi STRICT: pastikan nomor SPB dan judul konsisten
+  validateStrictSpbRows(allSpbRows, spbNo, judulSpb);
 
-  const [poRes, sjRes] = await Promise.all([
-    supabaseClient
-      .from("po")
-      .select("id, no_po, tanggal_po, id_spb, source_file")
-      .in("id_spb", spbIds),
-    supabaseClient.from("surat_jalan").select(SJ_SELECT).in("id_spb", spbIds),
-  ]);
+  // 3. Filter berdasarkan judul yang diminta (jika ada)
+  const spbRows = allSpbRows.filter((r) => {
+    if (!judulSpb) return true;
+    return cleanDocNo(r.judul_spb) === cleanDocNo(judulSpb);
+  });
+
+  const filteredSpbRows = filterVisibleSpbRows(spbRows, canViewRestricted);
+  if (filteredSpbRows.length === 0) return [];
+
+  const spbIds = filteredSpbRows.map((r) => r.id);
+
+  const poRes = await supabaseClient
+    .from("po")
+    .select("id, no_po, tanggal_po, id_spb, source_file")
+    .in("id_spb", spbIds);
 
   const poBySpbId = new Map<string, Row>();
   unwrap(poRes).forEach((p) => {
@@ -154,14 +207,9 @@ export const fetchDetailBySpb = async (
     if (cleanDocNo(p.no_po) && !poBySpbId.has(key)) poBySpbId.set(key, p);
   });
 
-  const spbItems = spbRows.map((r) =>
+  return filteredSpbRows.map((r) =>
     mapSpbRow(r, poBySpbId.get(String(r.id)) ?? null),
   );
-  const sjItems = sortById(unwrap(sjRes))
-    .filter((sj) => !isIgnoredSuratJalan(sj.no_surat_jalan))
-    .map(mapSjRow);
-
-  return [...spbItems, ...sjItems];
 };
 
 /**
@@ -239,7 +287,7 @@ export const fetchSingleItemById = async (
   if (type === "po") {
     const { data, error } = await supabaseClient
       .from("po")
-      .select("*")
+      .select(`*, spb:spb!id_spb (qty_permintaan)`)
       .eq("id", id)
       .single();
     if (error) throw error;
@@ -251,7 +299,7 @@ export const fetchSingleItemById = async (
     const { data, error } = await supabaseClient
       .from("surat_jalan")
       .select(
-        `*, spb:spb!id_spb (no_spb, tgl_spb, source_file), po:po!id_po (no_po, tanggal_po, nama_supplier, source_file)`,
+        `*, spb:spb!id_spb (no_spb, tgl_spb, source_file, qty_permintaan), po:po!id_po (no_po, tanggal_po, nama_supplier, source_file)`,
       )
       .eq("id", id)
       .single();
@@ -292,4 +340,3 @@ export const fetchSingleItemById = async (
 
   return mapSingleSpbItem(data, dataPo);
 };
-

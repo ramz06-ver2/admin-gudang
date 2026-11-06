@@ -305,31 +305,25 @@ export const groupMonitoringData = ({
   });
 
   // 6. Proses Surat Jalan (no 3+)
+  // Catatan: SJ yang memiliki `id_spb` (target === "spb") TIDAK ditambahkan ke card SPB
+  // agar card SPB murni hanya berisi data dari tabel `spb` sesuai nomor & judul SPB-nya.
   sjData.forEach((sj: any) => {
     if (isIgnoredSuratJalan(sj.no_surat_jalan)) return;
 
-    const spbRel = Array.isArray(sj.spb) ? sj.spb[0] : sj.spb;
     const poRel = Array.isArray(sj.po) ? sj.po[0] : sj.po;
     const sjNo = toStrOrNull(sj.no_surat_jalan);
     const target = getSjTarget(sj);
     const idSpb = toIdNumber(sj.id_spb);
 
     if (idSpb !== null && hiddenSpbIds.has(idSpb)) return;
+    if (target === "spb") return;
 
     let targetKey: string;
-    let spbNo: string | null = null;
-    let spbTitle: string | null = null;
+    const spbNo: string | null = null;
+    const spbTitle: string | null = null;
     let poNo: string | null = null;
 
-    if (target === "spb") {
-      const parentSpb = idSpb !== null ? spbById.get(idSpb) : null;
-      spbNo = cleanDocNo(parentSpb?.no_spb) ?? cleanDocNo(spbRel?.no_spb);
-      const rawTitle =
-        toStrOrNull(parentSpb?.judul_spb) ?? toStrOrNull(spbRel?.judul_spb);
-      spbTitle =
-        rawTitle ?? (spbNo ? titleBySpbNo.get(spbNo) ?? null : null);
-      targetKey = buildSpbGroupKey(spbNo, spbTitle, sj.id_spb);
-    } else if (target === "po") {
+    if (target === "po") {
       poNo = cleanDocNo(poRel?.no_po);
       targetKey = poNo ? `PO_${poNo}` : `PO_ID_${sj.id_po}`;
     } else {

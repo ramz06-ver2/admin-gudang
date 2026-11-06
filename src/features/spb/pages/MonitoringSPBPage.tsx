@@ -1,7 +1,7 @@
 // src/features/spb/pages/MonitoringSPBPage.tsx
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Alert, Col, Empty, Row, Spin } from "antd";
+import { Alert, Col, Empty, Row, Spin, Grid } from "antd"; // 🔧 Tambahkan Grid
 import { useGetIdentity } from "@refinedev/core";
 import { canEditData } from "../../../app/providers/accessControlProvider";
 import { getVerifiedUser } from "../../../shared/lib/authGuard";
@@ -23,6 +23,10 @@ import {
 export default function MonitoringSPBPage() {
   const { data, isLoading, error, refetch } = useMonitoringSPB();
   const navigate = useNavigate();
+  
+  // 🔧 PERBAIKAN: Deteksi layar mobile/desktop
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
 
   const { data: identity } = useGetIdentity<{ role: UserRole }>();
   const userRole = identity?.role ?? getVerifiedUser()?.role ?? "user";
@@ -136,6 +140,7 @@ export default function MonitoringSPBPage() {
                 localTitles={localTitles}
                 onCardClick={handleCardClick}
                 onEditTitle={openEditModal}
+                isMobile={isMobile} // 🔧 PERBAIKAN: Kirim prop isMobile
               />
             </Col>
           ))}

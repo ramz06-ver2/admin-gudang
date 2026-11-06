@@ -15,7 +15,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 2,
@@ -33,7 +34,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 3,
@@ -51,7 +53,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 4,
@@ -69,7 +72,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 5,
@@ -87,7 +91,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 6,
@@ -105,7 +110,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 7,
@@ -123,7 +129,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Panasonic",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 8,
@@ -141,7 +148,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Sika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 9,
@@ -159,7 +167,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Damdex",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 10,
@@ -177,7 +186,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 11,
@@ -195,7 +205,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 12,
@@ -213,7 +224,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 13,
@@ -231,7 +243,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 14,
@@ -249,7 +262,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 15,
@@ -267,7 +281,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 16,
@@ -285,7 +300,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 17,
@@ -303,7 +319,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 18,
@@ -321,7 +338,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 19,
@@ -339,7 +357,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 20,
@@ -357,7 +376,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Spindo",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 21,
@@ -375,7 +395,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Spindo",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 22,
@@ -393,7 +414,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Spindo",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 23,
@@ -411,7 +433,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Spindo",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 24,
@@ -429,7 +452,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Spindo",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 25,
@@ -447,7 +471,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Ricon,FKK",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 26,
@@ -465,7 +490,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Ricon,FKK",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 27,
@@ -483,7 +509,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Ricon,FKK",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 28,
@@ -501,7 +528,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Ricon,FKK",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 29,
@@ -519,7 +547,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Ricon,FKK",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 30,
@@ -537,7 +566,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Ricon,FKK",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 31,
@@ -555,7 +585,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Ricon,FKK",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 32,
@@ -573,7 +604,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 33,
@@ -591,7 +623,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 34,
@@ -609,7 +642,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 35,
@@ -627,7 +661,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 36,
@@ -645,7 +680,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 37,
@@ -663,7 +699,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 38,
@@ -681,7 +718,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 39,
@@ -699,7 +737,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 40,
@@ -717,7 +756,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 41,
@@ -735,7 +775,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 42,
@@ -753,7 +794,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 43,
@@ -771,7 +813,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 44,
@@ -789,7 +832,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 45,
@@ -807,7 +851,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 46,
@@ -825,7 +870,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 47,
@@ -843,7 +889,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 48,
@@ -861,7 +908,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 49,
@@ -879,7 +927,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 50,
@@ -897,7 +946,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 51,
@@ -915,7 +965,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Takada",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 52,
@@ -933,7 +984,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Takada",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 53,
@@ -951,7 +1003,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 54,
@@ -969,7 +1022,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": null,
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 55,
@@ -987,7 +1041,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Andaru",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 56,
@@ -1005,7 +1060,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Andaru",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 57,
@@ -1023,7 +1079,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Andaru",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 58,
@@ -1041,7 +1098,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Supramas",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 59,
@@ -1059,7 +1117,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Supramas",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 60,
@@ -1077,7 +1136,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Supramas",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 61,
@@ -1095,7 +1155,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Supramas",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 62,
@@ -1113,7 +1174,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Supramas",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 63,
@@ -1131,7 +1193,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Supramas",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 64,
@@ -1149,7 +1212,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Supramas",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 65,
@@ -1167,7 +1231,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Supramas",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 66,
@@ -1185,7 +1250,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Supramas",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 67,
@@ -1203,7 +1269,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 68,
@@ -1221,7 +1288,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 69,
@@ -1239,7 +1307,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 70,
@@ -1257,7 +1326,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 71,
@@ -1275,7 +1345,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 72,
@@ -1293,7 +1364,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 73,
@@ -1311,7 +1383,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 74,
@@ -1329,7 +1402,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 75,
@@ -1347,7 +1421,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 76,
@@ -1365,7 +1440,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 77,
@@ -1383,7 +1459,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 78,
@@ -1401,7 +1478,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 79,
@@ -1419,7 +1497,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 80,
@@ -1437,7 +1516,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 81,
@@ -1455,7 +1535,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 82,
@@ -1473,7 +1554,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 83,
@@ -1491,7 +1573,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 84,
@@ -1509,7 +1592,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 85,
@@ -1527,7 +1611,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Chint",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 86,
@@ -1545,7 +1630,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Chint",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 87,
@@ -1563,7 +1649,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Chint",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 88,
@@ -1581,7 +1668,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 89,
@@ -1599,7 +1687,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 90,
@@ -1617,7 +1706,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 91,
@@ -1635,7 +1725,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 92,
@@ -1653,7 +1744,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 93,
@@ -1671,7 +1763,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 94,
@@ -1689,7 +1782,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Panasonic",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 95,
@@ -1707,7 +1801,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 96,
@@ -1725,7 +1820,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 97,
@@ -1743,7 +1839,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 98,
@@ -1761,7 +1858,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 99,
@@ -1779,7 +1877,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 100,
@@ -1797,7 +1896,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 101,
@@ -1815,7 +1915,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Uticon",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 102,
@@ -1833,7 +1934,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Uticon",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 103,
@@ -1851,7 +1953,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 104,
@@ -1869,7 +1972,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 105,
@@ -1887,7 +1991,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 106,
@@ -1905,7 +2010,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lakoni",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 107,
@@ -1923,7 +2029,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 108,
@@ -1941,7 +2048,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 109,
@@ -1959,7 +2067,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 110,
@@ -1977,7 +2086,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 111,
@@ -1995,7 +2105,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 112,
@@ -2013,7 +2124,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Makita",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 113,
@@ -2031,7 +2143,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: WD",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 114,
@@ -2049,7 +2162,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 115,
@@ -2067,7 +2181,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 116,
@@ -2085,7 +2200,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 117,
@@ -2103,7 +2219,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 118,
@@ -2121,7 +2238,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 119,
@@ -2139,7 +2257,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 120,
@@ -2157,7 +2276,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 121,
@@ -2175,7 +2295,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 122,
@@ -2193,7 +2314,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Nitto",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 123,
@@ -2211,7 +2333,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Nitto",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 124,
@@ -2229,7 +2352,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Nitto",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 125,
@@ -2247,7 +2371,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Nitto",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 126,
@@ -2265,7 +2390,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: 3M'",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 127,
@@ -2283,7 +2409,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Milan",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 128,
@@ -2301,7 +2428,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 129,
@@ -2319,7 +2447,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 130,
@@ -2337,7 +2466,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 131,
@@ -2355,7 +2485,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 132,
@@ -2373,7 +2504,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 133,
@@ -2391,7 +2523,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 134,
@@ -2409,7 +2542,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 135,
@@ -2427,7 +2561,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 136,
@@ -2445,7 +2580,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Makita",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 137,
@@ -2463,7 +2599,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Makita",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 138,
@@ -2481,7 +2618,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Makita",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 139,
@@ -2499,7 +2637,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Bosch",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 140,
@@ -2517,7 +2656,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Bosch",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 141,
@@ -2535,7 +2675,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Bosch",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 142,
@@ -2553,7 +2694,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Nachi",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 143,
@@ -2571,7 +2713,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Nachi",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 144,
@@ -2589,7 +2732,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Nachi",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 145,
@@ -2607,7 +2751,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: WD",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 146,
@@ -2625,7 +2770,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 147,
@@ -2643,7 +2789,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 148,
@@ -2661,7 +2808,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 149,
@@ -2679,7 +2827,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 150,
@@ -2697,7 +2846,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 151,
@@ -2715,7 +2865,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 152,
@@ -2733,7 +2884,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 153,
@@ -2751,7 +2903,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 154,
@@ -2769,7 +2922,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 155,
@@ -2787,7 +2941,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 156,
@@ -2805,7 +2960,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 157,
@@ -2823,7 +2979,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 158,
@@ -2841,7 +2998,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 159,
@@ -2859,7 +3017,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 160,
@@ -2877,7 +3036,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 161,
@@ -2895,7 +3055,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 162,
@@ -2913,7 +3074,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 163,
@@ -2931,7 +3093,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 164,
@@ -2949,7 +3112,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 165,
@@ -2967,7 +3131,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 166,
@@ -2985,7 +3150,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 167,
@@ -3003,7 +3169,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 168,
@@ -3021,7 +3188,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 169,
@@ -3039,7 +3207,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 170,
@@ -3057,7 +3226,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 171,
@@ -3075,7 +3245,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 172,
@@ -3093,7 +3264,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 173,
@@ -3111,7 +3283,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 174,
@@ -3129,7 +3302,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 175,
@@ -3147,7 +3321,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Westlake",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 176,
@@ -3165,7 +3340,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 177,
@@ -3183,7 +3359,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Kyoritsu",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 178,
@@ -3201,7 +3378,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Makita",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 179,
@@ -3219,7 +3397,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Extrana",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 180,
@@ -3237,7 +3416,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Extrana",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 181,
@@ -3255,7 +3435,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Extrana",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 182,
@@ -3273,7 +3454,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: DCA",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 183,
@@ -3291,7 +3473,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: DCA",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 184,
@@ -3309,7 +3492,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: DCA",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 185,
@@ -3327,7 +3511,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: DCA",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 186,
@@ -3345,7 +3530,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: DCA",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 187,
@@ -3363,7 +3549,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Hilda",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 188,
@@ -3381,7 +3568,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Wipro",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 189,
@@ -3399,7 +3587,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 190,
@@ -3417,7 +3606,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": null,
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 191,
@@ -3435,7 +3625,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": null,
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 192,
@@ -3453,7 +3644,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": null,
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 193,
@@ -3471,7 +3663,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": null,
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 194,
@@ -3489,7 +3682,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": null,
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 195,
@@ -3507,7 +3701,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": null,
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 196,
@@ -3525,7 +3720,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": null,
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 197,
@@ -3543,7 +3739,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": null,
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 198,
@@ -3561,7 +3758,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": null,
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 199,
@@ -3579,7 +3777,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": null,
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 200,
@@ -3597,7 +3796,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": null,
-    "created_at": "2026-10-22T01:38:43.743533+00:00"
+    "created_at": "2026-10-22T01:38:43.743533+00:00",
+    "source_file": null
   },
   {
     "id": 201,
@@ -3615,7 +3815,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": null,
-    "created_at": "2026-10-22T01:38:44.104974+00:00"
+    "created_at": "2026-10-22T01:38:44.104974+00:00",
+    "source_file": null
   },
   {
     "id": 202,
@@ -3633,7 +3834,8 @@
     "material_datang_qty": null,
     "material_datang_satuan": null,
     "keterangan": null,
-    "created_at": "2026-10-22T01:38:44.104974+00:00"
+    "created_at": "2026-10-22T01:38:44.104974+00:00",
+    "source_file": null
   },
   {
     "id": 203,
@@ -3651,7 +3853,8 @@
     "material_datang_qty": 4,
     "material_datang_satuan": "klg",
     "keterangan": "Merk: Super Glue",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 204,
@@ -3669,7 +3872,8 @@
     "material_datang_qty": 20,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 205,
@@ -3687,7 +3891,8 @@
     "material_datang_qty": 24,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 206,
@@ -3705,7 +3910,8 @@
     "material_datang_qty": 38,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 207,
@@ -3723,7 +3929,8 @@
     "material_datang_qty": 92,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 208,
@@ -3741,7 +3948,8 @@
     "material_datang_qty": 28,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 209,
@@ -3759,7 +3967,8 @@
     "material_datang_qty": 6,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 210,
@@ -3777,7 +3986,8 @@
     "material_datang_qty": 8,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 211,
@@ -3795,7 +4005,8 @@
     "material_datang_qty": 16,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 212,
@@ -3813,7 +4024,8 @@
     "material_datang_qty": 32,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 213,
@@ -3831,7 +4043,8 @@
     "material_datang_qty": 37,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 214,
@@ -3849,7 +4062,8 @@
     "material_datang_qty": 24,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 215,
@@ -3867,7 +4081,8 @@
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 216,
@@ -3885,7 +4100,8 @@
     "material_datang_qty": 8,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 217,
@@ -3903,7 +4119,8 @@
     "material_datang_qty": 8,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 218,
@@ -3921,7 +4138,8 @@
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 219,
@@ -3939,7 +4157,8 @@
     "material_datang_qty": 37,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 220,
@@ -3957,7 +4176,8 @@
     "material_datang_qty": 35,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 221,
@@ -3975,7 +4195,8 @@
     "material_datang_qty": 30,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 222,
@@ -3993,7 +4214,8 @@
     "material_datang_qty": 42,
     "material_datang_satuan": "btg",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 223,
@@ -4011,7 +4233,8 @@
     "material_datang_qty": 60,
     "material_datang_satuan": "pcs",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 224,
@@ -4029,7 +4252,8 @@
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 225,
@@ -4047,7 +4271,8 @@
     "material_datang_qty": 20,
     "material_datang_satuan": "roll",
     "keterangan": "Merk: LS",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 226,
@@ -4065,7 +4290,8 @@
     "material_datang_qty": 32,
     "material_datang_satuan": "btg",
     "keterangan": "Merk: Armaflex",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 227,
@@ -4083,7 +4309,8 @@
     "material_datang_qty": 32,
     "material_datang_satuan": "btg",
     "keterangan": "Merk: Armaflex",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 228,
@@ -4101,7 +4328,8 @@
     "material_datang_qty": 128,
     "material_datang_satuan": "btg",
     "keterangan": "Merk: Armaflex",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 229,
@@ -4119,7 +4347,8 @@
     "material_datang_qty": 84,
     "material_datang_satuan": "btg",
     "keterangan": "Merk: Armaflex",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 230,
@@ -4137,7 +4366,8 @@
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: VPG",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 231,
@@ -4155,7 +4385,8 @@
     "material_datang_qty": 3,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Yuta",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 232,
@@ -4173,7 +4404,8 @@
     "material_datang_qty": 3,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Yuta",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 233,
@@ -4191,7 +4423,8 @@
     "material_datang_qty": 1500,
     "material_datang_satuan": "M'",
     "keterangan": "Merk: Supreme",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 234,
@@ -4209,7 +4442,8 @@
     "material_datang_qty": 100,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 235,
@@ -4227,7 +4461,8 @@
     "material_datang_qty": 80,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 236,
@@ -4245,7 +4480,8 @@
     "material_datang_qty": 200,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 237,
@@ -4263,7 +4499,8 @@
     "material_datang_qty": 200,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 238,
@@ -4281,7 +4518,8 @@
     "material_datang_qty": 60,
     "material_datang_satuan": "M'",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 239,
@@ -4299,7 +4537,8 @@
     "material_datang_qty": 100,
     "material_datang_satuan": "M'",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 240,
@@ -4317,7 +4556,8 @@
     "material_datang_qty": 1,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Tekiro",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 241,
@@ -4335,7 +4575,8 @@
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Sandflex",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 242,
@@ -4353,7 +4594,8 @@
     "material_datang_qty": 25,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: WD",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 243,
@@ -4371,7 +4613,8 @@
     "material_datang_qty": 150,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 244,
@@ -4389,7 +4632,8 @@
     "material_datang_qty": 200,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Belden",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 245,
@@ -4407,7 +4651,8 @@
     "material_datang_qty": 800,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Belden",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 246,
@@ -4425,7 +4670,8 @@
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 247,
@@ -4443,7 +4689,8 @@
     "material_datang_qty": 30,
     "material_datang_satuan": "Pak",
     "keterangan": "Merk: WD",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 248,
@@ -4461,7 +4708,8 @@
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 249,
@@ -4479,7 +4727,8 @@
     "material_datang_qty": 1,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Belden",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 250,
@@ -4497,7 +4746,8 @@
     "material_datang_qty": 1,
     "material_datang_satuan": "unit",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 251,
@@ -4515,7 +4765,8 @@
     "material_datang_qty": 5,
     "material_datang_satuan": "btg",
     "keterangan": "Merk: Spindo",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 252,
@@ -4533,7 +4784,8 @@
     "material_datang_qty": 7,
     "material_datang_satuan": "btg",
     "keterangan": "Merk: Spindo",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 253,
@@ -4551,7 +4803,8 @@
     "material_datang_qty": 6,
     "material_datang_satuan": "btg",
     "keterangan": "Merk: Spindo",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 254,
@@ -4569,7 +4822,8 @@
     "material_datang_qty": 20,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Ricon,FKK",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 255,
@@ -4587,7 +4841,8 @@
     "material_datang_qty": 8,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Ricon.FKK",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 256,
@@ -4605,7 +4860,8 @@
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Ricon.FKK",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 257,
@@ -4623,7 +4879,8 @@
     "material_datang_qty": 55,
     "material_datang_satuan": "btg",
     "keterangan": "Merk: Supramas",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 258,
@@ -4641,7 +4898,8 @@
     "material_datang_qty": 15,
     "material_datang_satuan": "btg",
     "keterangan": "Merk: Supramas",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 259,
@@ -4659,7 +4917,8 @@
     "material_datang_qty": 22,
     "material_datang_satuan": "btg",
     "keterangan": "Merk: Supramas",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 260,
@@ -4677,7 +4936,8 @@
     "material_datang_qty": 20,
     "material_datang_satuan": "btg",
     "keterangan": "Merk: Supramas",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 261,
@@ -4695,7 +4955,8 @@
     "material_datang_qty": 15,
     "material_datang_satuan": "btg",
     "keterangan": "Merk: Supramas",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 262,
@@ -4713,7 +4974,8 @@
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 263,
@@ -4731,7 +4993,8 @@
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 264,
@@ -4749,7 +5012,8 @@
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 265,
@@ -4767,7 +5031,8 @@
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 266,
@@ -4785,7 +5050,8 @@
     "material_datang_qty": 6,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 267,
@@ -4803,7 +5069,8 @@
     "material_datang_qty": 15,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 268,
@@ -4821,7 +5088,8 @@
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 269,
@@ -4839,7 +5107,8 @@
     "material_datang_qty": 20,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 270,
@@ -4857,7 +5126,8 @@
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 271,
@@ -4875,7 +5145,8 @@
     "material_datang_qty": 6,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 272,
@@ -4893,7 +5164,8 @@
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 273,
@@ -4911,7 +5183,8 @@
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 274,
@@ -4929,7 +5202,8 @@
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 275,
@@ -4947,7 +5221,8 @@
     "material_datang_qty": 30,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 276,
@@ -4965,7 +5240,8 @@
     "material_datang_qty": 30,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 277,
@@ -4983,7 +5259,8 @@
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 278,
@@ -5001,7 +5278,8 @@
     "material_datang_qty": 9,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 279,
@@ -5019,7 +5297,8 @@
     "material_datang_qty": 40,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 280,
@@ -5037,7 +5316,8 @@
     "material_datang_qty": 50,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 281,
@@ -5055,7 +5335,8 @@
     "material_datang_qty": 50,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 282,
@@ -5073,7 +5354,8 @@
     "material_datang_qty": 60,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 283,
@@ -5091,7 +5373,8 @@
     "material_datang_qty": 50,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 284,
@@ -5109,7 +5392,8 @@
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 285,
@@ -5127,7 +5411,8 @@
     "material_datang_qty": 8,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 286,
@@ -5145,7 +5430,8 @@
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 287,
@@ -5163,7 +5449,8 @@
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 288,
@@ -5181,7 +5468,8 @@
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 289,
@@ -5199,7 +5487,8 @@
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 290,
@@ -5217,7 +5506,8 @@
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 291,
@@ -5235,7 +5525,8 @@
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 292,
@@ -5253,7 +5544,8 @@
     "material_datang_qty": 1,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 293,
@@ -5271,7 +5563,8 @@
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 294,
@@ -5289,7 +5582,8 @@
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 295,
@@ -5307,7 +5601,8 @@
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 296,
@@ -5325,7 +5620,8 @@
     "material_datang_qty": 5,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 297,
@@ -5343,7 +5639,8 @@
     "material_datang_qty": 5,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 298,
@@ -5361,7 +5658,8 @@
     "material_datang_qty": 5,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 299,
@@ -5379,7 +5677,8 @@
     "material_datang_qty": 3,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 300,
@@ -5397,7 +5696,8 @@
     "material_datang_qty": 5,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Rucika",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 301,
@@ -5415,7 +5715,8 @@
     "material_datang_qty": 3,
     "material_datang_satuan": "psg",
     "keterangan": "Merk: Setara",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 302,
@@ -5433,7 +5734,8 @@
     "material_datang_qty": 1,
     "material_datang_satuan": "psg",
     "keterangan": "Merk: Setara",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 303,
@@ -5451,7 +5753,8 @@
     "material_datang_qty": 2,
     "material_datang_satuan": "psg",
     "keterangan": "Merk: Setara",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 304,
@@ -5469,7 +5772,8 @@
     "material_datang_qty": 8,
     "material_datang_satuan": "psg",
     "keterangan": "Merk: AP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 305,
@@ -5487,7 +5791,8 @@
     "material_datang_qty": 10,
     "material_datang_satuan": "psg",
     "keterangan": "Merk: AP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 306,
@@ -5505,7 +5810,8 @@
     "material_datang_qty": 5,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 307,
@@ -5523,7 +5829,8 @@
     "material_datang_qty": 5,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 308,
@@ -5541,7 +5848,8 @@
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 309,
@@ -5559,7 +5867,8 @@
     "material_datang_qty": 5,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 310,
@@ -5577,7 +5886,8 @@
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 311,
@@ -5595,7 +5905,8 @@
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 312,
@@ -5613,7 +5924,8 @@
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: TSP",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 313,
@@ -5631,7 +5943,8 @@
     "material_datang_qty": 1,
     "material_datang_satuan": "set",
     "keterangan": "Merk: Value",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 314,
@@ -5649,7 +5962,8 @@
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Value",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 315,
@@ -5667,7 +5981,8 @@
     "material_datang_qty": 1,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Value",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 316,
@@ -5685,7 +6000,8 @@
     "material_datang_qty": 1,
     "material_datang_satuan": "set",
     "keterangan": "Merk: Value",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 317,
@@ -5703,7 +6019,8 @@
     "material_datang_qty": 1,
     "material_datang_satuan": "set",
     "keterangan": "Merk: Kyuoritsu",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 318,
@@ -5721,7 +6038,8 @@
     "material_datang_qty": 100,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 319,
@@ -5739,7 +6057,8 @@
     "material_datang_qty": 20,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 320,
@@ -5757,7 +6076,8 @@
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 321,
@@ -5775,7 +6095,8 @@
     "material_datang_qty": 1,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 322,
@@ -5793,7 +6114,8 @@
     "material_datang_qty": 1,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Kyuoritsu",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 323,
@@ -5811,7 +6133,8 @@
     "material_datang_qty": 1,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 324,
@@ -5829,7 +6152,8 @@
     "material_datang_qty": 20,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 325,
@@ -5847,7 +6171,8 @@
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 326,
@@ -5865,7 +6190,8 @@
     "material_datang_qty": 20,
     "material_datang_satuan": "pak",
     "keterangan": "Merk: Setara",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 327,
@@ -5883,7 +6209,8 @@
     "material_datang_qty": 4,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 328,
@@ -5901,7 +6228,8 @@
     "material_datang_qty": 1,
     "material_datang_satuan": "set",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 329,
@@ -5919,7 +6247,8 @@
     "material_datang_qty": 75,
     "material_datang_satuan": "roll",
     "keterangan": "Merk: Blumen",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 330,
@@ -5937,7 +6266,8 @@
     "material_datang_qty": 1,
     "material_datang_satuan": "unit",
     "keterangan": "Merk: Value",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 331,
@@ -5955,7 +6285,8 @@
     "material_datang_qty": 100,
     "material_datang_satuan": "btg",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 332,
@@ -5973,7 +6304,8 @@
     "material_datang_qty": 1,
     "material_datang_satuan": "set",
     "keterangan": "Merk: Setara",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 333,
@@ -5991,7 +6323,8 @@
     "material_datang_qty": 2,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Weflo",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 334,
@@ -6009,7 +6342,8 @@
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Yuta",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 335,
@@ -6027,7 +6361,8 @@
     "material_datang_qty": 2,
     "material_datang_satuan": "set",
     "keterangan": "Merk: Midea",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 336,
@@ -6045,7 +6380,8 @@
     "material_datang_qty": 2,
     "material_datang_satuan": "unit",
     "keterangan": "Merk: ",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 337,
@@ -6063,7 +6399,8 @@
     "material_datang_qty": 2,
     "material_datang_satuan": "unit",
     "keterangan": "Merk: ",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 338,
@@ -6081,7 +6418,8 @@
     "material_datang_qty": 2,
     "material_datang_satuan": "roll",
     "keterangan": "Merk: ",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 339,
@@ -6099,7 +6437,8 @@
     "material_datang_qty": 2,
     "material_datang_satuan": "roll",
     "keterangan": "Merk: ",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   },
   {
     "id": 340,
@@ -6117,6 +6456,7 @@
     "material_datang_qty": 10,
     "material_datang_satuan": "bh",
     "keterangan": "Merk: Lokal",
-    "created_at": "2026-10-22T01:38:43.219536+00:00"
+    "created_at": "2026-10-22T01:38:43.219536+00:00",
+    "source_file": null
   }
 ]

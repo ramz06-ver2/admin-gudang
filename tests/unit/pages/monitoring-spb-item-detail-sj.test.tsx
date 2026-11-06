@@ -110,7 +110,7 @@ describe("MonitoringSPBDetailPage - Surat Jalan murni (SJ 3)", () => {
 });
 
 describe("MonitoringSPBDetailPage - card SPB dan PO", () => {
-  it("card SPB: barang SPB + barang Surat Jalan (no 3+) milik SPB tersebut", async () => {
+  it("card SPB: hanya menampilkan barang dari tabel SPB tanpa menduplikasi baris Surat Jalan", async () => {
     fakeDb.tables.spb = [
       { id: 1, no_spb: "63#R1", judul_spb: "Listrik Gudang", nama_barang_spb: "Kabel NYM", qty_permintaan: 5, satuan: "roll", po: null },
     ];
@@ -121,9 +121,9 @@ describe("MonitoringSPBDetailPage - card SPB dan PO", () => {
 
     renderAt("/monitoring-spb/detail?spb=63%23R1");
 
-    expect(await screen.findByText("Daftar Barang (2)")).toBeInTheDocument();
+    expect(await screen.findByText("Daftar Barang (1)")).toBeInTheDocument();
     expect(screen.getByText("Kabel NYM")).toBeInTheDocument();
-    expect(screen.getByText("Stop kontak")).toBeInTheDocument();
+    expect(screen.queryByText("Stop kontak")).not.toBeInTheDocument();
     expect(screen.queryByText("SJ 2 diabaikan")).not.toBeInTheDocument();
     expect(screen.getByText("Belum di PO")).toBeInTheDocument();
   });

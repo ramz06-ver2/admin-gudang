@@ -91,20 +91,19 @@ describe("Detail card SPB", () => {
     expect(items[0]).toMatchObject({ no_po: "PO-80", status: "Sudah PO" });
   });
 
-  it("menambahkan barang Surat Jalan (no 3+) yang punya id_spb ke card SPB, SJ no 1 & 2 diabaikan", async () => {
+  it("hanya menampilkan barang dari tabel spb (mengabaikan baris surat_jalan agar tidak duplikat)", async () => {
     fakeDb.tables.spb = [{ id: 1, no_spb: "63#R1", nama_barang_spb: "Barang SPB" }];
     fakeDb.tables.surat_jalan = [
       { id: 10, no_surat_jalan: "1", id_spb: 1, nama_barang: "SJ 1 (diabaikan)" },
       { id: 11, no_surat_jalan: "2", id_spb: 1, nama_barang: "SJ 2 (diabaikan)" },
-      { id: 12, no_surat_jalan: "3", id_spb: 1, nama_barang: "SJ 3 masuk SPB", spb: { no_spb: "63#R1" } },
-      { id: 13, no_surat_jalan: "12", id_spb: 1, nama_barang: "SJ 12 masuk SPB" },
+      { id: 12, no_surat_jalan: "3", id_spb: 1, nama_barang: "SJ 3 duplikat", spb: { no_spb: "63#R1" } },
+      { id: 13, no_surat_jalan: "12", id_spb: 1, nama_barang: "SJ 12 duplikat" },
     ];
 
     const { items } = await loadDetail("63#R1", null);
 
-    expect(names(items)).toEqual(["Barang SPB", "SJ 3 masuk SPB", "SJ 12 masuk SPB"]);
-    expect(items.map((i) => i.sumber)).toEqual(["spb", "sj", "sj"]);
-    expect(items[1].no_spb).toBe("63#R1");
+    expect(names(items)).toEqual(["Barang SPB"]);
+    expect(items.map((i) => i.sumber)).toEqual(["spb"]);
   });
 
   it("tidak menampilkan Surat Jalan milik SPB lain", async () => {
@@ -120,12 +119,13 @@ describe("Detail card SPB", () => {
     expect(names(items)).toEqual(["A"]);
   });
 
-  it("memberi key unik walau id SPB dan id SJ sama", async () => {
+  it("hanya mengembalikan item SPB dengan key unik 'spb-{id}'", async () => {
     fakeDb.tables.spb = [{ id: 1, no_spb: "63#R1", nama_barang_spb: "A" }];
     fakeDb.tables.surat_jalan = [{ id: 1, no_surat_jalan: "3", id_spb: 1, nama_barang: "B" }];
 
     const { items } = await loadDetail("63#R1", null);
-    expect(new Set(items.map((i) => i.key)).size).toBe(2);
+    expect(items).toHaveLength(1);
+    expect(items[0].key).toBe("spb-1");
   });
 
   it("mengembalikan array kosong jika SPB tidak ditemukan", async () => {
