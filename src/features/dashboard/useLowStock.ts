@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { USE_MOCK } from "../../shared/lib/config";
+import { QUERY_KEYS, STALE_TIMES } from "../../shared/lib/queryKeys";
 import { mockLowStockProducts } from "../../mocks/products";
 import { mapProduct } from "../../shared/lib/mappers";
 import type { Product } from "../../shared/types";
@@ -10,7 +11,8 @@ const LOW_STOCK_THRESHOLD = 5;
 
 export const useLowStock = (limit = 5) => {
   const { data, isLoading, refetch } = useQuery<Product[]>({
-    queryKey: ["low-stock", limit],
+    queryKey: QUERY_KEYS.lowStock(limit),
+    staleTime: STALE_TIMES.LOW_STOCK,
     queryFn: async () => {
       if (USE_MOCK) {
         await new Promise((r) => setTimeout(r, 300));

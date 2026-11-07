@@ -10,7 +10,7 @@ vi.mock("@/shared/lib/supabaseClient", async () => {
 });
 
 import { fakeDb } from "../../utils/fakeSupabase";
-import { useMonitoringSPBDetail } from "@/features/spb/useMonitoringSPBDetail";
+import { useMonitoringSPBDetail } from "@/features/spb/spb-monitoring/useMonitoringSPBDetail";
 
 function wrapper({ children }: { children: ReactNode }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });

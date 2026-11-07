@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { SPBItemDetail } from "../../shared/types";
+import type { SPBItemDetail } from "../../../shared/types";
 
 export type FilterType =
   | "Semua"

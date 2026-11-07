@@ -4,7 +4,7 @@ import {
   isRestrictedSpbStatus,
   toSafeExternalUrl,
   canViewRestrictedSpb,
-} from "@/features/spb/accessRules";
+} from "@/features/spb/spb-monitoring/accessRules";
 import { STORAGE_KEY } from "@/app/providers/authProvider";
 
 describe("accessRules - SPB 'belum di proses'", () => {

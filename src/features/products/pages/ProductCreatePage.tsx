@@ -6,6 +6,7 @@ import dayjs from "dayjs";
 import { supabaseClient } from "../../../shared/lib/supabaseClient";
 import { USE_MOCK } from "../../../shared/lib/config";
 import { requirePermission } from "../../../shared/lib/authGuard";
+import { invalidateOnMutation } from "../../../shared/lib/queryKeys";
 import { useProductSearch } from "../useProductSearch";
 import { useDebounce } from "../../../shared/hooks/useDebounce";
 import { formatNumber, formatDate } from "../../../shared/lib/format";
@@ -55,8 +56,7 @@ export const ProductCreatePage = () => {
       form.resetFields();
       setSelectedProduct(null);
       setKeyword("");
-      await queryClient.invalidateQueries({ queryKey: ["products"] });
-      await queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      await invalidateOnMutation(queryClient, "stock-in");
     } catch (err: any) {
       message.error(err?.message || "Gagal menyimpan data barang masuk");
     } finally {

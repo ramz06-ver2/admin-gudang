@@ -1,5 +1,5 @@
 // src/features/spb/utils/mapDetailRows.ts
-import type { SPBItemDetail } from "../../../shared/types";
+import type { SPBItemDetail } from "../../../../shared/types";
 import { cleanDocNo } from "../suratJalanRules";
 import type { MonitoringDetailItem } from "../types";
 import { calcLamaProses } from "./statusHelpers";
@@ -119,10 +119,12 @@ export const mapPoRow = (row: Row): MonitoringDetailItem => {
 };
 
 // 🔧 PERBAIKAN: mapSjRow sekarang menghitung status berdasarkan qty_permintaan dari SPB
+// dan menggunakan fallback tanggal_surat_jalan bila material_datang_tgl kosong (mis. SJ 1 & SJ 2)
 export const mapSjRow = (row: Row): MonitoringDetailItem => {
   const spb = first(row.spb);
   const po = first(row.po);
-  const tgl: string | null = row.material_datang_tgl || null;
+  const tgl: string | null =
+    row.material_datang_tgl || row.tanggal_surat_jalan || null;
   const arr = numOrZero(row.material_datang_qty ?? row.jumlah);
   const req =
     spb?.qty_permintaan !== undefined && spb?.qty_permintaan !== null

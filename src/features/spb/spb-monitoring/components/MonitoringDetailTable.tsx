@@ -1,7 +1,7 @@
 // src/features/spb/components/MonitoringDetailTable.tsx
 import { Button, Card, Space, Table, Tag, Typography } from "antd";
 import { InfoCircleOutlined } from "@ant-design/icons";
-import { formatDate } from "../../../shared/lib/format";
+import { formatDate } from "../../../../shared/lib/format";
 import type { MonitoringDetailItem } from "../types";
 import { getDetailStatusColor } from "../utils/statusHelpers";
 

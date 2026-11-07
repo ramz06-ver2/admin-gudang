@@ -2,13 +2,15 @@ import { useQuery } from "@tanstack/react-query";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { USE_MOCK } from "../../shared/lib/config";
+import { QUERY_KEYS, STALE_TIMES } from "../../shared/lib/queryKeys";
 import { mockProducts } from "../../mocks/products";
 import { mapProduct } from "../../shared/lib/mappers";
 import type { Product } from "../../shared/types";
 
 export const useProducts = (category?: string) => {
   const { data, isLoading, refetch } = useQuery<Product[]>({
-    queryKey: ["products", category ?? "all"],
+    queryKey: QUERY_KEYS.products(category),
+    staleTime: STALE_TIMES.PRODUCTS,
     queryFn: async () => {
       if (USE_MOCK) {
         await new Promise((r) => setTimeout(r, 300));

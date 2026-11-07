@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { USE_MOCK } from "../../shared/lib/config";
+import { QUERY_KEYS, STALE_TIMES } from "../../shared/lib/queryKeys";
 import { mockStockExits } from "../../mocks/stockExitList";
 import { mapStockExits } from "../../shared/lib/mappers";
 import type { StockExit } from "../../shared/types";
@@ -11,7 +12,8 @@ interface Options { onlyToday?: boolean; breakdown?: boolean; limit?: number; }
 
 export const useStockExits = ({ onlyToday = false, breakdown, limit = 50 }: Options = {}) => {
   const { data, isLoading, refetch } = useQuery<StockExit[]>({
-    queryKey: ["stock-exits", onlyToday, breakdown, limit],
+    queryKey: QUERY_KEYS.stockExits(onlyToday, breakdown, limit),
+    staleTime: STALE_TIMES.STOCK_EXITS,
     queryFn: async () => {
       if (USE_MOCK) return mockStockExits;
       let query = supabaseClient.from(TABLES.stockExits).select("*").order("created_at", { ascending: false });

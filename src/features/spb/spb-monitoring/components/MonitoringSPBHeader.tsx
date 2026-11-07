@@ -1,7 +1,7 @@
 // src/features/spb/components/MonitoringSPBHeader.tsx
 import { Space, Typography } from "antd";
 import { FileTextOutlined } from "@ant-design/icons";
-import { formatFullDate } from "../../../shared/lib/format";
+import { formatFullDate } from "../../../../shared/lib/format";
 
 const { Title, Text } = Typography;
 

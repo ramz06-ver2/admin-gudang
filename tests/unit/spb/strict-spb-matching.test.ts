@@ -6,9 +6,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { App as AntdApp, ConfigProvider } from "antd";
 
-import { fetchDetailBySpb, validateStrictSpbRows } from "@/features/spb/api";
-import { groupMonitoringData } from "@/features/spb/utils/groupMonitoringData";
-import { MonitoringSPBDetailPage } from "@/features/spb/pages/MonitoringSPBDetailPage";
+import { fetchDetailBySpb, validateStrictSpbRows } from "@/features/spb/spb-monitoring/api";
+import { groupMonitoringData } from "@/features/spb/spb-monitoring/utils/groupMonitoringData";
+import { MonitoringSPBDetailPage } from "@/features/spb/spb-monitoring/pages/MonitoringSPBDetailPage";
 
 import tabelSpb from "../../../cjs/tabel_spb.json";
 import tabelPo from "../../../cjs/tabel_po.json";

@@ -11,7 +11,7 @@ vi.mock("@/shared/lib/supabaseClient", async () => {
 });
 
 import { fakeDb } from "../../utils/fakeSupabase";
-import { MonitoringSPBDetailPage } from "@/features/spb/pages/MonitoringSPBDetailPage";
+import { MonitoringSPBDetailPage } from "@/features/spb/spb-monitoring/pages/MonitoringSPBDetailPage";
 
 /** Menampilkan URL tujuan navigasi agar bisa dicek di test. */
 function LocationProbe() {

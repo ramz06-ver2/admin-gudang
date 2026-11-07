@@ -83,9 +83,10 @@ const EntryPage = lazy(() => import("../features/stock-out/pages/EntryPage"));
 const InventoryPage = lazy(() => import("../features/products/pages/InventoryPage"));
 const LoginPage = lazy(() => import("../features/auth/pages/LoginPage"));
 const NotificationsPage = lazy(() => import("../features/auth/pages/NotificationsPage"));
-const MonitoringSPBPage = lazy(() => import("../features/spb/pages/MonitoringSPBPage"));
-const MonitoringSPBDetailPage = lazy(() => import("../features/spb/pages/MonitoringSPBDetailPage"));
-const MonitoringSPBItemDetailPage = lazy(() => import("../features/spb/pages/MonitoringSPBItemDetailPage"));
+const MonitoringSPBPage = lazy(() => import("../features/spb/spb-monitoring/pages/MonitoringSPBPage"));
+const MonitoringSPBDetailPage = lazy(() => import("../features/spb/spb-monitoring/pages/MonitoringSPBDetailPage"));
+const MonitoringSPBItemDetailPage = lazy(() => import("../features/spb/spb-monitoring/pages/MonitoringSPBItemDetailPage"));
+const SpbAnalyticsPage = lazy(() => import("../features/spb/analytics-spb/pages/SpbAnalyticsPage"));
 const ProductCreatePage = lazy(() => import("../features/products/pages/ProductCreatePage"));
 
 const PageLoader = () => (
@@ -126,6 +127,7 @@ function App() {
                   
                   {/* 🔧 Monitoring SPB dikembalikan ke publik agar bisa dilihat, fitur edit akan dibatasi di dalam UI */}
                   <Route path="/monitoring-spb" element={<MonitoringSPBPage />} />
+                  <Route path="/monitoring-spb/analytics" element={<SpbAnalyticsPage />} /> 
                   <Route path="/monitoring-spb/detail" element={<MonitoringSPBDetailPage />} />
                   <Route path="/monitoring-spb/item/:id" element={<MonitoringSPBItemDetailPage />} />
                 </Route>
@@ -1375,7 +1377,7 @@ import {
   cleanSpbTitle,
   isKeteranganBarang,
   resolveSpbItemStatus,
-} from "../spb/suratJalanRules";
+} from "../spb/spb-monitoring/suratJalanRules";
 import {
   canApproveAccounts,
   canEditData,
@@ -3867,8 +3869,835 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/reports/pages/Report
 
 
 ================================================================================
-FILE: ../src/features/spb/accessRules.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/accessRules.ts
+FILE: ../src/features/spb/analytics-spb/components/SpbAnalyticsButton.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/analytics-spb/components/SpbAnalyticsButton.tsx
+================================================================================
+
+import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { BarChartOutlined } from "@ant-design/icons";
+import { Tooltip } from "antd";
+import { BAR_COLORS, useSpbAnalytics } from "../useSpbAnalytics";
+
+export const SpbAnalyticsButton = () => {
+  const navigate = useNavigate();
+  const { data } = useSpbAnalytics();
+
+  const { gradient, hasData, tooltipText } = useMemo(() => {
+    if (!data) {
+      return { gradient: "#e6ebf1", hasData: false, tooltipText: "Memuat analitik..." };
+    }
+
+    const values = data.barData.map((b) => b.value);
+    const sum = values.reduce((s, v) => s + v, 0);
+
+    if (sum === 0) {
+      return { gradient: "#e6ebf1", hasData: false, tooltipText: "Belum ada data SPB" };
+    }
+
+    const pctA = (values[0] / sum) * 100;
+    const pctB = (values[1] / sum) * 100;
+    const pctC = (values[2] / sum) * 100;
+
+    const gradient = `conic-gradient(
+      ${BAR_COLORS.diajukan} 0% ${pctA}%,
+      ${BAR_COLORS.po} ${pctA}% ${pctA + pctB}%,
+      ${BAR_COLORS.datang} ${pctA + pctB}% 100%
+    )`;
+
+    return {
+      gradient,
+      hasData: true,
+      tooltipText: (
+        <div style={{ fontSize: 13, lineHeight: 1.8 }}>
+          <div style={{ color: BAR_COLORS.diajukan }}>● Diajukan: <strong>{pctA.toFixed(1)}%</strong></div>
+          <div style={{ color: BAR_COLORS.po }}>● Sudah PO: <strong>{pctB.toFixed(1)}%</strong></div>
+          <div style={{ color: BAR_COLORS.datang }}>● Sudah Datang: <strong>{pctC.toFixed(1)}%</strong></div>
+        </div>
+      ),
+    };
+  }, [data]);
+
+  return (
+    <div style={{ position: "fixed", right: 32, bottom: 100, zIndex: 1200 }}>
+      <Tooltip title={tooltipText} placement="left">
+        <div
+          role="button"
+          aria-label="Buka analitik SPB"
+          data-testid="spb-analytics-button"
+          onClick={() => navigate("/monitoring-spb/analytics")}
+          style={{
+            width: 102,        // ✅ Dibesarkan 50% dari 68px
+            height: 102,
+            borderRadius: "50%",
+            background: hasData ? gradient : "#e6ebf1",
+            padding: 8,        // Proporsional dengan ukuran
+            cursor: "pointer",
+            boxShadow: "0 8px 30px rgba(22, 119, 255, 0.35)",
+            transition: "transform 0.2s ease",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.08)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
+        >
+          <div
+            style={{
+              width: "100%",
+              height: "100%",
+              borderRadius: "50%",
+              background: "#ffffff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 36,     // Ikon lebih besar
+              color: "#1677ff",
+            }}
+          >
+            <BarChartOutlined />
+          </div>
+        </div>
+      </Tooltip>
+    </div>
+  );
+};
+
+================================================================================
+FILE: ../src/features/spb/analytics-spb/components/SpbbarChart.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/analytics-spb/components/SpbbarChart.tsx
+================================================================================
+
+import { formatNumber } from "../../../../shared/lib/format";
+import type { SpbBarItem } from "../useSpbAnalytics";
+import { niceTicks, useContainerWidth } from "../hooks/useContainerWidth";
+
+/** 3 batang, 3 warna gradasi (kuning-oranye, cyan-biru, hijau). */
+const GRADIENTS: Record<string, [string, string]> = {
+  Diajukan: ["#ffe94d", "#f57c00"],
+  "Sudah PO": ["#4ee9ff", "#2b55e6"],
+  "Sudah Datang": ["#b6f75a", "#18a24a"],
+};
+const FALLBACK: [string, string] = ["#a78bfa", "#6d28d9"];
+
+const THEME = {
+  bg: "#071a33",
+  grid: "#16376b",
+  axis: "#1d4ed8",
+  tick: "#cbd5e1",
+  label: "#9fb0c8",
+};
+
+interface Props {
+  data: SpbBarItem[];
+  height?: number;
+}
+
+export const SpbBarChart = ({ data, height = 360 }: Props) => {
+  const { ref, width } = useContainerWidth<HTMLDivElement>(700);
+
+  const m = { top: 64, right: 28, bottom: 52, left: 56 };
+  const plotW = width - m.left - m.right;
+  const plotH = height - m.top - m.bottom;
+
+  const maxVal = Math.max(0, ...data.map((d) => d.value));
+  const ticks = niceTicks(maxVal);
+  const yMax = ticks[ticks.length - 1] || 1;
+  const y = (v: number) => m.top + plotH - (v / yMax) * plotH;
+
+  const slot = plotW / Math.max(1, data.length);
+  const barW = Math.min(64, slot * 0.38);
+
+  return (
+    <div
+      ref={ref}
+      style={{ background: THEME.bg, borderRadius: 12, padding: "4px 0", width: "100%" }}
+    >
+      <svg width={width} height={height} role="img" aria-label="Diagram batang distribusi barang SPB">
+        <style>{`
+          @keyframes spbGrow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+          .spb-bar { transform-box: fill-box; transform-origin: bottom; animation: spbGrow .7s cubic-bezier(.2,.8,.2,1) both; }
+        `}</style>
+
+        <defs>
+          {data.map((d) => {
+            const [top, bottom] = GRADIENTS[d.label] ?? FALLBACK;
+            return (
+              <linearGradient key={d.label} id={`spb-grad-${d.label.replace(/\s/g, "")}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={top} />
+                <stop offset="100%" stopColor={bottom} />
+              </linearGradient>
+            );
+          })}
+        </defs>
+
+        {/* Legend (kanan atas) */}
+        <g transform={`translate(${width - m.right}, 26)`} textAnchor="end">
+          {[...data].reverse().reduce<{ els: JSX.Element[]; x: number }>(
+            (acc, d) => {
+              const w = d.label.length * 7.2 + 36;
+              const x = acc.x - w;
+              acc.els.push(
+                <g key={d.label} transform={`translate(${x}, 0)`}>
+                  <rect width={22} height={14} rx={4} y={-11} fill={`url(#spb-grad-${d.label.replace(/\s/g, "")})`} />
+                  <text x={30} fontSize={13} fontWeight={600} fill={THEME.label} textAnchor="start">
+                    {d.label}
+                  </text>
+                </g>,
+              );
+              return { els: acc.els, x };
+            },
+            { els: [], x: 0 },
+          ).els}
+        </g>
+
+        {/* Grid putus-putus + label sumbu Y */}
+        {ticks.map((t) => (
+          <g key={t}>
+            <line
+              x1={m.left}
+              x2={width - m.right}
+              y1={y(t)}
+              y2={y(t)}
+              stroke={THEME.grid}
+              strokeDasharray="6 5"
+              strokeWidth={1}
+            />
+            <text x={m.left - 12} y={y(t) + 4} textAnchor="end" fontSize={13} fill={THEME.tick}>
+              {formatNumber(t)}
+            </text>
+          </g>
+        ))}
+
+        {/* Garis sumbu */}
+        <line x1={m.left} x2={m.left} y1={m.top - 6} y2={m.top + plotH} stroke={THEME.axis} strokeWidth={2} />
+        <line x1={m.left} x2={width - m.right} y1={m.top + plotH} y2={m.top + plotH} stroke={THEME.axis} strokeWidth={2} />
+
+        {/* Batang */}
+        {data.map((d, i) => {
+          const cx = m.left + slot * i + slot / 2;
+          const h = Math.max(d.value > 0 ? 6 : 0, m.top + plotH - y(d.value));
+          const top = m.top + plotH - h;
+          return (
+            <g key={d.label}>
+              {d.value > 0 && (
+                <rect
+                  className="spb-bar"
+                  x={cx - barW / 2}
+                  y={top}
+                  width={barW}
+                  height={h}
+                  rx={Math.min(barW / 2, h / 2)}
+                  fill={`url(#spb-grad-${d.label.replace(/\s/g, "")})`}
+                  style={{ animationDelay: `${i * 120}ms` }}
+                >
+                  <title>{`${d.label}: ${formatNumber(d.value)} item`}</title>
+                </rect>
+              )}
+              <text x={cx} y={top - 10} textAnchor="middle" fontSize={16} fontWeight={700} fill="#ffffff">
+                {formatNumber(d.value)}
+              </text>
+              <text x={cx} y={m.top + plotH + 28} textAnchor="middle" fontSize={14} fontWeight={600} fill={THEME.label}>
+                {d.label}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+};
+
+export default SpbBarChart;
+
+================================================================================
+FILE: ../src/features/spb/analytics-spb/components/SpbTimelineChart.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/analytics-spb/components/SpbTimelineChart.tsx
+================================================================================
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { SpbLinePoint } from "../useSpbAnalytics";
+import { niceTicks, useContainerWidth } from "../hooks/useContainerWidth";
+
+/** Biru = SPB terkirim, Merah = barang datang. */
+export const SERIES = [
+  { key: "SPB Terkirim", color: "#1fb6ff", name: "SPB terkirim" },
+  { key: "Barang Datang", color: "#ff4560", name: "Barang datang" },
+] as const;
+
+const THEME = {
+  bg: "#031326",
+  grid: "#12304f",
+  axis: "#1e3a5f",
+  tick: "#7b8ca5",
+};
+
+const MIN_STEP = 64; // lebar minimum per tanggal (px); lebih dari ini -> bisa di-scroll
+
+interface Pt { x: number; y: number }
+
+/** Spline monoton (halus, tidak "overshoot" ke bawah 0). */
+const monotonePath = (p: Pt[]): string => {
+  const n = p.length;
+  if (n === 0) return "";
+  if (n === 1) return `M${p[0].x},${p[0].y}`;
+  if (n === 2) return `M${p[0].x},${p[0].y}L${p[1].x},${p[1].y}`;
+
+  const dx: number[] = [];
+  const m: number[] = [];
+  for (let i = 0; i < n - 1; i++) {
+    dx[i] = p[i + 1].x - p[i].x;
+    m[i] = (p[i + 1].y - p[i].y) / dx[i];
+  }
+  const t: number[] = new Array(n).fill(0);
+  t[0] = m[0];
+  t[n - 1] = m[n - 2];
+  for (let i = 1; i < n - 1; i++) t[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+  for (let i = 0; i < n - 1; i++) {
+    if (m[i] === 0) { t[i] = 0; t[i + 1] = 0; continue; }
+    const a = t[i] / m[i];
+    const b = t[i + 1] / m[i];
+    const s = a * a + b * b;
+    if (s > 9) {
+      const tau = 3 / Math.sqrt(s);
+      t[i] = tau * a * m[i];
+      t[i + 1] = tau * b * m[i];
+    }
+  }
+  let d = `M${p[0].x},${p[0].y}`;
+  for (let i = 0; i < n - 1; i++) {
+    const h = dx[i] / 3;
+    d += `C${p[i].x + h},${p[i].y + t[i] * h},${p[i + 1].x - h},${p[i + 1].y - t[i + 1] * h},${p[i + 1].x},${p[i + 1].y}`;
+  }
+  return d;
+};
+
+interface Props {
+  data: SpbLinePoint[];
+  height?: number;
+}
+
+export const SpbTimelineChart = ({ data, height = 420 }: Props) => {
+  const { ref, width: boxW } = useContainerWidth<HTMLDivElement>(900);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [hover, setHover] = useState<number | null>(null);
+
+  // Kategori sumbu X = gabungan semua tanggal (urut), dipakai kedua garis.
+  const { cats, lookup, maxVal } = useMemo(() => {
+    const labelByRaw = new Map<string, string>();
+    const lk = new Map<string, Map<string, SpbLinePoint>>();
+    let mx = 0;
+    data.forEach((d) => {
+      labelByRaw.set(d.rawDate, d.date);
+      if (!lk.has(d.type)) lk.set(d.type, new Map());
+      lk.get(d.type)!.set(d.rawDate, d);
+      mx = Math.max(mx, d.value);
+    });
+    const raws = [...labelByRaw.keys()].sort();
+    return {
+      cats: raws.map((r) => ({ raw: r, label: labelByRaw.get(r) ?? r })),
+      lookup: lk,
+      maxVal: mx,
+    };
+  }, [data]);
+
+  const m = { top: 74, right: 32, bottom: 56, left: 52 };
+  const innerMin = cats.length * MIN_STEP;
+  const width = Math.max(boxW, innerMin + m.left + m.right);
+  const plotW = width - m.left - m.right;
+  const plotH = height - m.top - m.bottom;
+  const step = plotW / Math.max(1, cats.length);
+
+  const ticks = niceTicks(maxVal);
+  const yMax = ticks[ticks.length - 1] || 1;
+  const x = (i: number) => m.left + step * i + step / 2;
+  const y = (v: number) => m.top + plotH - (v / yMax) * plotH;
+  const labelEvery = Math.max(1, Math.ceil(76 / step));
+
+  // Titik tiap seri
+  const series = SERIES.map((s) => {
+    const pts = cats
+      .map((c, i) => {
+        const d = lookup.get(s.key)?.get(c.raw);
+        return d ? { i, d, x: x(i), y: y(d.value) } : null;
+      })
+      .filter((v): v is { i: number; d: SpbLinePoint; x: number; y: number } => v !== null);
+    const peak = pts.reduce<(typeof pts)[number] | null>((b, p) => (!b || p.d.value > b.d.value ? p : b), null);
+    return { ...s, pts, peak };
+  });
+
+  // Auto-scroll ke tanggal terbaru bila grafik lebih lebar dari kartu
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, [width, cats.length]);
+
+  const onMove = (e: React.MouseEvent<SVGRectElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const idx = Math.floor((e.clientX - rect.left) / step);
+    setHover(Math.min(cats.length - 1, Math.max(0, idx)));
+  };
+
+  // Tooltip
+  const hc = hover !== null ? cats[hover] : null;
+  const hSent = hc ? lookup.get("SPB Terkirim")?.get(hc.raw) : undefined;
+  const hArr = hc ? lookup.get("Barang Datang")?.get(hc.raw) : undefined;
+  const tipX = hover !== null ? x(hover) : 0;
+  const flip = tipX > width - 230;
+
+  return (
+    <div ref={ref} style={{ background: THEME.bg, borderRadius: 12, width: "100%", position: "relative" }}>
+      <div ref={scrollRef} style={{ overflowX: "auto", overflowY: "hidden" }}>
+        <div style={{ position: "relative", width, height }}>
+          <svg width={width} height={height} role="img" aria-label="Grafik garis timeline SPB terkirim dan barang datang">
+            <defs>
+              <filter id="spb-glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="3" result="b" />
+                <feMerge>
+                  <feMergeNode in="b" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+
+            {/* Legend */}
+            <g transform={`translate(${m.left}, 26)`}>
+              {SERIES.map((s, i) => (
+                <g key={s.key} transform={`translate(${i * 150}, 0)`}>
+                  <circle r={6} cx={6} cy={-4} fill="none" stroke={s.color} strokeWidth={2.5} />
+                  <text x={20} fontSize={13} fontWeight={600} fill="#c3cfe0">
+                    {s.name}
+                  </text>
+                </g>
+              ))}
+            </g>
+
+            {/* Grid horizontal + label Y */}
+            {ticks.map((t) => (
+              <g key={t}>
+                <line x1={m.left} x2={width - m.right} y1={y(t)} y2={y(t)} stroke={THEME.grid} strokeWidth={1} />
+                <text x={m.left - 12} y={y(t) + 4} textAnchor="end" fontSize={12} fill={THEME.tick}>
+                  {t}
+                </text>
+              </g>
+            ))}
+
+            {/* Grid vertikal tipis + label X */}
+            {cats.map((c, i) => (
+              <g key={c.raw}>
+                <line x1={x(i)} x2={x(i)} y1={m.top} y2={m.top + plotH} stroke={THEME.grid} strokeWidth={1} opacity={0.45} />
+                {i % labelEvery === 0 && (
+                  <text x={x(i)} y={m.top + plotH + 26} textAnchor="middle" fontSize={12} fill={THEME.tick}>
+                    {c.label}
+                  </text>
+                )}
+              </g>
+            ))}
+            <line x1={m.left} x2={width - m.right} y1={m.top + plotH} y2={m.top + plotH} stroke={THEME.axis} strokeWidth={1.5} />
+
+            {/* Garis panduan hover */}
+            {hover !== null && (
+              <line x1={x(hover)} x2={x(hover)} y1={m.top} y2={m.top + plotH} stroke="#94a3b8" strokeDasharray="4 4" opacity={0.6} />
+            )}
+
+            {/* Garis spline (biru & merah) */}
+            {series.map((s) => (
+              <path
+                key={s.key}
+                d={monotonePath(s.pts)}
+                fill="none"
+                stroke={s.color}
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                filter="url(#spb-glow)"
+              />
+            ))}
+
+            {/* Titik berbentuk cincin */}
+            {series.map((s) =>
+              s.pts.map((p) => (
+                <circle
+                  key={`${s.key}-${p.d.rawDate}`}
+                  cx={p.x}
+                  cy={p.y}
+                  r={hover === p.i ? 7 : 5}
+                  fill={THEME.bg}
+                  stroke={s.color}
+                  strokeWidth={3}
+                />
+              )),
+            )}
+
+            {/* Bubble nilai tertinggi tiap seri */}
+            {(() => {
+              const peaks = series.filter((s) => s.peak);
+              const same = peaks.length === 2 && peaks[0].peak!.i === peaks[1].peak!.i;
+              return peaks.map((s, k) => {
+                const p = s.peak!;
+                const shift = same ? (k === 0 ? -26 : 26) : 0;
+                const cx = p.x + shift;
+                const cy = Math.max(26, p.y - 40);
+                return (
+                  <g key={`bubble-${s.key}`} pointerEvents="none">
+                    <circle cx={cx} cy={cy} r={22} fill={s.color} filter="url(#spb-glow)" opacity={0.95} />
+                    <text x={cx} y={cy + 6} textAnchor="middle" fontSize={16} fontWeight={700} fill="#fff">
+                      {p.d.value}
+                    </text>
+                  </g>
+                );
+              });
+            })()}
+
+            {/* Area tangkap mouse per tanggal */}
+            <rect
+              x={m.left}
+              y={m.top - 10}
+              width={plotW}
+              height={plotH + 10}
+              fill="transparent"
+              onMouseMove={onMove}
+              onMouseLeave={() => setHover(null)}
+            />
+          </svg>
+
+          {/* Tooltip bergaya kartu gelap */}
+          {hc && (hSent || hArr) && (
+            <div
+              style={{
+                position: "absolute",
+                top: m.top,
+                left: flip ? undefined : tipX + 14,
+                right: flip ? width - tipX + 14 : undefined,
+                padding: "12px 16px",
+                background: "#0f2742",
+                borderRadius: 8,
+                border: "1px solid #1e3a5f",
+                boxShadow: "0 6px 18px rgba(0,0,0,.5)",
+                pointerEvents: "none",
+                minWidth: 170,
+                zIndex: 5,
+              }}
+            >
+              <div style={{ fontWeight: 600, fontSize: 14, color: "#f8fafc", marginBottom: 6 }}>{hc.label}</div>
+              {hSent && (
+                <div style={{ color: SERIES[0].color, fontSize: 13, marginTop: 4 }}>
+                  ● SPB terkirim: <strong>{hSent.value}</strong> item
+                </div>
+              )}
+              {hArr && (
+                <>
+                  <div style={{ color: SERIES[1].color, fontSize: 13, marginTop: 4 }}>
+                    ● Barang datang: <strong>{hArr.value}</strong> item
+                  </div>
+                  <div style={{ color: SERIES[1].color, fontSize: 13, marginTop: 2 }}>
+                    ● Lama proses: <strong>{hArr.lamaProses ?? "-"}</strong> hari
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SpbTimelineChart;
+
+================================================================================
+FILE: ../src/features/spb/analytics-spb/hooks/useContainerWidth.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/analytics-spb/hooks/useContainerWidth.ts
+================================================================================
+
+import { useEffect, useRef, useState } from "react";
+
+/** Mengukur lebar elemen secara responsif (tanpa library tambahan). */
+export const useContainerWidth = <T extends HTMLElement>(fallback = 800) => {
+  const ref = useRef<T | null>(null);
+  const [width, setWidth] = useState(fallback);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => setWidth(Math.max(280, Math.floor(el.clientWidth)));
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  return { ref, width };
+};
+
+/** Tick sumbu Y yang "rapi" (kelipatan 1/2/5 x 10^n), selalu bilangan bulat. */
+export const niceTicks = (max: number, target = 4): number[] => {
+  if (max <= 0) return [0, 1, 2, 3, 4];
+  const raw = max / target;
+  const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / pow;
+  const mult = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10;
+  const step = Math.max(1, mult * pow);
+  const top = Math.ceil(max / step) * step;
+  const ticks: number[] = [];
+  for (let v = 0; v <= top + 1e-9; v += step) ticks.push(v);
+  return ticks;
+};
+
+================================================================================
+FILE: ../src/features/spb/analytics-spb/pages/SpbAnalyticsPage.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/analytics-spb/pages/SpbAnalyticsPage.tsx
+================================================================================
+
+import { useNavigate } from "react-router-dom";
+import { Alert, Button, Card, Col, Empty, Row, Space, Spin, Statistic, Typography } from "antd";
+import { ArrowLeftOutlined, BarChartOutlined, LineChartOutlined } from "@ant-design/icons";
+import { useSpbAnalytics } from "../useSpbAnalytics";
+import { SpbBarChart } from "../components/SpbbarChart";
+import { SpbTimelineChart } from "../components/SpbTimelineChart";
+
+const { Title, Text } = Typography;
+
+const DARK_CARD = {
+  borderRadius: 12,
+  background: "#031326",
+  border: "1px solid #0e2a4a",
+} as const;
+
+export default function SpbAnalyticsPage() {
+  const navigate = useNavigate();
+  const { data, isLoading, error } = useSpbAnalytics();
+
+  if (isLoading) return <div style={{ textAlign: "center", padding: 60 }}><Spin size="large" /></div>;
+  if (error) return <Alert type="error" showIcon message="Gagal memuat analitik" description={(error as Error)?.message} />;
+  if (!data) return null;
+
+  const totalPo = data.itemsWithPoNotArrived + data.itemsArrived;
+
+  return (
+    <div style={{ maxWidth: 1100, margin: "0 auto", paddingBottom: 32 }}>
+      <Space align="center" style={{ marginBottom: 16 }}>
+        <Button type="text" size="large" icon={<ArrowLeftOutlined />} onClick={() => navigate("/monitoring-spb")} />
+        <div>
+          <Title level={3} style={{ margin: 0 }}>Analitik Monitoring SPB</Title>
+          <Text type="secondary">Statistik pengajuan, PO, dan kedatangan barang</Text>
+        </div>
+      </Space>
+
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={12} md={6}>
+          <Card variant="borderless" style={{ borderRadius: 12 }}>
+            <Statistic title="Barang Diajukan" value={data.itemsNotPo} valueStyle={{ color: "#faad14" }} />
+          </Card>
+        </Col>
+        <Col xs={12} md={6}>
+          <Card variant="borderless" style={{ borderRadius: 12 }}>
+            <Statistic title="Total Sudah PO" value={totalPo} valueStyle={{ color: "#1677ff" }} />
+          </Card>
+        </Col>
+        <Col xs={12} md={6}>
+          <Card variant="borderless" style={{ borderRadius: 12 }}>
+            <Statistic title="Sudah Datang" value={data.itemsArrived} valueStyle={{ color: "#52c41a" }} />
+          </Card>
+        </Col>
+        <Col xs={12} md={6}>
+          <Card variant="borderless" style={{ borderRadius: 12 }}>
+            <Statistic title="Total Item SPB" value={data.totalItems} valueStyle={{ color: "#722ed1" }} />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* DIAGRAM BATANG: 3 batang, 3 warna gradasi, tema gelap */}
+      <Card
+        variant="borderless"
+        title={<Space><BarChartOutlined style={{ color: "#faad14" }} /><span style={{ color: "#fff" }}>Distribusi Barang SPB</span></Space>}
+        style={{ ...DARK_CARD, marginBottom: 24 }}
+        styles={{ header: { borderBottom: "1px solid #0e2a4a", color: "#fff" }, body: { padding: 12 } }}
+      >
+        {data.totalItems === 0 ? (
+          <Empty description={<span style={{ color: "#64748b" }}>Belum ada data SPB</span>} />
+        ) : (
+          <SpbBarChart data={data.barData} height={360} />
+        )}
+      </Card>
+
+      {/* GRAFIK GARIS: biru = SPB terkirim, merah = barang datang (dalam 1 grafik) */}
+      <Card
+        variant="borderless"
+        title={<Space><LineChartOutlined style={{ color: "#1fb6ff" }} /><span style={{ color: "#fff" }}>Timeline SPB Terkirim & Barang Datang</span></Space>}
+        style={DARK_CARD}
+        styles={{ header: { borderBottom: "1px solid #0e2a4a", color: "#fff" }, body: { padding: 12 } }}
+      >
+        {data.lineData.length === 0 ? (
+          <Empty description={<span style={{ color: "#64748b" }}>Belum ada data timeline</span>} />
+        ) : (
+          <SpbTimelineChart data={data.lineData} height={420} />
+        )}
+      </Card>
+    </div>
+  );
+}
+
+================================================================================
+FILE: ../src/features/spb/analytics-spb/useSpbAnalytics.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/analytics-spb/useSpbAnalytics.ts
+================================================================================
+
+import { useQuery } from "@tanstack/react-query";
+import dayjs from "dayjs";
+import { supabaseClient } from "../../../shared/lib/supabaseClient";
+import { TABLES } from "../../../shared/lib/constants";
+import { formatDate } from "../../../shared/lib/format";
+import { canViewRestrictedSpb, filterVisibleSpbRows } from "../spb-monitoring/accessRules";
+
+export interface SpbBarItem {
+  label: string;
+  value: number;
+  type: string;
+}
+
+export interface SpbLinePoint {
+  date: string;
+  rawDate: string;
+  type: string;
+  value: number;
+  lamaProses?: number;
+}
+
+export interface SpbAnalyticsData {
+  totalItems: number;
+  itemsNotPo: number;
+  itemsWithPoNotArrived: number;
+  itemsArrived: number;
+  barData: SpbBarItem[];
+  lineData: SpbLinePoint[];
+}
+
+export const BAR_COLORS = {
+  diajukan: "#faad14", // Kuning
+  po: "#1677ff",       // Biru
+  datang: "#52c41a",   // Hijau
+} as const;
+
+const fetchAllSpbForAnalytics = async (): Promise<any[]> => {
+  const { data, error } = await supabaseClient
+    .from(TABLES.spb)
+    .select(
+      "id, no_spb, tgl_spb, id_po, qty_permintaan, material_datang_tgl, nama_barang_spb, status"
+    )
+    .range(0, 9999);
+  if (error) throw error;
+  return data ?? [];
+};
+
+const isKeteranganRow = (row: any): boolean => {
+  const name = String(row.nama_barang_spb ?? "").trim().toLowerCase();
+  if (!name) return true;
+  return name.includes("keterangan") || name.includes("catatan");
+};
+
+export const useSpbAnalytics = () => {
+  const canViewRestricted = canViewRestrictedSpb();
+
+  return useQuery<SpbAnalyticsData>({
+    queryKey: ["spb-analytics", canViewRestricted],
+    queryFn: async (): Promise<SpbAnalyticsData> => {
+      const raw = await fetchAllSpbForAnalytics();
+      const visible = filterVisibleSpbRows(raw, canViewRestricted);
+      const rows = visible.filter((r) => !isKeteranganRow(r));
+
+      let totalItems = 0;
+      let itemsNotPo = 0;
+      let itemsWithPoNotArrived = 0;
+      let itemsArrived = 0;
+
+      const spbDateMap = new Map<string, number>();
+      const arrivalDateMap = new Map<string, { count: number; totalDays: number }>();
+
+      rows.forEach((row) => {
+        totalItems += 1;
+
+        const hasArrival = !!row.material_datang_tgl;
+        const hasPo = !!row.id_po;
+
+        if (hasArrival) {
+          itemsArrived += 1;
+          const arrDate = dayjs(row.material_datang_tgl);
+          if (arrDate.isValid()) {
+            const key = arrDate.format("YYYY-MM-DD");
+            const existing = arrivalDateMap.get(key) ?? { count: 0, totalDays: 0 };
+            existing.count += 1;
+            
+            if (row.tgl_spb) {
+              const start = dayjs(row.tgl_spb);
+              if (start.isValid()) {
+                const days = arrDate.diff(start, "day");
+                if (days >= 0) existing.totalDays += days;
+              }
+            }
+            arrivalDateMap.set(key, existing);
+          }
+        } else if (hasPo) {
+          itemsWithPoNotArrived += 1;
+        } else {
+          // Kategori Diajukan: Belum punya PO dan belum ada tanggal kedatangan
+          itemsNotPo += 1;
+        }
+
+        if (row.tgl_spb) {
+          const spbDate = dayjs(row.tgl_spb);
+          if (spbDate.isValid()) {
+            const key = spbDate.format("YYYY-MM-DD");
+            spbDateMap.set(key, (spbDateMap.get(key) ?? 0) + 1);
+          }
+        }
+      });
+
+      const totalPo = itemsWithPoNotArrived + itemsArrived;
+
+      // Data untuk Diagram Batang
+      const barData: SpbBarItem[] = [
+        { label: "Diajukan", value: itemsNotPo, type: "Diajukan" },
+        { label: "Sudah PO", value: totalPo, type: "Sudah PO" },
+        { label: "Sudah Datang", value: itemsArrived, type: "Sudah Datang" },
+      ];
+
+      const lineData: SpbLinePoint[] = [];
+
+      [...spbDateMap.entries()]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .forEach(([rawDate, count]) => {
+          lineData.push({
+            date: formatDate(rawDate),
+            rawDate,
+            type: "SPB Terkirim",
+            value: count,
+          });
+        });
+
+      [...arrivalDateMap.entries()]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .forEach(([rawDate, info]) => {
+          lineData.push({
+            date: formatDate(rawDate),
+            rawDate,
+            type: "Barang Datang",
+            value: info.count,
+            lamaProses: info.count > 0 ? Math.round(info.totalDays / info.count) : 0,
+          });
+        });
+
+      return {
+        totalItems,
+        itemsNotPo,
+        itemsWithPoNotArrived,
+        itemsArrived,
+        barData,
+        lineData,
+      };
+    },
+  });
+};
+
+================================================================================
+FILE: ../src/features/spb/spb-monitoring/accessRules.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/accessRules.ts
 ================================================================================
 
 /**
@@ -3879,7 +4708,7 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/accessRules.ts
  * supabase/migrations/20261103_enforce_auth_rls.sql). Jangan mengandalkan
  * filter klien saja.
  */
-import { getVerifiedUser } from "../../shared/lib/authGuard";
+import { getVerifiedUser } from "../../../shared/lib/authGuard";
 
 /** Nilai kolom `status` tabel spb yang hanya boleh dilihat user yang login. */
 export const RESTRICTED_SPB_STATUS = "belum di proses";
@@ -3925,15 +4754,15 @@ export const toSafeExternalUrl = (value: unknown): string | null => {
 
 
 ================================================================================
-FILE: ../src/features/spb/api.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/api.ts
+FILE: ../src/features/spb/spb-monitoring/api.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/api.ts
 ================================================================================
 
 // src/features/spb/api.ts
-import { supabaseClient } from "../../shared/lib/supabaseClient";
-import { TABLES } from "../../shared/lib/constants";
-import { requirePermission } from "../../shared/lib/authGuard";
-import type { SPBItemDetail } from "../../shared/types";
+import { supabaseClient } from "../../../shared/lib/supabaseClient";
+import { TABLES } from "../../../shared/lib/constants";
+import { requirePermission } from "../../../shared/lib/authGuard";
+import type { SPBItemDetail } from "../../../shared/types";
 import { canViewRestrictedSpb, filterVisibleSpbRows, isRestrictedSpbStatus } from "./accessRules";
 import { cleanDocNo, hasValue, isIgnoredSuratJalan } from "./suratJalanRules";
 import type { MonitoringDetailItem } from "./types";
@@ -3955,16 +4784,11 @@ import {
   saveTitleOverride,
 } from "./utils/titleOverrides";
 
-// PostgREST (Supabase) default max-rows = 1000.
 const PAGE_SIZE = 1000;
 
 const SPB_SELECT = `*, po:po!id_po (no_po, tanggal_po, source_file)`;
-const SJ_SELECT = `*, spb:spb!id_spb (no_spb, judul_spb, source_file), po:po!id_po (no_po, source_file)`;
+const SJ_SELECT = `*, spb:spb!id_spb (no_spb, judul_spb, source_file, qty_permintaan), po:po!id_po (no_po, source_file)`;
 
-/**
- * Mengambil seluruh baris dari sebuah tabel dengan pagination `.range()`
- * untuk menghindari batas default 1000 baris PostgREST.
- */
 export const fetchAllRows = async (
   table: string,
   select: string,
@@ -3989,9 +4813,6 @@ export const fetchAllRows = async (
   return all;
 };
 
-/**
- * Mengambil semua baris mentah (SPB, PO, Surat Jalan) untuk halaman Monitoring SPB.
- */
 export const fetchMonitoringRawData = async () => {
   const [allSpbData, poData, sjData] = await Promise.all([
     fetchAllRows(
@@ -4018,9 +4839,6 @@ export const fetchMonitoringRawData = async () => {
   return { allSpbData, poData, sjData };
 };
 
-/**
- * Memperbarui judul dokumen SPB atau PO di database & menyimpan override lokal.
- */
 export const updateDocumentTitle = async (
   type: "spb" | "po",
   docNo: string,
@@ -4050,34 +4868,98 @@ export const updateDocumentTitle = async (
 };
 
 /**
- * Mengambil daftar barang detail berdasarkan nomor SPB.
+ * Validasi ketat baris SPB agar di card/detail Monitoring SPB hanya muncul data
+ * dari tabel `spb` dengan `no_spb` dan `judul_spb` yang sesuai:
+ * - Jika ada data dari nomor SPB lain (meskipun judulnya sama) -> lempar Error.
+ * - Jika nomor SPB sama tetapi judulnya berbeda (baik antar-baris di DB maupun terhadap judul yang diminta) -> lempar Error.
+ */
+export const validateStrictSpbRows = (
+  rows: Row[],
+  spbNo: string,
+  judulSpb: string | null = null,
+): void => {
+  const expectedNo = cleanDocNo(spbNo);
+  const expectedTitle = cleanDocNo(judulSpb);
+
+  for (const row of rows) {
+    if (row.sumber && row.sumber !== "spb") {
+      throw new Error(
+        `Data tidak konsisten: Ditemukan data bukan dari tabel SPB (sumber: ${row.sumber}) pada SPB ${spbNo}.`,
+      );
+    }
+
+    const rowNo = cleanDocNo(row.no_spb);
+    const rowTitle = cleanDocNo(row.judul_spb);
+
+    // 1. Jika data berasal dari nomor SPB lain (termasuk yang judulnya sama)
+    if (rowNo !== expectedNo) {
+      if (expectedTitle && rowTitle === expectedTitle) {
+        throw new Error(
+          `Data tidak konsisten: Ditemukan data dari nomor SPB lain (${row.no_spb ?? "-"}) dengan judul yang sama ("${row.judul_spb ?? judulSpb}").`,
+        );
+      }
+      throw new Error(
+        `Data tidak konsisten: Ditemukan data dari nomor SPB lain (${row.no_spb ?? "-"}) pada SPB ${spbNo}.`,
+      );
+    }
+  }
+
+  // 2. Jika nomor SPB sama tetapi memiliki lebih dari satu judul berbeda di database
+  const uniqueTitles = new Set(rows.map((r) => cleanDocNo(r.judul_spb)));
+  if (uniqueTitles.size > 1) {
+    throw new Error(
+      `Data tidak konsisten: SPB ${spbNo} memiliki lebih dari satu judul yang berbeda di database (${Array.from(uniqueTitles).join(", ")}). Mohon periksa kembali data SPB.`,
+    );
+  }
+
+  // 3. Jika nomor SPB sama tetapi judul di database berbeda dengan judul yang diminta
+  if (expectedTitle && rows.length > 0) {
+    for (const row of rows) {
+      const rowTitle = cleanDocNo(row.judul_spb);
+      if (rowTitle !== expectedTitle) {
+        throw new Error(
+          `Data tidak konsisten: Nomor SPB ${spbNo} memiliki judul "${row.judul_spb ?? "-"}" yang berbeda dengan judul yang diminta ("${judulSpb}").`,
+        );
+      }
+    }
+  }
+};
+
+/**
+ * Mengambil daftar barang detail berdasarkan nomor SPB dengan validasi STRICT.
+ * Hanya mengembalikan baris dari tabel `spb` dengan `no_spb` dan `judul_spb` yang cocok.
  */
 export const fetchDetailBySpb = async (
   spbNo: string,
   judulSpb: string | null = null,
   canViewRestricted = false,
 ): Promise<MonitoringDetailItem[]> => {
-  let spbQuery = supabaseClient
+  // 1. Ambil semua baris dengan no_spb tersebut dari tabel spb
+  const spbQuery = supabaseClient
     .from("spb")
     .select(SPB_SELECT)
     .eq("no_spb", spbNo);
-  if (judulSpb) spbQuery = spbQuery.eq("judul_spb", judulSpb);
 
-  const spbRows = filterVisibleSpbRows(
-    sortById(unwrap(await spbQuery)),
-    canViewRestricted,
-  );
-  if (spbRows.length === 0) return [];
+  const allSpbRows = sortById(unwrap(await spbQuery));
 
-  const spbIds = spbRows.map((r) => r.id);
+  // 2. Validasi STRICT: pastikan nomor SPB dan judul konsisten
+  validateStrictSpbRows(allSpbRows, spbNo, judulSpb);
 
-  const [poRes, sjRes] = await Promise.all([
-    supabaseClient
-      .from("po")
-      .select("id, no_po, tanggal_po, id_spb, source_file")
-      .in("id_spb", spbIds),
-    supabaseClient.from("surat_jalan").select(SJ_SELECT).in("id_spb", spbIds),
-  ]);
+  // 3. Filter berdasarkan judul yang diminta (jika ada)
+  const spbRows = allSpbRows.filter((r) => {
+    if (!judulSpb) return true;
+    return cleanDocNo(r.judul_spb) === cleanDocNo(judulSpb);
+  });
+
+  const filteredSpbRows = filterVisibleSpbRows(spbRows, canViewRestricted);
+  if (filteredSpbRows.length === 0) return [];
+
+  const spbIds = filteredSpbRows.map((r) => r.id);
+
+  const poRes = await supabaseClient
+    .from("po")
+    .select("id, no_po, tanggal_po, id_spb, source_file")
+    .in("id_spb", spbIds);
 
   const poBySpbId = new Map<string, Row>();
   unwrap(poRes).forEach((p) => {
@@ -4085,14 +4967,9 @@ export const fetchDetailBySpb = async (
     if (cleanDocNo(p.no_po) && !poBySpbId.has(key)) poBySpbId.set(key, p);
   });
 
-  const spbItems = spbRows.map((r) =>
+  return filteredSpbRows.map((r) =>
     mapSpbRow(r, poBySpbId.get(String(r.id)) ?? null),
   );
-  const sjItems = sortById(unwrap(sjRes))
-    .filter((sj) => !isIgnoredSuratJalan(sj.no_surat_jalan))
-    .map(mapSjRow);
-
-  return [...spbItems, ...sjItems];
 };
 
 /**
@@ -4170,7 +5047,7 @@ export const fetchSingleItemById = async (
   if (type === "po") {
     const { data, error } = await supabaseClient
       .from("po")
-      .select("*")
+      .select(`*, spb:spb!id_spb (qty_permintaan)`)
       .eq("id", id)
       .single();
     if (error) throw error;
@@ -4182,7 +5059,7 @@ export const fetchSingleItemById = async (
     const { data, error } = await supabaseClient
       .from("surat_jalan")
       .select(
-        `*, spb:spb!id_spb (no_spb, tgl_spb, source_file), po:po!id_po (no_po, tanggal_po, nama_supplier, source_file)`,
+        `*, spb:spb!id_spb (no_spb, tgl_spb, source_file, qty_permintaan), po:po!id_po (no_po, tanggal_po, nama_supplier, source_file)`,
       )
       .eq("id", id)
       .single();
@@ -4224,11 +5101,9 @@ export const fetchSingleItemById = async (
   return mapSingleSpbItem(data, dataPo);
 };
 
-
-
 ================================================================================
-FILE: ../src/features/spb/components/EditDocumentTitleModal.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/components/EditDocumentTitleModal.tsx
+FILE: ../src/features/spb/spb-monitoring/components/EditDocumentTitleModal.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/components/EditDocumentTitleModal.tsx
 ================================================================================
 
 // src/features/spb/components/EditDocumentTitleModal.tsx
@@ -4280,15 +5155,15 @@ export const EditDocumentTitleModal = ({
 
 
 ================================================================================
-FILE: ../src/features/spb/components/ItemDetailRowsBuilder.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/components/ItemDetailRowsBuilder.tsx
+FILE: ../src/features/spb/spb-monitoring/components/ItemDetailRowsBuilder.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/components/ItemDetailRowsBuilder.tsx
 ================================================================================
 
 // src/features/spb/components/ItemDetailRowsBuilder.tsx
 import { Button, Space, Tag, Tooltip, Typography } from "antd";
 import { FileOutlined } from "@ant-design/icons";
-import type { SPBItemDetail } from "../../../shared/types";
-import { formatDate } from "../../../shared/lib/format";
+import type { SPBItemDetail } from "../../../../shared/types";
+import { formatDate } from "../../../../shared/lib/format";
 import { toSafeExternalUrl } from "../accessRules";
 import type { DetailRow } from "../types";
 import { getItemDetailStatusColor } from "../utils/statusHelpers";
@@ -4428,8 +5303,8 @@ export const buildItemDetailRows = (
 };
 
 ================================================================================
-FILE: ../src/features/spb/components/MonitoringDetailHeader.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/components/MonitoringDetailHeader.tsx
+FILE: ../src/features/spb/spb-monitoring/components/MonitoringDetailHeader.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/components/MonitoringDetailHeader.tsx
 ================================================================================
 
 // src/features/spb/components/MonitoringDetailHeader.tsx
@@ -4578,14 +5453,14 @@ export const MonitoringPoStatusRow = ({
 );
 
 ================================================================================
-FILE: ../src/features/spb/components/MonitoringDetailTable.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/components/MonitoringDetailTable.tsx
+FILE: ../src/features/spb/spb-monitoring/components/MonitoringDetailTable.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/components/MonitoringDetailTable.tsx
 ================================================================================
 
 // src/features/spb/components/MonitoringDetailTable.tsx
 import { Button, Card, Space, Table, Tag, Typography } from "antd";
 import { InfoCircleOutlined } from "@ant-design/icons";
-import { formatDate } from "../../../shared/lib/format";
+import { formatDate } from "../../../../shared/lib/format";
 import type { MonitoringDetailItem } from "../types";
 import { getDetailStatusColor } from "../utils/statusHelpers";
 
@@ -4797,16 +5672,16 @@ export const MonitoringDetailTable = ({
 
 
 ================================================================================
-FILE: ../src/features/spb/components/MonitoringSPBCard.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/components/MonitoringSPBCard.tsx
+FILE: ../src/features/spb/spb-monitoring/components/MonitoringSPBCard.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/components/MonitoringSPBCard.tsx
 ================================================================================
 
 // src/features/spb/components/MonitoringSPBCard.tsx
 import type { MouseEvent } from "react";
 import { Button, Card, Divider, Space, Tag, Typography } from "antd";
 import { ArrowRightOutlined, EditOutlined } from "@ant-design/icons";
-import type { SPBDocumentGroup } from "../../../shared/types";
-import { formatDate } from "../../../shared/lib/format";
+import type { SPBDocumentGroup } from "../../../../shared/types";
+import { formatDate } from "../../../../shared/lib/format";
 import { getCardStatusColor } from "../utils/statusHelpers";
 import { buildLocalTitleKey } from "../utils/titleOverrides";
 import { SourceFileLink } from "./SourceFileLink";
@@ -4824,6 +5699,7 @@ export interface MonitoringSPBCardProps {
     docNo: string,
     currentTitle?: string | null,
   ) => void;
+  isMobile?: boolean; // 🔧 TAMBAHKAN PROP INI
 }
 
 export const MonitoringSPBCard = ({
@@ -4832,6 +5708,7 @@ export const MonitoringSPBCard = ({
   localTitles,
   onCardClick,
   onEditTitle,
+  isMobile = false, // 🔧 DEFAULT VALUE
 }: MonitoringSPBCardProps) => {
   const hasSPB = item.spbNo !== null && item.spbNo !== "NO_SPB";
   const hasPO =
@@ -4926,11 +5803,14 @@ export const MonitoringSPBCard = ({
                   - {resolvedSpbTitle}
                 </span>
               )}
-              <SourceFileLink
-                url={item.spbSourceFile}
-                label={`Buka file asli SPB ${item.spbNo}`}
-                testId={`source-file-spb-${item.spbNo}`}
-              />
+              {/* 🔧 PERBAIKAN: Sembunyikan logo file di mobile */}
+              {!isMobile && (
+                <SourceFileLink
+                  url={item.spbSourceFile}
+                  label={`Buka file asli SPB ${item.spbNo}`}
+                  testId={`source-file-spb-${item.spbNo}`}
+                />
+              )}
             </div>
           </div>
         )}
@@ -4992,11 +5872,14 @@ export const MonitoringSPBCard = ({
                   - {resolvedPoTitle}
                 </span>
               )}
-              <SourceFileLink
-                url={item.poSourceFile}
-                label={`Buka file asli PO ${item.poNo}`}
-                testId={`source-file-po-${item.poNo}`}
-              />
+              {/* 🔧 PERBAIKAN: Sembunyikan logo file di mobile */}
+              {!isMobile && (
+                <SourceFileLink
+                  url={item.poSourceFile}
+                  label={`Buka file asli PO ${item.poNo}`}
+                  testId={`source-file-po-${item.poNo}`}
+                />
+              )}
             </div>
           </div>
         )}
@@ -5060,14 +5943,14 @@ export const MonitoringSPBCard = ({
 };
 
 ================================================================================
-FILE: ../src/features/spb/components/MonitoringSPBHeader.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/components/MonitoringSPBHeader.tsx
+FILE: ../src/features/spb/spb-monitoring/components/MonitoringSPBHeader.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/components/MonitoringSPBHeader.tsx
 ================================================================================
 
 // src/features/spb/components/MonitoringSPBHeader.tsx
 import { Space, Typography } from "antd";
 import { FileTextOutlined } from "@ant-design/icons";
-import { formatFullDate } from "../../../shared/lib/format";
+import { formatFullDate } from "../../../../shared/lib/format";
 
 const { Title, Text } = Typography;
 
@@ -5111,14 +5994,14 @@ export const MonitoringSPBHeader = ({
 
 
 ================================================================================
-FILE: ../src/features/spb/components/MonitoringSPBRecentList.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/components/MonitoringSPBRecentList.tsx
+FILE: ../src/features/spb/spb-monitoring/components/MonitoringSPBRecentList.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/components/MonitoringSPBRecentList.tsx
 ================================================================================
 
 // src/features/spb/components/MonitoringSPBRecentList.tsx
 import { Card, Grid, Space, Typography } from "antd";
-import type { SPBDocumentGroup } from "../../../shared/types";
-import { formatDate } from "../../../shared/lib/format";
+import type { SPBDocumentGroup } from "../../../../shared/types";
+import { formatDate } from "../../../../shared/lib/format";
 
 const { Text } = Typography;
 
@@ -5193,8 +6076,8 @@ export const MonitoringSPBRecentList = ({
 
 
 ================================================================================
-FILE: ../src/features/spb/components/MonitoringSPBToolbar.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/components/MonitoringSPBToolbar.tsx
+FILE: ../src/features/spb/spb-monitoring/components/MonitoringSPBToolbar.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/components/MonitoringSPBToolbar.tsx
 ================================================================================
 
 // src/features/spb/components/MonitoringSPBToolbar.tsx
@@ -5295,8 +6178,8 @@ export const MonitoringSPBToolbar = ({
 
 
 ================================================================================
-FILE: ../src/features/spb/components/SourceFileLink.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/components/SourceFileLink.tsx
+FILE: ../src/features/spb/spb-monitoring/components/SourceFileLink.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/components/SourceFileLink.tsx
 ================================================================================
 
 import { FileOutlined } from "@ant-design/icons";
@@ -5348,8 +6231,8 @@ export const SourceFileLink = ({
 };
 
 ================================================================================
-FILE: ../src/features/spb/hooks/useEditDocumentTitle.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/hooks/useEditDocumentTitle.ts
+FILE: ../src/features/spb/spb-monitoring/hooks/useEditDocumentTitle.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/hooks/useEditDocumentTitle.ts
 ================================================================================
 
 // src/features/spb/hooks/useEditDocumentTitle.ts
@@ -5423,8 +6306,8 @@ export const useEditDocumentTitle = (
 
 
 ================================================================================
-FILE: ../src/features/spb/hooks/useMonitoringSPBFilter.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/hooks/useMonitoringSPBFilter.ts
+FILE: ../src/features/spb/spb-monitoring/hooks/useMonitoringSPBFilter.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/hooks/useMonitoringSPBFilter.ts
 ================================================================================
 
 // src/features/spb/hooks/useMonitoringSPBFilter.ts
@@ -5477,13 +6360,13 @@ export const useMonitoringSPBFilter = (canViewRestricted: boolean) => {
 
 
 ================================================================================
-FILE: ../src/features/spb/hooks/useSPBItem.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/hooks/useSPBItem.ts
+FILE: ../src/features/spb/spb-monitoring/hooks/useSPBItem.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/hooks/useSPBItem.ts
 ================================================================================
 
 // src/features/spb/hooks/useSPBItem.ts
 import { useQuery } from "@tanstack/react-query";
-import type { SPBItemDetail } from "../../../shared/types";
+import type { SPBItemDetail } from "../../../../shared/types";
 import { fetchSingleItemById } from "../api";
 
 export const useSPBItem = (id: string | undefined, type: string) => {
@@ -5502,8 +6385,8 @@ export const useSPBItem = (id: string | undefined, type: string) => {
 
 
 ================================================================================
-FILE: ../src/features/spb/index.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/index.ts
+FILE: ../src/features/spb/spb-monitoring/index.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/index.ts
 ================================================================================
 
 // src/features/spb/index.ts
@@ -5530,8 +6413,8 @@ export * from "./components/ItemDetailRowsBuilder";
 
 
 ================================================================================
-FILE: ../src/features/spb/pages/MonitoringSPBDetailPage.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/pages/MonitoringSPBDetailPage.tsx
+FILE: ../src/features/spb/spb-monitoring/pages/MonitoringSPBDetailPage.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/pages/MonitoringSPBDetailPage.tsx
 ================================================================================
 
 // src/features/spb/pages/MonitoringSPBDetailPage.tsx
@@ -5640,8 +6523,8 @@ export default MonitoringSPBDetailPage;
 
 
 ================================================================================
-FILE: ../src/features/spb/pages/MonitoringSPBItemDetailPage.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/pages/MonitoringSPBItemDetailPage.tsx
+FILE: ../src/features/spb/spb-monitoring/pages/MonitoringSPBItemDetailPage.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/pages/MonitoringSPBItemDetailPage.tsx
 ================================================================================
 
 // src/features/spb/pages/MonitoringSPBItemDetailPage.tsx
@@ -5739,18 +6622,18 @@ export default MonitoringSPBItemDetailPage;
 
 
 ================================================================================
-FILE: ../src/features/spb/pages/MonitoringSPBPage.tsx
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/pages/MonitoringSPBPage.tsx
+FILE: ../src/features/spb/spb-monitoring/pages/MonitoringSPBPage.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/pages/MonitoringSPBPage.tsx
 ================================================================================
 
 // src/features/spb/pages/MonitoringSPBPage.tsx
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Alert, Col, Empty, Row, Spin } from "antd";
+import { Alert, Col, Empty, Row, Spin, Grid } from "antd"; // 🔧 Tambahkan Grid
 import { useGetIdentity } from "@refinedev/core";
-import { canEditData } from "../../../app/providers/accessControlProvider";
-import { getVerifiedUser } from "../../../shared/lib/authGuard";
-import type { SPBDocumentGroup, UserRole } from "../../../shared/types";
+import { canEditData } from "../../../../app/providers/accessControlProvider";
+import { getVerifiedUser } from "../../../../shared/lib/authGuard";
+import type { SPBDocumentGroup, UserRole } from "../../../../shared/types";
 import { canViewRestrictedSpb } from "../accessRules";
 import { EditDocumentTitleModal } from "../components/EditDocumentTitleModal";
 import { MonitoringSPBCard } from "../components/MonitoringSPBCard";
@@ -5760,6 +6643,7 @@ import { MonitoringSPBToolbar } from "../components/MonitoringSPBToolbar";
 import { useEditDocumentTitle } from "../hooks/useEditDocumentTitle";
 import { useMonitoringSPBFilter } from "../hooks/useMonitoringSPBFilter";
 import { useMonitoringSPB } from "../useMonitoringSPB";
+import { SpbAnalyticsButton } from "../../analytics-spb/components/SpbAnalyticsButton";
 import {
   filterAndSortSpbDocuments,
   getRecentSpbDocuments,
@@ -5768,6 +6652,10 @@ import {
 export default function MonitoringSPBPage() {
   const { data, isLoading, error, refetch } = useMonitoringSPB();
   const navigate = useNavigate();
+  
+  // 🔧 PERBAIKAN: Deteksi layar mobile/desktop
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
 
   const { data: identity } = useGetIdentity<{ role: UserRole }>();
   const userRole = identity?.role ?? getVerifiedUser()?.role ?? "user";
@@ -5881,6 +6769,7 @@ export default function MonitoringSPBPage() {
                 localTitles={localTitles}
                 onCardClick={handleCardClick}
                 onEditTitle={openEditModal}
+                isMobile={isMobile} // 🔧 PERBAIKAN: Kirim prop isMobile
               />
             </Col>
           ))}
@@ -5903,14 +6792,15 @@ export default function MonitoringSPBPage() {
           onSave={handleSaveTitle}
         />
       )}
+
+      <SpbAnalyticsButton />
     </div>
   );
 }
 
-
 ================================================================================
-FILE: ../src/features/spb/suratJalanRules.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/suratJalanRules.ts
+FILE: ../src/features/spb/spb-monitoring/suratJalanRules.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/suratJalanRules.ts
 ================================================================================
 
 // src/features/spb/suratJalanRules.ts
@@ -6035,12 +6925,12 @@ export const resolveSpbItemStatus = (row: any): string => {
 };
 
 ================================================================================
-FILE: ../src/features/spb/types.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/types.ts
+FILE: ../src/features/spb/spb-monitoring/types.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/types.ts
 ================================================================================
 
 import type { ReactNode } from "react";
-import type { SPBItemDetail } from "../../shared/types";
+import type { SPBItemDetail } from "../../../shared/types";
 
 export type FilterType =
   | "Semua"
@@ -6084,14 +6974,14 @@ export interface UniquePoInfo {
 
 
 ================================================================================
-FILE: ../src/features/spb/useMonitoringSPB.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/useMonitoringSPB.ts
+FILE: ../src/features/spb/spb-monitoring/useMonitoringSPB.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/useMonitoringSPB.ts
 ================================================================================
 
 // src/features/spb/useMonitoringSPB.ts
 import { useQuery } from "@tanstack/react-query";
-import { USE_MOCK } from "../../shared/lib/config";
-import type { SPBDocumentGroup } from "../../shared/types";
+import { USE_MOCK } from "../../../shared/lib/config";
+import type { SPBDocumentGroup } from "../../../shared/types";
 import { canViewRestrictedSpb } from "./accessRules";
 import { fetchMonitoringRawData, updateDocumentTitle } from "./api";
 import { groupMonitoringData } from "./utils/groupMonitoringData";
@@ -6130,8 +7020,8 @@ export const useMonitoringSPB = () => {
 
 
 ================================================================================
-FILE: ../src/features/spb/useMonitoringSPBDetail.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/useMonitoringSPBDetail.ts
+FILE: ../src/features/spb/spb-monitoring/useMonitoringSPBDetail.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/useMonitoringSPBDetail.ts
 ================================================================================
 
 // src/features/spb/useMonitoringSPBDetail.ts
@@ -6184,14 +7074,14 @@ export const useMonitoringSPBDetail = (
 
 
 ================================================================================
-FILE: ../src/features/spb/useSPBItemDetail.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/useSPBItemDetail.ts
+FILE: ../src/features/spb/spb-monitoring/useSPBItemDetail.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/useSPBItemDetail.ts
 ================================================================================
 
 import { useQuery } from "@tanstack/react-query";
-import { supabaseClient } from "../../shared/lib/supabaseClient";
-import { TABLES } from "../../shared/lib/constants";
-import type { SPBItemDetail } from "../../shared/types";
+import { supabaseClient } from "../../../shared/lib/supabaseClient";
+import { TABLES } from "../../../shared/lib/constants";
+import type { SPBItemDetail } from "../../../shared/types";
 import { canViewRestrictedSpb, isRestrictedSpbStatus } from "./accessRules";
 
 export const useSPBItemDetail = (itemId: string | null) => {
@@ -6258,12 +7148,12 @@ export const useSPBItemDetail = (itemId: string | null) => {
 
 
 ================================================================================
-FILE: ../src/features/spb/utils/filterAndSortSpb.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/utils/filterAndSortSpb.ts
+FILE: ../src/features/spb/spb-monitoring/utils/filterAndSortSpb.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/utils/filterAndSortSpb.ts
 ================================================================================
 
 // src/features/spb/utils/filterAndSortSpb.ts
-import type { SPBDocumentGroup } from "../../../shared/types";
+import type { SPBDocumentGroup } from "../../../../shared/types";
 import type { FilterType, SearchMode, SortBy } from "../types";
 import { getNumberFromStr } from "./statusHelpers";
 import { buildLocalTitleKey } from "./titleOverrides";
@@ -6353,7 +7243,9 @@ export const filterAndSortSpbDocuments = ({
       case "Belum di PO":
         return (!item.poNo || item.poNo === "-") && item.status === "Belum PO";
       case "Sudah di PO":
-        return !!item.poNo && item.poNo !== "-" && item.status !== "Selesai";
+        // 🔧 PERBAIKAN: Hanya tampilkan yang statusnya murni "Sudah PO"
+        // Jangan tampilkan yang sudah "Datang" atau "Selesai"
+        return item.status === "Sudah PO";
       case "Datang":
         return item.status === "Datang" || item.status === "Selesai";
       case "Selesai":
@@ -6408,15 +7300,13 @@ export const getRecentSpbDocuments = (
     .slice(0, limit);
 };
 
-
-
 ================================================================================
-FILE: ../src/features/spb/utils/groupMonitoringData.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/utils/groupMonitoringData.ts
+FILE: ../src/features/spb/spb-monitoring/utils/groupMonitoringData.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/utils/groupMonitoringData.ts
 ================================================================================
 
 // src/features/spb/utils/groupMonitoringData.ts
-import type { SPBDocumentGroup } from "../../../shared/types";
+import type { SPBDocumentGroup } from "../../../../shared/types";
 import {
   filterVisibleSpbRows,
   isRestrictedSpbStatus,
@@ -6722,31 +7612,25 @@ export const groupMonitoringData = ({
   });
 
   // 6. Proses Surat Jalan (no 3+)
+  // Catatan: SJ yang memiliki `id_spb` (target === "spb") TIDAK ditambahkan ke card SPB
+  // agar card SPB murni hanya berisi data dari tabel `spb` sesuai nomor & judul SPB-nya.
   sjData.forEach((sj: any) => {
     if (isIgnoredSuratJalan(sj.no_surat_jalan)) return;
 
-    const spbRel = Array.isArray(sj.spb) ? sj.spb[0] : sj.spb;
     const poRel = Array.isArray(sj.po) ? sj.po[0] : sj.po;
     const sjNo = toStrOrNull(sj.no_surat_jalan);
     const target = getSjTarget(sj);
     const idSpb = toIdNumber(sj.id_spb);
 
     if (idSpb !== null && hiddenSpbIds.has(idSpb)) return;
+    if (target === "spb") return;
 
     let targetKey: string;
-    let spbNo: string | null = null;
-    let spbTitle: string | null = null;
+    const spbNo: string | null = null;
+    const spbTitle: string | null = null;
     let poNo: string | null = null;
 
-    if (target === "spb") {
-      const parentSpb = idSpb !== null ? spbById.get(idSpb) : null;
-      spbNo = cleanDocNo(parentSpb?.no_spb) ?? cleanDocNo(spbRel?.no_spb);
-      const rawTitle =
-        toStrOrNull(parentSpb?.judul_spb) ?? toStrOrNull(spbRel?.judul_spb);
-      spbTitle =
-        rawTitle ?? (spbNo ? titleBySpbNo.get(spbNo) ?? null : null);
-      targetKey = buildSpbGroupKey(spbNo, spbTitle, sj.id_spb);
-    } else if (target === "po") {
+    if (target === "po") {
       poNo = cleanDocNo(poRel?.no_po);
       targetKey = poNo ? `PO_${poNo}` : `PO_ID_${sj.id_po}`;
     } else {
@@ -6857,12 +7741,12 @@ export const groupMonitoringData = ({
 
 
 ================================================================================
-FILE: ../src/features/spb/utils/mapDetailRows.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/utils/mapDetailRows.ts
+FILE: ../src/features/spb/spb-monitoring/utils/mapDetailRows.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/utils/mapDetailRows.ts
 ================================================================================
 
 // src/features/spb/utils/mapDetailRows.ts
-import type { SPBItemDetail } from "../../../shared/types";
+import type { SPBItemDetail } from "../../../../shared/types";
 import { cleanDocNo } from "../suratJalanRules";
 import type { MonitoringDetailItem } from "../types";
 import { calcLamaProses } from "./statusHelpers";
@@ -6887,6 +7771,24 @@ export const unique = <T>(arr: T[]): T[] => Array.from(new Set(arr));
 export const unwrap = (res: { data: unknown; error: unknown }): Row[] => {
   if (res.error) throw res.error;
   return (res.data as Row[] | null) ?? [];
+};
+
+// 🔧 HELPER BARU: Menghitung status kedatangan (Sesuai / Kurang / Lebih)
+const resolveArrivalStatus = (
+  req: number | null | undefined,
+  arr: number,
+  tglDatang: string | null,
+  fallbackStatus: string,
+): string => {
+  if (!tglDatang) return fallbackStatus;
+
+  if (req !== undefined && req !== null) {
+    const r = Number(req);
+    if (r === arr) return "Datang Sesuai";
+    if (r < arr) return "Datang Lebih";
+    return "Datang Kurang";
+  }
+  return "Datang"; // Fallback jika tidak ada data permintaan
 };
 
 const spbStatus = (
@@ -6943,6 +7845,9 @@ export const mapSpbRow = (
 
 export const mapPoRow = (row: Row): MonitoringDetailItem => {
   const tgl: string | null = row.material_datang_tgl || null;
+  const arr = numOrZero(row.material_datang_qty);
+  const status = tgl ? "Datang" : "Sudah PO";
+
   return {
     key: `po-${row.id}`,
     sumber: "po",
@@ -6954,16 +7859,23 @@ export const mapPoRow = (row: Row): MonitoringDetailItem => {
     no_po: cleanDocNo(row.no_po) ?? "-",
     tanggal_po: row.tanggal_po ?? null,
     tanggal_datang: tgl,
-    qty_datang: numOrZero(row.material_datang_qty),
-    status: tgl ? "Datang" : "Sudah PO",
+    qty_datang: arr,
+    status,
     poSourceFile: row.source_file,
   };
 };
 
+// 🔧 PERBAIKAN: mapSjRow sekarang menghitung status berdasarkan qty_permintaan dari SPB
 export const mapSjRow = (row: Row): MonitoringDetailItem => {
   const spb = first(row.spb);
   const po = first(row.po);
   const tgl: string | null = row.material_datang_tgl || null;
+  const arr = numOrZero(row.material_datang_qty ?? row.jumlah);
+  const req =
+    spb?.qty_permintaan !== undefined && spb?.qty_permintaan !== null
+      ? numOrZero(spb.qty_permintaan)
+      : null;
+
   return {
     key: `sj-${row.id}`,
     sumber: "sj",
@@ -6973,13 +7885,13 @@ export const mapSjRow = (row: Row): MonitoringDetailItem => {
     no_spb: cleanDocNo(spb?.no_spb) ?? "-",
     judul_spb: spb?.judul_spb ?? null,
     nama_barang: row.nama_barang || "-",
-    jumlah_permintaan: null,
+    jumlah_permintaan: req,
     satuan: row.material_datang_satuan ?? row.satuan ?? null,
     no_po: cleanDocNo(po?.no_po) ?? "-",
     tanggal_po: null,
     tanggal_datang: tgl,
-    qty_datang: numOrZero(row.material_datang_qty),
-    status: tgl ? "Datang" : "Belum Datang",
+    qty_datang: arr,
+    status: resolveArrivalStatus(req, arr, tgl, "Belum Datang"),
     spbSourceFile: spb?.source_file,
     poSourceFile: po?.source_file,
   };
@@ -6989,18 +7901,19 @@ export const mapSjRow = (row: Row): MonitoringDetailItem => {
  * Memetakan baris tunggal dari tabel `po` menjadi `SPBItemDetail`.
  */
 export const mapSinglePoItem = (data: Row): SPBItemDetail => {
+  const spbRel = first(data.spb); // 🔧 Ambil relasi SPB
   const tglDatang = data.material_datang_tgl || null;
   const arr = data.material_datang_qty ?? 0;
   const satuanDatang = data.material_datang_satuan || data.satuan || "-";
-  const status = tglDatang ? "Datang" : "Sudah PO";
+  const req = spbRel?.qty_permintaan ?? null;
 
   return {
     ...data,
-    no_spb: "-",
+    no_spb: spbRel?.no_spb || "-",
     tanggal_spb: null,
     nama_barang: data.nama_barang_po || data.nama_barang || "-",
     ukuran: data.ukuran || "-",
-    jumlah_permintaan: data.qty_permintaan ?? null,
+    jumlah_permintaan: req !== null ? Number(req) : null, // 🔧 Tampilkan qty permintaan
     satuan: data.satuan || data.material_datang_satuan || "-",
     no_po: data.no_po || "-",
     tanggal_po: data.tanggal_po || null,
@@ -7015,7 +7928,7 @@ export const mapSinglePoItem = (data: Row): SPBItemDetail => {
     lama_proses: calcLamaProses(data.tanggal_po, tglDatang, data.lama_proses),
     kurang_lebih: data.kurang_lebih ?? "-",
     keterangan: data.keterangan || "-",
-    status,
+    status: resolveArrivalStatus(req, Number(arr), tglDatang, "Sudah PO"),
     poSourceFile: data.source_file,
   } as SPBItemDetail;
 };
@@ -7024,10 +7937,11 @@ export const mapSinglePoItem = (data: Row): SPBItemDetail => {
  * Memetakan baris tunggal dari tabel `surat_jalan` menjadi `SPBItemDetail`.
  */
 export const mapSingleSjItem = (data: Row): SPBItemDetail => {
-  const spbRel = Array.isArray(data.spb) ? data.spb[0] : data.spb;
-  const poRel = Array.isArray(data.po) ? data.po[0] : data.po;
+  const spbRel = first(data.spb);
+  const poRel = first(data.po);
   const tgl = data.material_datang_tgl || null;
   const arr = data.material_datang_qty ?? data.jumlah ?? 0;
+  const req = spbRel?.qty_permintaan ?? null; // 🔧 Ambil qty permintaan
 
   return {
     ...data,
@@ -7039,7 +7953,7 @@ export const mapSingleSjItem = (data: Row): SPBItemDetail => {
     supplier: poRel?.nama_supplier || data.supplier || "-",
     nama_barang: data.nama_barang || "-",
     ukuran: data.ukuran || "-",
-    jumlah_permintaan: data.jumlah ?? null,
+    jumlah_permintaan: req !== null ? Number(req) : null, // 🔧 Tampilkan qty permintaan
     satuan: data.satuan || data.material_datang_satuan || "-",
     merk: data.merk || "-",
     spesifikasi_teknis: data.spesifikasi || data.spesifikasi_teknis || "-",
@@ -7055,7 +7969,7 @@ export const mapSingleSjItem = (data: Row): SPBItemDetail => {
     ),
     kurang_lebih: data.kurang_lebih ?? "-",
     keterangan: data.keterangan || "-",
-    status: tgl ? "Datang" : "Belum Datang",
+    status: resolveArrivalStatus(req, Number(arr), tgl, "Belum Datang"),
     spbSourceFile: spbRel?.source_file,
     poSourceFile: poRel?.source_file,
   } as SPBItemDetail;
@@ -7126,11 +8040,9 @@ export const mapSingleSpbItem = (
   } as SPBItemDetail;
 };
 
-
-
 ================================================================================
-FILE: ../src/features/spb/utils/statusHelpers.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/utils/statusHelpers.ts
+FILE: ../src/features/spb/spb-monitoring/utils/statusHelpers.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/utils/statusHelpers.ts
 ================================================================================
 
 // src/features/spb/utils/statusHelpers.ts
@@ -7228,8 +8140,8 @@ export const calcLamaProses = (
 
 
 ================================================================================
-FILE: ../src/features/spb/utils/titleOverrides.ts
-PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/utils/titleOverrides.ts
+FILE: ../src/features/spb/spb-monitoring/utils/titleOverrides.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/utils/titleOverrides.ts
 ================================================================================
 
 // src/features/spb/utils/titleOverrides.ts

@@ -1928,7 +1928,7 @@ import {
   isRestrictedSpbStatus,
   toSafeExternalUrl,
   canViewRestrictedSpb,
-} from "@/features/spb/accessRules";
+} from "@/features/spb/spb-monitoring/accessRules";
 import { STORAGE_KEY } from "@/app/providers/authProvider";
 
 describe("accessRules - SPB 'belum di proses'", () => {
@@ -1995,7 +1995,7 @@ import {
   getSjTarget,
   hasValue,
   isIgnoredSuratJalan,
-} from "@/features/spb/suratJalanRules";
+} from "@/features/spb/spb-monitoring/suratJalanRules";
 
 describe("isIgnoredSuratJalan", () => {
   it.each(["1", "2", 1, 2, " 1 "])("mengabaikan Surat Jalan no %s", (no) => {
@@ -2135,7 +2135,7 @@ vi.mock("@/shared/lib/supabaseClient", async () => {
 });
 
 import { fakeDb } from "../../utils/fakeSupabase";
-import { useMonitoringSPB } from "@/features/spb/useMonitoringSPB";
+import { useMonitoringSPB } from "@/features/spb/spb-monitoring/useMonitoringSPB";
 
 function wrapper({ children }: { children: ReactNode }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -2191,7 +2191,7 @@ describe("useMonitoringSPB - penempatan Surat Jalan (no 3 dst)", () => {
     expect(await loadCards()).toEqual([]);
   });
 
-  it("punya id_spb -> masuk ke card SPB, tidak membuat card terpisah", async () => {
+  it("punya id_spb -> tidak membuat card SJ terpisah dan card SPB hanya berisi barang dari tabel spb", async () => {
     fakeDb.tables.spb = [{ id: 1, no_spb: "63#R1", judul_spb: "Listrik", tgl_spb: "2026-09-01", nama_barang_spb: "Kabel" }];
     fakeDb.tables.surat_jalan = [
       { id: 10, no_surat_jalan: "3", id_spb: 1, id_po: null, nama_barang: "Kabel NYM", spb: { no_spb: "63#R1", judul_spb: "Listrik" } },
@@ -2200,9 +2200,8 @@ describe("useMonitoringSPB - penempatan Surat Jalan (no 3 dst)", () => {
     const cards = await loadCards();
 
     expect(cards).toHaveLength(1);
-    // 🔧 PERBAIKAN: ID diubah ke format baru
-    expect(cards[0]).toMatchObject({ id: "SPB_63#R1::Listrik", spbNo: "63#R1", itemsCount: 2 });
-    expect(cards[0].itemNames).toEqual(expect.arrayContaining(["Kabel", "Kabel NYM"]));
+    expect(cards[0]).toMatchObject({ id: "SPB_63#R1::Listrik", spbNo: "63#R1", itemsCount: 1 });
+    expect(cards[0].itemNames).toEqual(["Kabel"]);
   });
 
   it("tanpa id_spb tetapi punya id_po -> masuk ke card PO", async () => {
@@ -2260,9 +2259,9 @@ describe("useMonitoringSPB - penempatan Surat Jalan (no 3 dst)", () => {
     const cards = await loadCards();
     const total = cards.reduce((sum, c) => sum + c.itemsCount, 0);
 
-    expect(total).toBe(5);
-    // 🔧 PERBAIKAN: Karena judul kosong, IDnya menjadi SPB_63#R1::
-    expect(cards.find((c) => c.id === "SPB_63#R1::")!.itemsCount).toBe(2);
+    expect(total).toBe(4);
+    // Card SPB hanya berisi barang dari tabel spb (tidak menduplikasi SJ yang punya id_spb)
+    expect(cards.find((c) => c.id === "SPB_63#R1::")!.itemsCount).toBe(1);
     expect(cards.find((c) => c.id === "PO_34")!.itemsCount).toBe(2);
     expect(cards.find((c) => c.id === "SJ_3")!.itemsCount).toBe(1);
   });
@@ -2306,7 +2305,7 @@ vi.mock("@/shared/lib/supabaseClient", () => ({
   }
 }));
 
-import { useMonitoringSPBDetail } from "@/features/spb/useMonitoringSPBDetail";
+import { useMonitoringSPBDetail } from "@/features/spb/spb-monitoring/useMonitoringSPBDetail";
 
 function wrapper({ children }: { children: ReactNode }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -2366,7 +2365,7 @@ vi.mock("@/shared/lib/supabaseClient", async () => {
 });
 
 import { fakeDb } from "../../utils/fakeSupabase";
-import { useMonitoringSPBDetail } from "@/features/spb/useMonitoringSPBDetail";
+import { useMonitoringSPBDetail } from "@/features/spb/spb-monitoring/useMonitoringSPBDetail";
 
 function wrapper({ children }: { children: ReactNode }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -2447,20 +2446,19 @@ describe("Detail card SPB", () => {
     expect(items[0]).toMatchObject({ no_po: "PO-80", status: "Sudah PO" });
   });
 
-  it("menambahkan barang Surat Jalan (no 3+) yang punya id_spb ke card SPB, SJ no 1 & 2 diabaikan", async () => {
+  it("hanya menampilkan barang dari tabel spb (mengabaikan baris surat_jalan agar tidak duplikat)", async () => {
     fakeDb.tables.spb = [{ id: 1, no_spb: "63#R1", nama_barang_spb: "Barang SPB" }];
     fakeDb.tables.surat_jalan = [
       { id: 10, no_surat_jalan: "1", id_spb: 1, nama_barang: "SJ 1 (diabaikan)" },
       { id: 11, no_surat_jalan: "2", id_spb: 1, nama_barang: "SJ 2 (diabaikan)" },
-      { id: 12, no_surat_jalan: "3", id_spb: 1, nama_barang: "SJ 3 masuk SPB", spb: { no_spb: "63#R1" } },
-      { id: 13, no_surat_jalan: "12", id_spb: 1, nama_barang: "SJ 12 masuk SPB" },
+      { id: 12, no_surat_jalan: "3", id_spb: 1, nama_barang: "SJ 3 duplikat", spb: { no_spb: "63#R1" } },
+      { id: 13, no_surat_jalan: "12", id_spb: 1, nama_barang: "SJ 12 duplikat" },
     ];
 
     const { items } = await loadDetail("63#R1", null);
 
-    expect(names(items)).toEqual(["Barang SPB", "SJ 3 masuk SPB", "SJ 12 masuk SPB"]);
-    expect(items.map((i) => i.sumber)).toEqual(["spb", "sj", "sj"]);
-    expect(items[1].no_spb).toBe("63#R1");
+    expect(names(items)).toEqual(["Barang SPB"]);
+    expect(items.map((i) => i.sumber)).toEqual(["spb"]);
   });
 
   it("tidak menampilkan Surat Jalan milik SPB lain", async () => {
@@ -2476,12 +2474,13 @@ describe("Detail card SPB", () => {
     expect(names(items)).toEqual(["A"]);
   });
 
-  it("memberi key unik walau id SPB dan id SJ sama", async () => {
+  it("hanya mengembalikan item SPB dengan key unik 'spb-{id}'", async () => {
     fakeDb.tables.spb = [{ id: 1, no_spb: "63#R1", nama_barang_spb: "A" }];
     fakeDb.tables.surat_jalan = [{ id: 1, no_surat_jalan: "3", id_spb: 1, nama_barang: "B" }];
 
     const { items } = await loadDetail("63#R1", null);
-    expect(new Set(items.map((i) => i.key)).size).toBe(2);
+    expect(items).toHaveLength(1);
+    expect(items[0].key).toBe("spb-1");
   });
 
   it("mengembalikan array kosong jika SPB tidak ditemukan", async () => {
@@ -2761,8 +2760,8 @@ vi.mock("@/features/spb/useMonitoringSPB", () => ({
   updateDocumentTitle: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { useMonitoringSPB } from "@/features/spb/useMonitoringSPB";
-import MonitoringSPBPage from "@/features/spb/pages/MonitoringSPBPage";
+import { useMonitoringSPB } from "@/features/spb/spb-monitoring/useMonitoringSPB";
+import MonitoringSPBPage from "@/features/spb/spb-monitoring/pages/MonitoringSPBPage";
 import { STORAGE_KEY } from "@/app/providers/authProvider";
 
 function Wrapper({ children }: { children: ReactNode }) {
@@ -2883,7 +2882,7 @@ vi.mock("@/shared/lib/supabaseClient", async () => {
 });
 
 import { fakeDb } from "../../utils/fakeSupabase";
-import { MonitoringSPBDetailPage } from "@/features/spb/pages/MonitoringSPBDetailPage";
+import { MonitoringSPBDetailPage } from "@/features/spb/spb-monitoring/pages/MonitoringSPBDetailPage";
 
 /** Menampilkan URL tujuan navigasi agar bisa dicek di test. */
 function LocationProbe() {
@@ -2982,7 +2981,7 @@ describe("MonitoringSPBDetailPage - Surat Jalan murni (SJ 3)", () => {
 });
 
 describe("MonitoringSPBDetailPage - card SPB dan PO", () => {
-  it("card SPB: barang SPB + barang Surat Jalan (no 3+) milik SPB tersebut", async () => {
+  it("card SPB: hanya menampilkan barang dari tabel SPB tanpa menduplikasi baris Surat Jalan", async () => {
     fakeDb.tables.spb = [
       { id: 1, no_spb: "63#R1", judul_spb: "Listrik Gudang", nama_barang_spb: "Kabel NYM", qty_permintaan: 5, satuan: "roll", po: null },
     ];
@@ -2993,9 +2992,9 @@ describe("MonitoringSPBDetailPage - card SPB dan PO", () => {
 
     renderAt("/monitoring-spb/detail?spb=63%23R1");
 
-    expect(await screen.findByText("Daftar Barang (2)")).toBeInTheDocument();
+    expect(await screen.findByText("Daftar Barang (1)")).toBeInTheDocument();
     expect(screen.getByText("Kabel NYM")).toBeInTheDocument();
-    expect(screen.getByText("Stop kontak")).toBeInTheDocument();
+    expect(screen.queryByText("Stop kontak")).not.toBeInTheDocument();
     expect(screen.queryByText("SJ 2 diabaikan")).not.toBeInTheDocument();
     expect(screen.getByText("Belum di PO")).toBeInTheDocument();
   });
@@ -3041,7 +3040,7 @@ vi.mock("@/shared/lib/supabaseClient", () => ({
   },
 }));
 
-import { MonitoringSPBItemDetailPage } from "@/features/spb/pages/MonitoringSPBItemDetailPage";
+import { MonitoringSPBItemDetailPage } from "@/features/spb/spb-monitoring/pages/MonitoringSPBItemDetailPage";
 
 function Wrapper({ children, route }: { children: ReactNode; route: string }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -3222,8 +3221,8 @@ vi.mock("@/features/spb/useMonitoringSPB", () => ({
   updateDocumentTitle: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { useMonitoringSPB, updateDocumentTitle } from "@/features/spb/useMonitoringSPB";
-import MonitoringSPBPage from "@/features/spb/pages/MonitoringSPBPage";
+import { useMonitoringSPB, updateDocumentTitle } from "@/features/spb/spb-monitoring/useMonitoringSPB";
+import MonitoringSPBPage from "@/features/spb/spb-monitoring/pages/MonitoringSPBPage";
 
 const mockUseMonitoringSPB = vi.mocked(useMonitoringSPB);
 const mockUpdateDocumentTitle = vi.mocked(updateDocumentTitle);
@@ -3460,7 +3459,7 @@ vi.mock("@/shared/lib/supabaseClient", () => ({
   }
 }));
 
-import { useMonitoringSPBDetail } from "@/features/spb/useMonitoringSPBDetail";
+import { useMonitoringSPBDetail } from "@/features/spb/spb-monitoring/useMonitoringSPBDetail";
 
 function wrapper({ children }: { children: ReactNode }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -3502,6 +3501,296 @@ describe("useMonitoringSPBDetail - Logika Filtering Kebal Peluru", () => {
     expect(result.current.items).toHaveLength(4);
   });
 });
+
+================================================================================
+FILE: test/unit/spb/strict-spb-matching.test.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/tests/unit/spb/strict-spb-matching.test.ts
+================================================================================
+
+// tests/unit/spb/strict-spb-matching.test.ts
+import React, { type ReactNode } from "react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { App as AntdApp, ConfigProvider } from "antd";
+
+import { fetchDetailBySpb, validateStrictSpbRows } from "@/features/spb/spb-monitoring/api";
+import { groupMonitoringData } from "@/features/spb/spb-monitoring/utils/groupMonitoringData";
+import { MonitoringSPBDetailPage } from "@/features/spb/spb-monitoring/pages/MonitoringSPBDetailPage";
+
+import tabelSpb from "../../../cjs/tabel_spb.json";
+import tabelPo from "../../../cjs/tabel_po.json";
+import tabelSuratJalan from "../../../cjs/tabel_surat_jalan.json";
+
+const mockSelect = vi.fn();
+
+vi.mock("@/shared/lib/supabaseClient", () => ({
+  supabaseClient: {
+    from: vi.fn(() => ({
+      select: mockSelect,
+    })),
+  },
+}));
+
+function createTestWrapper(route: string) {
+  return function TestWrapper({ children }: { children: ReactNode }) {
+    const qc = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    return React.createElement(
+      ConfigProvider,
+      null,
+      React.createElement(
+        AntdApp,
+        null,
+        React.createElement(
+          QueryClientProvider,
+          { client: qc },
+          React.createElement(
+            MemoryRouter,
+            { initialEntries: [route] },
+            React.createElement(
+              Routes,
+              null,
+              React.createElement(Route, {
+                path: "/monitoring-spb/detail",
+                element: children,
+              }),
+            ),
+          ),
+        ),
+      ),
+    );
+  };
+}
+
+describe("Strict SPB Matching & Validasi Tabel SPB (SPB 37)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("Hanya mengembalikan data dari tabel spb jika nomor SPB dan judul SAMA PERSIS", async () => {
+    mockSelect.mockReturnValueOnce({
+      eq: vi.fn().mockResolvedValueOnce({
+        data: [
+          {
+            id: 501,
+            no_spb: "37",
+            judul_spb: "AC&Alat kerja",
+            nama_barang_spb: "Analizer",
+            status: "sudah di proses",
+          },
+          {
+            id: 517,
+            no_spb: "37",
+            judul_spb: "AC&Alat kerja",
+            nama_barang_spb: "Kawat Las Perak",
+            status: "sudah di proses",
+          },
+        ],
+        error: null,
+      }),
+    });
+
+    mockSelect.mockReturnValueOnce({
+      in: vi.fn().mockResolvedValueOnce({
+        data: [
+          { id: 344, no_po: "59R1", id_spb: 501 },
+          { id: 357, no_po: "64", id_spb: 517 },
+        ],
+        error: null,
+      }),
+    });
+
+    const result = await fetchDetailBySpb("37", "AC&Alat kerja", true);
+
+    expect(result).toHaveLength(2);
+    expect(result.every((item) => item.sumber === "spb")).toBe(true);
+    expect(result.every((item) => item.no_spb === "37")).toBe(true);
+    expect(result.every((item) => item.judul_spb === "AC&Alat kerja")).toBe(
+      true,
+    );
+    expect(result[result.length - 1].nama_barang).toBe("Kawat Las Perak");
+  });
+
+  it("SPB 37 pada data nyata (tabel_spb.json) hanya menampilkan 17 barang sampai 'Kawat Las Perak' tanpa duplikat dari surat_jalan maupun SPB 38", async () => {
+    // 1. Verifikasi pada Card Monitoring SPB (groupMonitoringData)
+    const cards = groupMonitoringData({
+      allSpbData: tabelSpb as any[],
+      poData: tabelPo as any[],
+      sjData: tabelSuratJalan as any[],
+      canViewRestricted: true,
+      overrides: {},
+    });
+
+    const cardSpb37 = cards.find(
+      (c) => c.spbNo === "37" && c.spbTitle === "AC&Alat kerja",
+    );
+    expect(cardSpb37).toBeDefined();
+    expect(cardSpb37!.itemsCount).toBe(17);
+    expect(cardSpb37!.itemNames).not.toContain("Tang Skun Manual"); // Milik SPB 38 yang judulnya sama ("AC&Alat kerja")
+
+    // 2. Verifikasi pada Detail Card SPB 37 (fetchDetailBySpb)
+    const spb37Rows = (tabelSpb as any[]).filter(
+      (r) => String(r.no_spb).trim() === "37",
+    );
+    const spb37Ids = new Set(spb37Rows.map((r) => Number(r.id)));
+    const poFor37 = (tabelPo as any[]).filter((p) =>
+      spb37Ids.has(Number(p.id_spb)),
+    );
+
+    mockSelect.mockReturnValueOnce({
+      eq: vi.fn().mockResolvedValueOnce({
+        data: spb37Rows,
+        error: null,
+      }),
+    });
+    mockSelect.mockReturnValueOnce({
+      in: vi.fn().mockResolvedValueOnce({
+        data: poFor37,
+        error: null,
+      }),
+    });
+
+    const detailItems = await fetchDetailBySpb("37", "AC&Alat kerja", true);
+
+    expect(detailItems).toHaveLength(17);
+    expect(detailItems[0].nama_barang).toBe("Analizer");
+    expect(detailItems[16].nama_barang).toBe("Kawat Las Perak");
+    expect(detailItems.every((item) => item.sumber === "spb")).toBe(true);
+    expect(detailItems.every((item) => item.no_spb === "37")).toBe(true);
+    expect(
+      detailItems.every((item) => item.judul_spb === "AC&Alat kerja"),
+    ).toBe(true);
+  });
+
+  it("MELEMPAR ERROR jika ada data dari NOMOR SPB LAIN tetapi JUDULNYA SAMA", async () => {
+    mockSelect.mockReturnValueOnce({
+      eq: vi.fn().mockResolvedValueOnce({
+        data: [
+          {
+            id: 517,
+            no_spb: "37",
+            judul_spb: "AC&Alat kerja",
+            nama_barang_spb: "Kawat Las Perak",
+          },
+          {
+            id: 518,
+            no_spb: "38",
+            judul_spb: "AC&Alat kerja",
+            nama_barang_spb: "Tang Skun Manual",
+          },
+        ],
+        error: null,
+      }),
+    });
+
+    await expect(fetchDetailBySpb("37", "AC&Alat kerja")).rejects.toThrow(
+      /Data tidak konsisten: Ditemukan data dari nomor SPB lain \(38\) dengan judul yang sama \("AC&Alat kerja"\)/i,
+    );
+  });
+
+  it("MELEMPAR ERROR jika NOMOR SPB SAMA tetapi ada JUDUL YANG BERBEDA di database", async () => {
+    mockSelect.mockReturnValueOnce({
+      eq: vi.fn().mockResolvedValueOnce({
+        data: [
+          {
+            id: 1,
+            no_spb: "37",
+            judul_spb: "AC&Alat kerja",
+            nama_barang_spb: "Kawat Las Perak",
+          },
+          {
+            id: 2,
+            no_spb: "37",
+            judul_spb: "Judul Lain",
+            nama_barang_spb: "Analizer",
+          },
+        ],
+        error: null,
+      }),
+    });
+
+    await expect(fetchDetailBySpb("37", "AC&Alat kerja")).rejects.toThrow(
+      /Data tidak konsisten: SPB 37 memiliki lebih dari satu judul/i,
+    );
+  });
+
+  it("MELEMPAR ERROR jika NOMOR SPB SAMA tetapi judul di database berbeda dengan judul yang diminta", async () => {
+    mockSelect.mockReturnValueOnce({
+      eq: vi.fn().mockResolvedValueOnce({
+        data: [
+          {
+            id: 517,
+            no_spb: "37",
+            judul_spb: "AC&Alat kerja",
+            nama_barang_spb: "Kawat Las Perak",
+          },
+        ],
+        error: null,
+      }),
+    });
+
+    await expect(fetchDetailBySpb("37", "Judul yang salah")).rejects.toThrow(
+      /Data tidak konsisten: Nomor SPB 37 memiliki judul "AC&Alat kerja" yang berbeda dengan judul yang diminta \("Judul yang salah"\)/i,
+    );
+  });
+
+  it("validateStrictSpbRows menolak baris yang bukan berasal dari tabel spb (mis. sumber: 'sj')", () => {
+    expect(() =>
+      validateStrictSpbRows(
+        [
+          {
+            id: 313,
+            sumber: "sj",
+            no_spb: "37",
+            judul_spb: "AC&Alat kerja",
+            nama_barang: "Analizer",
+          },
+        ],
+        "37",
+        "AC&Alat kerja",
+      ),
+    ).toThrow(/bukan dari tabel SPB/i);
+  });
+
+  it("MonitoringSPBDetailPage menampilkan pesan error di UI saat terjadi konflik nomor/judul SPB", async () => {
+    mockSelect.mockReturnValueOnce({
+      eq: vi.fn().mockResolvedValueOnce({
+        data: [
+          {
+            id: 517,
+            no_spb: "37",
+            judul_spb: "AC&Alat kerja",
+            nama_barang_spb: "Kawat Las Perak",
+          },
+          {
+            id: 518,
+            no_spb: "38",
+            judul_spb: "AC&Alat kerja",
+            nama_barang_spb: "Tang Skun Manual",
+          },
+        ],
+        error: null,
+      }),
+    });
+
+    render(React.createElement(MonitoringSPBDetailPage), {
+      wrapper: createTestWrapper(
+        "/monitoring-spb/detail?spb=37&judul=AC%26Alat+kerja",
+      ),
+    });
+
+    expect(await screen.findByText("Gagal memuat detail")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Data tidak konsisten: Ditemukan data dari nomor SPB lain \(38\) dengan judul yang sama/i,
+      ),
+    ).toBeInTheDocument();
+  });
+});
+
 
 ================================================================================
 FILE: test/utils/fakeSupabase.ts

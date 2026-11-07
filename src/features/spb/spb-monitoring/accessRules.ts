@@ -6,7 +6,7 @@
  * supabase/migrations/20261103_enforce_auth_rls.sql). Jangan mengandalkan
  * filter klien saja.
  */
-import { getVerifiedUser } from "../../shared/lib/authGuard";
+import { getVerifiedUser } from "../../../shared/lib/authGuard";
 
 /** Nilai kolom `status` tabel spb yang hanya boleh dilihat user yang login. */
 export const RESTRICTED_SPB_STATUS = "belum di proses";

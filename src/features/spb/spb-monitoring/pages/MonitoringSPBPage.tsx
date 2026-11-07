@@ -3,9 +3,9 @@ import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Alert, Col, Empty, Row, Spin, Grid } from "antd"; // 🔧 Tambahkan Grid
 import { useGetIdentity } from "@refinedev/core";
-import { canEditData } from "../../../app/providers/accessControlProvider";
-import { getVerifiedUser } from "../../../shared/lib/authGuard";
-import type { SPBDocumentGroup, UserRole } from "../../../shared/types";
+import { canEditData } from "../../../../app/providers/accessControlProvider";
+import { getVerifiedUser } from "../../../../shared/lib/authGuard";
+import type { SPBDocumentGroup, UserRole } from "../../../../shared/types";
 import { canViewRestrictedSpb } from "../accessRules";
 import { EditDocumentTitleModal } from "../components/EditDocumentTitleModal";
 import { MonitoringSPBCard } from "../components/MonitoringSPBCard";
@@ -15,6 +15,7 @@ import { MonitoringSPBToolbar } from "../components/MonitoringSPBToolbar";
 import { useEditDocumentTitle } from "../hooks/useEditDocumentTitle";
 import { useMonitoringSPBFilter } from "../hooks/useMonitoringSPBFilter";
 import { useMonitoringSPB } from "../useMonitoringSPB";
+import { SpbAnalyticsButton } from "../../analytics-spb/components/SpbAnalyticsButton";
 import {
   filterAndSortSpbDocuments,
   getRecentSpbDocuments,
@@ -26,7 +27,7 @@ export default function MonitoringSPBPage() {
   
   // 🔧 PERBAIKAN: Deteksi layar mobile/desktop
   const screens = Grid.useBreakpoint();
-  const isMobile = !screens.md;
+  const isMobile = Boolean((screens.xs || screens.sm) && !screens.md);
 
   const { data: identity } = useGetIdentity<{ role: UserRole }>();
   const userRole = identity?.role ?? getVerifiedUser()?.role ?? "user";
@@ -163,6 +164,8 @@ export default function MonitoringSPBPage() {
           onSave={handleSaveTitle}
         />
       )}
+
+      <SpbAnalyticsButton />
     </div>
   );
 }

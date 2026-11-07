@@ -2,6 +2,8 @@ import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { mapProduct } from "../../shared/lib/mappers";
 import { requirePermission } from "../../shared/lib/authGuard";
+import { appQueryClient } from "../../shared/lib/queryClient";
+import { invalidateOnMutation } from "../../shared/lib/queryKeys";
 import type { Product } from "../../shared/types";
 
 export interface BarangInput {
@@ -38,6 +40,8 @@ export const createBarang = async (input: BarangInput): Promise<Product> => {
 
   if (error) throw error;
 
+  await invalidateOnMutation(appQueryClient, "product-create");
+
   return mapProduct(
     data ?? {
       id: Date.now(),
@@ -73,6 +77,8 @@ export const updateBarang = async (
 
   if (error) throw error;
 
+  await invalidateOnMutation(appQueryClient, "product-update");
+
   return mapProduct(
     data ?? {
       id,
@@ -98,4 +104,6 @@ export const deleteBarang = async (id: number): Promise<void> => {
     .eq("id", id);
 
   if (error) throw error;
+
+  await invalidateOnMutation(appQueryClient, "product-delete");
 };

@@ -1,13 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabaseClient } from "../../shared/lib/supabaseClient";
-import { TABLES } from "../../shared/lib/constants";
-import type { SPBItemDetail } from "../../shared/types";
+import { supabaseClient } from "../../../shared/lib/supabaseClient";
+import { TABLES } from "../../../shared/lib/constants";
+import { QUERY_KEYS, STALE_TIMES } from "../../../shared/lib/queryKeys";
+import type { SPBItemDetail } from "../../../shared/types";
 import { canViewRestrictedSpb, isRestrictedSpbStatus } from "./accessRules";
 
 export const useSPBItemDetail = (itemId: string | null) => {
   const enabled = !!itemId;
   const { data, isLoading, error } = useQuery<SPBItemDetail | null>({
-    queryKey: ["spb-item-detail", itemId],
+    queryKey: QUERY_KEYS.spbItemDetail(itemId),
+    staleTime: STALE_TIMES.SPB_ITEM,
     queryFn: async () => {
       if (!itemId) return null;
 

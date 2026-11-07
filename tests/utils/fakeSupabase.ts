@@ -253,6 +253,7 @@ export const fakeSupabaseClient = {
       order(...args: unknown[]) { log("order", args); return builder; },
       limit(...args: unknown[]) { log("limit", args); return builder; },
       range(from: number, to: number) { log("range", [from, to]); rangeWindow = [from, to]; return builder; },
+      abortSignal() { return builder; },
       single() { log("single", []); const { data, error } = run(); return Promise.resolve({ data: data?.[0] ?? null, error }); },
       then(resolve: (v: unknown) => unknown, reject?: (e: unknown) => unknown) { return Promise.resolve(run()).then(resolve, reject); },
     };

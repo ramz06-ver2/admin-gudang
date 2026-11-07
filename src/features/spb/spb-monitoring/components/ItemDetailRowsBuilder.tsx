@@ -1,8 +1,8 @@
 // src/features/spb/components/ItemDetailRowsBuilder.tsx
 import { Button, Space, Tag, Tooltip, Typography } from "antd";
 import { FileOutlined } from "@ant-design/icons";
-import type { SPBItemDetail } from "../../../shared/types";
-import { formatDate } from "../../../shared/lib/format";
+import type { SPBItemDetail } from "../../../../shared/types";
+import { formatDate } from "../../../../shared/lib/format";
 import { toSafeExternalUrl } from "../accessRules";
 import type { DetailRow } from "../types";
 import { getItemDetailStatusColor } from "../utils/statusHelpers";

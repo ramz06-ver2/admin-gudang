@@ -2,8 +2,8 @@
 import type { MouseEvent } from "react";
 import { Button, Card, Divider, Space, Tag, Typography } from "antd";
 import { ArrowRightOutlined, EditOutlined } from "@ant-design/icons";
-import type { SPBDocumentGroup } from "../../../shared/types";
-import { formatDate } from "../../../shared/lib/format";
+import type { SPBDocumentGroup } from "../../../../shared/types";
+import { formatDate } from "../../../../shared/lib/format";
 import { getCardStatusColor } from "../utils/statusHelpers";
 import { buildLocalTitleKey } from "../utils/titleOverrides";
 import { SourceFileLink } from "./SourceFileLink";

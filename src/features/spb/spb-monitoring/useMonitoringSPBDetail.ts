@@ -1,5 +1,6 @@
 // src/features/spb/useMonitoringSPBDetail.ts
 import { useQuery } from "@tanstack/react-query";
+import { QUERY_KEYS, STALE_TIMES } from "../../../shared/lib/queryKeys";
 import { canViewRestrictedSpb } from "./accessRules";
 import {
   fetchDetailByPo,
@@ -20,14 +21,14 @@ export const useMonitoringSPBDetail = (
   const canViewRestricted = canViewRestrictedSpb();
 
   const { data, isLoading, error } = useQuery<MonitoringDetailItem[]>({
-    queryKey: [
-      "monitoring-spb-detail",
+    queryKey: QUERY_KEYS.monitoringSpbDetail(
       spbNo,
       poNo,
       sjNo,
       judulSpb,
       canViewRestricted,
-    ],
+    ),
+    staleTime: STALE_TIMES.MONITORING_SPB_DETAIL,
     queryFn: async () => {
       if (spbNo) return fetchDetailBySpb(spbNo, judulSpb, canViewRestricted);
       if (poNo) return fetchDetailByPo(poNo);

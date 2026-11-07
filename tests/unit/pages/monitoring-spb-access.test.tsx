@@ -5,13 +5,13 @@ import { MemoryRouter } from "react-router-dom";
 import { App as AntdApp, ConfigProvider } from "antd";
 import type { ReactNode } from "react";
 
-vi.mock("@/features/spb/useMonitoringSPB", () => ({
+vi.mock("@/features/spb/spb-monitoring/useMonitoringSPB", () => ({
   useMonitoringSPB: vi.fn(),
   updateDocumentTitle: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { useMonitoringSPB } from "@/features/spb/useMonitoringSPB";
-import MonitoringSPBPage from "@/features/spb/pages/MonitoringSPBPage";
+import { useMonitoringSPB } from "@/features/spb/spb-monitoring/useMonitoringSPB";
+import MonitoringSPBPage from "@/features/spb/spb-monitoring/pages/MonitoringSPBPage";
 import { STORAGE_KEY } from "@/app/providers/authProvider";
 
 function Wrapper({ children }: { children: ReactNode }) {

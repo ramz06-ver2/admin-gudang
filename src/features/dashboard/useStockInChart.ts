@@ -3,12 +3,14 @@ import dayjs from "dayjs";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { USE_MOCK } from "../../shared/lib/config";
+import { QUERY_KEYS, STALE_TIMES } from "../../shared/lib/queryKeys";
 import { mockStockInChart } from "../../mocks/stockEntries";
 import type { StockInChartItem } from "../../shared/types";
 
 export const useStockInChart = (days = 30) => {
   const { data, isLoading, refetch } = useQuery<StockInChartItem[]>({
-    queryKey: ["stock-in-chart", days],
+    queryKey: QUERY_KEYS.stockInChart(days),
+    staleTime: STALE_TIMES.STOCK_IN_CHART,
     queryFn: async () => {
       if (USE_MOCK) {
         await new Promise((r) => setTimeout(r, 300));

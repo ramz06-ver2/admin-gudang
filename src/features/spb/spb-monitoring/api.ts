@@ -1,8 +1,11 @@
 // src/features/spb/api.ts
-import { supabaseClient } from "../../shared/lib/supabaseClient";
-import { TABLES } from "../../shared/lib/constants";
-import { requirePermission } from "../../shared/lib/authGuard";
-import type { SPBItemDetail } from "../../shared/types";
+import { supabaseClient } from "../../../shared/lib/supabaseClient";
+import { TABLES } from "../../../shared/lib/constants";
+import { requirePermission } from "../../../shared/lib/authGuard";
+import { appQueryClient } from "../../../shared/lib/queryClient";
+import { invalidateOnMutation } from "../../../shared/lib/queryKeys";
+import type { SPBItemDetail } from "../../../shared/types";
+import { invalidateSpbStatusCache } from "../shared/spbStatusCache";
 import { canViewRestrictedSpb, filterVisibleSpbRows, isRestrictedSpbStatus } from "./accessRules";
 import { cleanDocNo, hasValue, isIgnoredSuratJalan } from "./suratJalanRules";
 import type { MonitoringDetailItem } from "./types";
@@ -29,18 +32,37 @@ const PAGE_SIZE = 1000;
 const SPB_SELECT = `*, po:po!id_po (no_po, tanggal_po, source_file)`;
 const SJ_SELECT = `*, spb:spb!id_spb (no_spb, judul_spb, source_file, qty_permintaan), po:po!id_po (no_po, source_file)`;
 
+const createAbortError = () =>
+  typeof DOMException !== "undefined"
+    ? new DOMException("Request dibatalkan", "AbortError")
+    : Object.assign(new Error("Request dibatalkan"), { name: "AbortError" });
+
 export const fetchAllRows = async (
   table: string,
   select: string,
+  signal?: AbortSignal,
 ): Promise<any[]> => {
   const all: any[] = [];
   let from = 0;
 
   for (let guard = 0; guard < 100; guard += 1) {
-    const { data, error } = await supabaseClient
+    if (signal?.aborted) {
+      throw createAbortError();
+    }
+
+    let query: any = supabaseClient
       .from(table)
       .select(select)
       .range(from, from + PAGE_SIZE - 1);
+
+    if (signal && typeof query?.abortSignal === "function") {
+      query = query.abortSignal(signal);
+    }
+
+    const { data, error } = await query;
+    if (signal?.aborted) {
+      throw createAbortError();
+    }
     if (error) throw error;
 
     const rows = (data as any[]) ?? [];
@@ -53,7 +75,7 @@ export const fetchAllRows = async (
   return all;
 };
 
-export const fetchMonitoringRawData = async () => {
+export const fetchMonitoringRawData = async (signal?: AbortSignal) => {
   const [allSpbData, poData, sjData] = await Promise.all([
     fetchAllRows(
       "spb",
@@ -61,18 +83,21 @@ export const fetchMonitoringRawData = async () => {
        qty_permintaan, material_datang_qty, nama_barang_spb, status,
        source_file,
        po:po!id_po (no_po, tanggal_po)`,
+      signal,
     ),
     fetchAllRows(
       "po",
       `id, no_po, judul_po, tanggal_po, id_spb, material_datang_tgl,
        material_datang_qty, nama_barang_po, nama_supplier, source_file`,
+      signal,
     ),
     fetchAllRows(
       "surat_jalan",
-      `id, no_surat_jalan, id_spb, id_po, nama_barang,
-       material_datang_tgl, material_datang_qty,
-       spb:spb!id_spb (no_spb, judul_spb),
-       po:po!id_po (no_po)`,
+      `id, no_surat_jalan, id_spb, id_po, nama_barang, jumlah, satuan,
+       tanggal_surat_jalan, material_datang_tgl, material_datang_qty, material_datang_satuan,
+       spb:spb!id_spb (no_spb, judul_spb, tgl_spb, qty_permintaan, material_datang_tgl),
+       po:po!id_po (no_po, tanggal_po, material_datang_tgl)`,
+      signal,
     ),
   ]);
 
@@ -105,6 +130,10 @@ export const updateDocumentTitle = async (
       .eq("no_po", docNo);
     if (error) throw error;
   }
+
+  await invalidateOnMutation(appQueryClient, "spb-update", () => {
+    invalidateSpbStatusCache();
+  });
 };
 
 /**

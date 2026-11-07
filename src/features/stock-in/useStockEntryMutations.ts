@@ -1,9 +1,10 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { App } from "antd";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { USE_MOCK } from "../../shared/lib/config";
 import { requirePermission } from "../../shared/lib/authGuard";
+import { invalidateOnMutation } from "../../shared/lib/queryKeys";
 import type { StockEntry } from "../../shared/types";
 
 export interface CreateStockEntryInput {
@@ -17,6 +18,7 @@ export interface CreateStockEntryInput {
 
 export const useCreateStockEntry = () => {
   const { message } = App.useApp();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (input: CreateStockEntryInput) => {
@@ -46,7 +48,8 @@ export const useCreateStockEntry = () => {
       if (error) throw error;
       return data as StockEntry;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await invalidateOnMutation(queryClient, "stock-in");
       message.success("Barang masuk berhasil disimpan");
     },
     onError: (error: Error) => {

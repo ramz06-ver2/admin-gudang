@@ -2,11 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { USE_MOCK } from "../../shared/lib/config";
+import { QUERY_KEYS, STALE_TIMES } from "../../shared/lib/queryKeys";
 import type { Person } from "../../shared/types";
 
 export const usePersons = () => {
   const { data, isLoading, refetch } = useQuery<Person[]>({
-    queryKey: ["persons"],
+    queryKey: QUERY_KEYS.persons,
+    staleTime: STALE_TIMES.PERSONS,
     queryFn: async () => {
       if (USE_MOCK) {
         return [];

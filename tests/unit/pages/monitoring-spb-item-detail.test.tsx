@@ -16,7 +16,7 @@ vi.mock("@/shared/lib/supabaseClient", () => ({
   },
 }));
 
-import { MonitoringSPBItemDetailPage } from "@/features/spb/pages/MonitoringSPBItemDetailPage";
+import { MonitoringSPBItemDetailPage } from "@/features/spb/spb-monitoring/pages/MonitoringSPBItemDetailPage";
 
 function Wrapper({ children, route }: { children: ReactNode; route: string }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });

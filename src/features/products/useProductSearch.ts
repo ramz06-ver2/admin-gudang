@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { USE_MOCK } from "../../shared/lib/config";
+import { QUERY_KEYS, STALE_TIMES } from "../../shared/lib/queryKeys";
 import { mockProducts } from "../../mocks/products";
 import { mapProduct } from "../../shared/lib/mappers";
 import type { Product } from "../../shared/types";
@@ -11,7 +12,7 @@ export const useProductSearch = (keyword: string, limit = 30) => {
   const trimmed = sanitize(keyword).trim();
 
   const { data, isLoading, refetch } = useQuery<Product[]>({
-    queryKey: ["product-search", trimmed, limit],
+    queryKey: QUERY_KEYS.productSearch(trimmed, limit),
     queryFn: async () => {
       if (USE_MOCK) {
         if (!trimmed) return mockProducts.slice(0, limit);
@@ -30,7 +31,7 @@ export const useProductSearch = (keyword: string, limit = 30) => {
       if (error) throw error;
       return (data ?? []).map(mapProduct);
     },
-    staleTime: 10_000,
+    staleTime: STALE_TIMES.PRODUCT_SEARCH,
   });
 
   return { products: data ?? [], isLoading, refetch };

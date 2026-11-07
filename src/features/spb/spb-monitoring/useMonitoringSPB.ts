@@ -1,7 +1,8 @@
 // src/features/spb/useMonitoringSPB.ts
 import { useQuery } from "@tanstack/react-query";
-import { USE_MOCK } from "../../shared/lib/config";
-import type { SPBDocumentGroup } from "../../shared/types";
+import { USE_MOCK } from "../../../shared/lib/config";
+import { QUERY_KEYS, STALE_TIMES } from "../../../shared/lib/queryKeys";
+import type { SPBDocumentGroup } from "../../../shared/types";
 import { canViewRestrictedSpb } from "./accessRules";
 import { fetchMonitoringRawData, updateDocumentTitle } from "./api";
 import { groupMonitoringData } from "./utils/groupMonitoringData";
@@ -13,12 +14,13 @@ export const useMonitoringSPB = () => {
   const canViewRestricted = canViewRestrictedSpb();
 
   const { data, isLoading, error, refetch } = useQuery<SPBDocumentGroup[]>({
-    queryKey: ["monitoring-spb", canViewRestricted],
-    queryFn: async () => {
+    queryKey: QUERY_KEYS.monitoringSpb(canViewRestricted),
+    staleTime: STALE_TIMES.MONITORING_SPB,
+    queryFn: async ({ signal }) => {
       if (USE_MOCK) return [];
 
       const overrides = getTitleOverrides();
-      const { allSpbData, poData, sjData } = await fetchMonitoringRawData();
+      const { allSpbData, poData, sjData } = await fetchMonitoringRawData(signal);
 
       return groupMonitoringData({
         allSpbData,

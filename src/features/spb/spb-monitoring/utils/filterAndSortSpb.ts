@@ -1,5 +1,5 @@
 // src/features/spb/utils/filterAndSortSpb.ts
-import type { SPBDocumentGroup } from "../../../shared/types";
+import type { SPBDocumentGroup } from "../../../../shared/types";
 import type { FilterType, SearchMode, SortBy } from "../types";
 import { getNumberFromStr } from "./statusHelpers";
 import { buildLocalTitleKey } from "./titleOverrides";

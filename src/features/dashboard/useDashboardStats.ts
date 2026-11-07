@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { USE_MOCK } from "../../shared/lib/config";
+import { QUERY_KEYS, STALE_TIMES } from "../../shared/lib/queryKeys";
 import { getMockDashboardStats } from "../../mocks/dashboard";
 import type { DashboardStats } from "../../shared/types";
 
@@ -21,7 +22,8 @@ const EMPTY_STATS: DashboardStats = {
 
 export const useDashboardStats = (): UseDashboardStatsResult => {
   const query = useQuery<DashboardStats, Error, DashboardStats>({
-    queryKey: ["dashboard-stats"],
+    queryKey: QUERY_KEYS.dashboardStats,
+    staleTime: STALE_TIMES.DASHBOARD_STATS,
     refetchInterval: USE_MOCK ? false : 60_000,
     queryFn: async (): Promise<DashboardStats> => {
       if (USE_MOCK) {

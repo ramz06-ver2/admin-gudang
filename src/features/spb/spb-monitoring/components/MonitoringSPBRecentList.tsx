@@ -1,7 +1,7 @@
 // src/features/spb/components/MonitoringSPBRecentList.tsx
 import { Card, Grid, Space, Typography } from "antd";
-import type { SPBDocumentGroup } from "../../../shared/types";
-import { formatDate } from "../../../shared/lib/format";
+import type { SPBDocumentGroup } from "../../../../shared/types";
+import { formatDate } from "../../../../shared/lib/format";
 
 const { Text } = Typography;
 

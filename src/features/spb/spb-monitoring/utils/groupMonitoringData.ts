@@ -1,5 +1,5 @@
 // src/features/spb/utils/groupMonitoringData.ts
-import type { SPBDocumentGroup } from "../../../shared/types";
+import type { SPBDocumentGroup } from "../../../../shared/types";
 import {
   filterVisibleSpbRows,
   isRestrictedSpbStatus,

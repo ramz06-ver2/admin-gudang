@@ -12,6 +12,7 @@ import { mockWorkplaces } from "../../../mocks/entry";
 import { supabaseClient } from "../../../shared/lib/supabaseClient";
 import { USE_MOCK } from "../../../shared/lib/config";
 import { requirePermission } from "../../../shared/lib/authGuard";
+import { invalidateOnMutation } from "../../../shared/lib/queryKeys";
 import { formatNumber } from "../../../shared/lib/format";
 import type { Product, Person, Workplace, OutboundLine } from "../../../shared/types"; // Menggunakan OutboundLine dari types/index
 
@@ -115,9 +116,7 @@ export const EntryPage = () => {
         if (error) throw error;
       }
       message.success(`Pengeluaran ${lines.length} jenis barang berhasil disimpan!`);
-      await queryClient.invalidateQueries({ queryKey: ["products"] });
-      await queryClient.invalidateQueries({ queryKey: ["stock-exits"] });
-      await queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      await invalidateOnMutation(queryClient, "stock-out");
       navigate("/dashboard");
     } catch (err: any) {
       message.error(err?.message || "Gagal menyimpan pengeluaran barang (cek stok)");

@@ -8,7 +8,7 @@ import {
   cleanSpbTitle,
   isKeteranganBarang,
   resolveSpbItemStatus,
-} from "../spb/suratJalanRules";
+} from "../spb/spb-monitoring/suratJalanRules";
 import {
   canApproveAccounts,
   canEditData,

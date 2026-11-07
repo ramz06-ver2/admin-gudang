@@ -4,7 +4,7 @@ import {
   getSjTarget,
   hasValue,
   isIgnoredSuratJalan,
-} from "@/features/spb/suratJalanRules";
+} from "@/features/spb/spb-monitoring/suratJalanRules";
 
 describe("isIgnoredSuratJalan", () => {
   it.each(["1", "2", 1, 2, " 1 "])("mengabaikan Surat Jalan no %s", (no) => {
