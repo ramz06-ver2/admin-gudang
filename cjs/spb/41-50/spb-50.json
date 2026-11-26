@@ -1,0 +1,27 @@
+[
+  {
+    "id": 624,
+    "no_spb": "50",
+    "tgl_spb": "2026-09-21",
+    "no_barang_di_spb": "1",
+    "nama_barang_spb": "Mesin Jack Hammer",
+    "ukuran": "30kg",
+    "qty_permintaan": 1,
+    "satuan": "bh",
+    "merk": "Wipro",
+    "spesifikasi_teknis": "Wipro: W6167",
+    "lokasi_pemasangan": "Pantekan Grounding",
+    "rencana_pemasangan": null,
+    "material_datang_tgl": null,
+    "material_datang_qty": 0,
+    "material_datang_satuan": "bh",
+    "keterangan": null,
+    "created_at": "2026-10-21T09:08:06.154649+00:00",
+    "id_po": 440,
+    "judul_spb": "Pipa Refrigent",
+    "status": "sudah diproses",
+    "keterangan_barang": null,
+    "id_surat_jalan": null,
+    "source_file": "https://docs.google.com/spreadsheets/d/1vEHfQM6zi2ktl-x6pO41No3vP1NfMHTC/edit?gid=733731202#gid=733731202"
+  }
+]

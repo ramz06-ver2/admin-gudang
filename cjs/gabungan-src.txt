@@ -59,6 +59,7 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/app/App.tsx
 
 import { Suspense, lazy } from "react";
 import { Refine, Authenticated } from "@refinedev/core";
+import { QueryClientProvider } from "@tanstack/react-query";
 import routerBindings, { UnsavedChangesNotifier, DocumentTitleHandler } from "@refinedev/react-router-v6";
 import { BrowserRouter, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { ErrorComponent } from "@refinedev/antd";
@@ -74,6 +75,7 @@ import {
 } from "@ant-design/icons";
 
 import { supabaseClient } from "../shared/lib/supabaseClient";
+import { appQueryClient } from "../shared/lib/queryClient";
 import { authProvider } from "./providers/authProvider";
 import { accessControlProvider } from "./providers/accessControlProvider";
 import { AdminLayout } from "../shared/layout/AdminLayout";
@@ -97,61 +99,67 @@ const PageLoader = () => (
 
 function App() {
   return (
-    <BrowserRouter>
-      <ConfigProvider theme={{ token: { colorPrimary: "#1677ff", borderRadius: 8 } }}>
-        <AntdApp>
-          <Refine
-            dataProvider={dataProvider(supabaseClient)}
-            authProvider={authProvider}
-            accessControlProvider={accessControlProvider}
-            routerProvider={routerBindings}
-            resources={[
-              { name: "dashboard", list: "/dashboard", meta: { label: "Dashboard", icon: <DashboardOutlined /> } },
-              { name: "barang", list: "/inventory", meta: { label: "Inventory", icon: <AppstoreOutlined /> } },
-              { name: "spb", list: "/monitoring-spb", meta: { label: "Monitoring SPB", icon: <FileTextOutlined /> } },
-              { name: "barang_masuk", list: "/products/create", meta: { label: "Tambah Barang Masuk", icon: <PlusCircleOutlined /> } },
-              { name: "pengeluaran", list: "/entry", meta: { label: "Pengeluaran Barang", icon: <SendOutlined /> } },
-              { name: "notifications", list: "/notifications", meta: { label: "Notifikasi", icon: <BellOutlined /> } },
-            ]}
-            options={{ syncWithLocation: true, warnWhenUnsavedChanges: true }}
-          >
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+    <QueryClientProvider client={appQueryClient}>
+      <BrowserRouter>
+        <ConfigProvider theme={{ token: { colorPrimary: "#1677ff", borderRadius: 8 } }}>
+          <AntdApp>
+            <Refine
+              dataProvider={dataProvider(supabaseClient)}
+              authProvider={authProvider}
+              accessControlProvider={accessControlProvider}
+              routerProvider={routerBindings}
+              resources={[
+                { name: "dashboard", list: "/dashboard", meta: { label: "Dashboard", icon: <DashboardOutlined /> } },
+                { name: "barang", list: "/inventory", meta: { label: "Inventory", icon: <AppstoreOutlined /> } },
+                { name: "spb", list: "/monitoring-spb", meta: { label: "Monitoring SPB", icon: <FileTextOutlined /> } },
+                { name: "barang_masuk", list: "/products/create", meta: { label: "Tambah Barang Masuk", icon: <PlusCircleOutlined /> } },
+                { name: "pengeluaran", list: "/entry", meta: { label: "Pengeluaran Barang", icon: <SendOutlined /> } },
+                { name: "notifications", list: "/notifications", meta: { label: "Notifikasi", icon: <BellOutlined /> } },
+              ]}
+              options={{
+                syncWithLocation: true,
+                warnWhenUnsavedChanges: true,
+                reactQuery: { clientConfig: appQueryClient },
+              }}
+            >
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-                {/* Rute Publik (Bisa diakses tanpa login) */}
-                <Route element={<AdminLayout><Outlet /></AdminLayout>}>
-                  <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/inventory" element={<InventoryPage />} />
-                  
-                  {/* 🔧 Monitoring SPB dikembalikan ke publik agar bisa dilihat, fitur edit akan dibatasi di dalam UI */}
-                  <Route path="/monitoring-spb" element={<MonitoringSPBPage />} />
-                  <Route path="/monitoring-spb/analytics" element={<SpbAnalyticsPage />} /> 
-                  <Route path="/monitoring-spb/detail" element={<MonitoringSPBDetailPage />} />
-                  <Route path="/monitoring-spb/item/:id" element={<MonitoringSPBItemDetailPage />} />
-                </Route>
+                  {/* Rute Publik (Bisa diakses tanpa login) */}
+                  <Route element={<AdminLayout><Outlet /></AdminLayout>}>
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/inventory" element={<InventoryPage />} />
+                    
+                    {/* 🔧 Monitoring SPB dikembalikan ke publik agar bisa dilihat, fitur edit akan dibatasi di dalam UI */}
+                    <Route path="/monitoring-spb" element={<MonitoringSPBPage />} />
+                    <Route path="/monitoring-spb/analytics" element={<SpbAnalyticsPage />} /> 
+                    <Route path="/monitoring-spb/detail" element={<MonitoringSPBDetailPage />} />
+                    <Route path="/monitoring-spb/item/:id" element={<MonitoringSPBItemDetailPage />} />
+                  </Route>
 
-                {/* Rute Admin & Super User (Wajib Login) */}
-                <Route element={
-                  <Authenticated key="admin-routes" fallback={<Navigate to="/login" replace />}>
-                    <AdminLayout><Outlet /></AdminLayout>
-                  </Authenticated>
-                }>
-                  <Route path="/products/create" element={<ProductCreatePage />} />
-                  <Route path="/entry" element={<EntryPage />} />
-                  <Route path="/notifications" element={<NotificationsPage />} />
-                </Route>
+                  {/* Rute Admin & Super User (Wajib Login) */}
+                  <Route element={
+                    <Authenticated key="admin-routes" fallback={<Navigate to="/login" replace />}>
+                      <AdminLayout><Outlet /></AdminLayout>
+                    </Authenticated>
+                  }>
+                    <Route path="/products/create" element={<ProductCreatePage />} />
+                    <Route path="/entry" element={<EntryPage />} />
+                    <Route path="/notifications" element={<NotificationsPage />} />
+                  </Route>
 
-                <Route path="*" element={<ErrorComponent />} />
-              </Routes>
-            </Suspense>
-            <UnsavedChangesNotifier />
-            <DocumentTitleHandler />
-          </Refine>
-        </AntdApp>
-      </ConfigProvider>
-    </BrowserRouter>
+                  <Route path="*" element={<ErrorComponent />} />
+                </Routes>
+              </Suspense>
+              <UnsavedChangesNotifier />
+              <DocumentTitleHandler />
+            </Refine>
+          </AntdApp>
+        </ConfigProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
 
@@ -2649,6 +2657,7 @@ import dayjs from "dayjs";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { USE_MOCK } from "../../shared/lib/config";
+import { QUERY_KEYS, STALE_TIMES } from "../../shared/lib/queryKeys";
 import { getMockDashboardStats } from "../../mocks/dashboard";
 import type { DashboardStats } from "../../shared/types";
 
@@ -2667,7 +2676,8 @@ const EMPTY_STATS: DashboardStats = {
 
 export const useDashboardStats = (): UseDashboardStatsResult => {
   const query = useQuery<DashboardStats, Error, DashboardStats>({
-    queryKey: ["dashboard-stats"],
+    queryKey: QUERY_KEYS.dashboardStats,
+    staleTime: STALE_TIMES.DASHBOARD_STATS,
     refetchInterval: USE_MOCK ? false : 60_000,
     queryFn: async (): Promise<DashboardStats> => {
       if (USE_MOCK) {
@@ -2737,6 +2747,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { USE_MOCK } from "../../shared/lib/config";
+import { QUERY_KEYS, STALE_TIMES } from "../../shared/lib/queryKeys";
 import { mockLowStockProducts } from "../../mocks/products";
 import { mapProduct } from "../../shared/lib/mappers";
 import type { Product } from "../../shared/types";
@@ -2745,7 +2756,8 @@ const LOW_STOCK_THRESHOLD = 5;
 
 export const useLowStock = (limit = 5) => {
   const { data, isLoading, refetch } = useQuery<Product[]>({
-    queryKey: ["low-stock", limit],
+    queryKey: QUERY_KEYS.lowStock(limit),
+    staleTime: STALE_TIMES.LOW_STOCK,
     queryFn: async () => {
       if (USE_MOCK) {
         await new Promise((r) => setTimeout(r, 300));
@@ -2790,12 +2802,14 @@ import dayjs from "dayjs";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { USE_MOCK } from "../../shared/lib/config";
+import { QUERY_KEYS, STALE_TIMES } from "../../shared/lib/queryKeys";
 import { mockStockInChart } from "../../mocks/stockEntries";
 import type { StockInChartItem } from "../../shared/types";
 
 export const useStockInChart = (days = 30) => {
   const { data, isLoading, refetch } = useQuery<StockInChartItem[]>({
-    queryKey: ["stock-in-chart", days],
+    queryKey: QUERY_KEYS.stockInChart(days),
+    staleTime: STALE_TIMES.STOCK_IN_CHART,
     queryFn: async () => {
       if (USE_MOCK) {
         await new Promise((r) => setTimeout(r, 300));
@@ -2851,6 +2865,8 @@ import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { mapProduct } from "../../shared/lib/mappers";
 import { requirePermission } from "../../shared/lib/authGuard";
+import { appQueryClient } from "../../shared/lib/queryClient";
+import { invalidateOnMutation } from "../../shared/lib/queryKeys";
 import type { Product } from "../../shared/types";
 
 export interface BarangInput {
@@ -2887,6 +2903,8 @@ export const createBarang = async (input: BarangInput): Promise<Product> => {
 
   if (error) throw error;
 
+  await invalidateOnMutation(appQueryClient, "product-create");
+
   return mapProduct(
     data ?? {
       id: Date.now(),
@@ -2922,6 +2940,8 @@ export const updateBarang = async (
 
   if (error) throw error;
 
+  await invalidateOnMutation(appQueryClient, "product-update");
+
   return mapProduct(
     data ?? {
       id,
@@ -2947,6 +2967,8 @@ export const deleteBarang = async (id: number): Promise<void> => {
     .eq("id", id);
 
   if (error) throw error;
+
+  await invalidateOnMutation(appQueryClient, "product-delete");
 };
 
 
@@ -3664,6 +3686,7 @@ import dayjs from "dayjs";
 import { supabaseClient } from "../../../shared/lib/supabaseClient";
 import { USE_MOCK } from "../../../shared/lib/config";
 import { requirePermission } from "../../../shared/lib/authGuard";
+import { invalidateOnMutation } from "../../../shared/lib/queryKeys";
 import { useProductSearch } from "../useProductSearch";
 import { useDebounce } from "../../../shared/hooks/useDebounce";
 import { formatNumber, formatDate } from "../../../shared/lib/format";
@@ -3713,8 +3736,7 @@ export const ProductCreatePage = () => {
       form.resetFields();
       setSelectedProduct(null);
       setKeyword("");
-      await queryClient.invalidateQueries({ queryKey: ["products"] });
-      await queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      await invalidateOnMutation(queryClient, "stock-in");
     } catch (err: any) {
       message.error(err?.message || "Gagal menyimpan data barang masuk");
     } finally {
@@ -3778,13 +3800,15 @@ import { useQuery } from "@tanstack/react-query";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { USE_MOCK } from "../../shared/lib/config";
+import { QUERY_KEYS, STALE_TIMES } from "../../shared/lib/queryKeys";
 import { mockProducts } from "../../mocks/products";
 import { mapProduct } from "../../shared/lib/mappers";
 import type { Product } from "../../shared/types";
 
 export const useProducts = (category?: string) => {
   const { data, isLoading, refetch } = useQuery<Product[]>({
-    queryKey: ["products", category ?? "all"],
+    queryKey: QUERY_KEYS.products(category),
+    staleTime: STALE_TIMES.PRODUCTS,
     queryFn: async () => {
       if (USE_MOCK) {
         await new Promise((r) => setTimeout(r, 300));
@@ -3827,6 +3851,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { USE_MOCK } from "../../shared/lib/config";
+import { QUERY_KEYS, STALE_TIMES } from "../../shared/lib/queryKeys";
 import { mockProducts } from "../../mocks/products";
 import { mapProduct } from "../../shared/lib/mappers";
 import type { Product } from "../../shared/types";
@@ -3836,7 +3861,7 @@ export const useProductSearch = (keyword: string, limit = 30) => {
   const trimmed = sanitize(keyword).trim();
 
   const { data, isLoading, refetch } = useQuery<Product[]>({
-    queryKey: ["product-search", trimmed, limit],
+    queryKey: QUERY_KEYS.productSearch(trimmed, limit),
     queryFn: async () => {
       if (USE_MOCK) {
         if (!trimmed) return mockProducts.slice(0, limit);
@@ -3855,7 +3880,7 @@ export const useProductSearch = (keyword: string, limit = 30) => {
       if (error) throw error;
       return (data ?? []).map(mapProduct);
     },
-    staleTime: 10_000,
+    staleTime: STALE_TIMES.PRODUCT_SEARCH,
   });
 
   return { products: data ?? [], isLoading, refetch };
@@ -4088,7 +4113,7 @@ export const SpbBarChart = ({ data, height = 360 }: Props) => {
                   fill={`url(#spb-grad-${d.label.replace(/\s/g, "")})`}
                   style={{ animationDelay: `${i * 120}ms` }}
                 >
-                  <title>{`${d.label}: ${formatNumber(d.value)} item`}</title>
+                  <title>{`${d.label}: ${formatNumber(d.value)} barang`}</title>
                 </rect>
               )}
               <text x={cx} y={top - 10} textAnchor="middle" fontSize={16} fontWeight={700} fill="#ffffff">
@@ -4112,11 +4137,13 @@ FILE: ../src/features/spb/analytics-spb/components/SpbTimelineChart.tsx
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/analytics-spb/components/SpbTimelineChart.tsx
 ================================================================================
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { SpbLinePoint } from "../useSpbAnalytics";
 import { niceTicks, useContainerWidth } from "../hooks/useContainerWidth";
+import { useZoom } from "../hooks/zoom/useZoom";
+import { ZoomControls } from "./zoom/ZoomControls";
 
-/** Biru = SPB terkirim, Merah = barang datang. */
+/** Biru = SPB terkirim (jumlah SPB), Merah = barang datang (jumlah barang). */
 export const SERIES = [
   { key: "SPB Terkirim", color: "#1fb6ff", name: "SPB terkirim" },
   { key: "Barang Datang", color: "#ff4560", name: "Barang datang" },
@@ -4132,6 +4159,7 @@ const THEME = {
 const MIN_STEP = 64; // lebar minimum per tanggal (px); lebih dari ini -> bisa di-scroll
 
 interface Pt { x: number; y: number }
+interface SeriesPoint { i: number; d: SpbLinePoint; x: number; y: number }
 
 /** Spline monoton (halus, tidak "overshoot" ke bawah 0). */
 const monotonePath = (p: Pt[]): string => {
@@ -4169,17 +4197,25 @@ const monotonePath = (p: Pt[]): string => {
   return d;
 };
 
+const bubbleRadius = (v: number) => {
+  const digits = String(v).length;
+  return digits <= 2 ? 15 : 15 + (digits - 2) * 3;
+};
+
 interface Props {
   data: SpbLinePoint[];
   height?: number;
 }
 
-export const SpbTimelineChart = ({ data, height = 420 }: Props) => {
+export const SpbTimelineChart = ({ data, height = 440 }: Props) => {
   const { ref, width: boxW } = useContainerWidth<HTMLDivElement>(900);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [hover, setHover] = useState<number | null>(null);
+  const { zoom, zoomIn, zoomOut, reset } = useZoom(ref);
+  // posisi tengah layar (0..1) agar zoom tetap "berpusat" di area yang sedang dilihat
+  const anchor = useRef(1);
 
-  // Kategori sumbu X = gabungan semua tanggal (urut), dipakai kedua garis.
+  // Sumbu X = gabungan semua tanggal (urut), dipakai kedua garis.
   const { cats, lookup, maxVal } = useMemo(() => {
     const labelByRaw = new Map<string, string>();
     const lk = new Map<string, Map<string, SpbLinePoint>>();
@@ -4198,35 +4234,49 @@ export const SpbTimelineChart = ({ data, height = 420 }: Props) => {
     };
   }, [data]);
 
-  const m = { top: 74, right: 32, bottom: 56, left: 52 };
-  const innerMin = cats.length * MIN_STEP;
-  const width = Math.max(boxW, innerMin + m.left + m.right);
+  const m = { top: 84, right: 32, bottom: 56, left: 52 };
+  const fitStep = (boxW - m.left - m.right) / Math.max(1, cats.length);
+  const baseStep = Math.max(MIN_STEP, fitStep);
+  const width = Math.max(boxW, cats.length * baseStep * zoom + m.left + m.right);
   const plotW = width - m.left - m.right;
   const plotH = height - m.top - m.bottom;
+  const axisY = m.top + plotH;
   const step = plotW / Math.max(1, cats.length);
 
   const ticks = niceTicks(maxVal);
   const yMax = ticks[ticks.length - 1] || 1;
   const x = (i: number) => m.left + step * i + step / 2;
-  const y = (v: number) => m.top + plotH - (v / yMax) * plotH;
+  const y = (v: number) => axisY - (v / yMax) * plotH;
   const labelEvery = Math.max(1, Math.ceil(76 / step));
 
-  // Titik tiap seri
   const series = SERIES.map((s) => {
-    const pts = cats
-      .map((c, i) => {
-        const d = lookup.get(s.key)?.get(c.raw);
-        return d ? { i, d, x: x(i), y: y(d.value) } : null;
-      })
-      .filter((v): v is { i: number; d: SpbLinePoint; x: number; y: number } => v !== null);
-    const peak = pts.reduce<(typeof pts)[number] | null>((b, p) => (!b || p.d.value > b.d.value ? p : b), null);
-    return { ...s, pts, peak };
+    const pts: SeriesPoint[] = [];
+    cats.forEach((c, i) => {
+      const d = lookup.get(s.key)?.get(c.raw);
+      if (d) pts.push({ i, d, x: x(i), y: y(d.value) });
+    });
+    return { ...s, pts };
   });
+  const blue = series[0];
+  const red = series[1];
+  const blueAt = new Map(blue.pts.map((p) => [p.i, p]));
+  const redAt = new Map(red.pts.map((p) => [p.i, p]));
 
-  // Auto-scroll ke tanggal terbaru bila grafik lebih lebar dari kartu
-  useEffect(() => {
+  const onScroll = () => {
     const el = scrollRef.current;
-    if (el) el.scrollLeft = el.scrollWidth;
+    if (el && el.scrollWidth > 0) anchor.current = (el.scrollLeft + el.clientWidth / 2) / el.scrollWidth;
+  };
+
+  // Data baru -> lompat ke tanggal terbaru (kanan)
+  useLayoutEffect(() => {
+    anchor.current = 1;
+  }, [cats.length]);
+
+  // Setiap lebar/zoom berubah -> pertahankan titik tengah yang sedang dilihat
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollLeft = anchor.current * el.scrollWidth - el.clientWidth / 2;
   }, [width, cats.length]);
 
   const onMove = (e: React.MouseEvent<SVGRectElement>) => {
@@ -4234,6 +4284,34 @@ export const SpbTimelineChart = ({ data, height = 420 }: Props) => {
     const idx = Math.floor((e.clientX - rect.left) / step);
     setHover(Math.min(cats.length - 1, Math.max(0, idx)));
   };
+
+  // Angka di SETIAP titik: biru = bubble berisi angka, merah = angka saja.
+  // Jika di tanggal yang sama keduanya berdekatan, yang lebih tinggi diberi
+  // label di atas dan yang lebih rendah di bawah supaya tidak bertumpuk.
+  const labels = cats.map((_, i) => {
+    const b = blueAt.get(i);
+    const r = redAt.get(i);
+    const close = !!(b && r && Math.abs(b.y - r.y) < 70);
+    const redHigher = close && r!.y < b!.y;
+
+    let bubble: { cx: number; cy: number; r: number; v: number } | null = null;
+    if (b) {
+      const rad = bubbleRadius(b.d.value);
+      let below = redHigher;
+      let cy = below ? b.y + rad + 12 : b.y - rad - 12;
+      if (below && cy + rad > axisY - 2) { below = false; cy = b.y - rad - 12; }
+      cy = Math.max(rad + 38, cy);
+      bubble = { cx: b.x, cy, r: rad, v: b.d.value };
+    }
+
+    let redLabel: { x: number; y: number; v: number } | null = null;
+    if (r) {
+      let above = redHigher;
+      if (!above && r.y > axisY - 26) above = true; // dekat sumbu -> taruh di atas
+      redLabel = { x: r.x, y: above ? r.y - 12 : r.y + 24, v: r.d.value };
+    }
+    return { bubble, redLabel };
+  });
 
   // Tooltip
   const hc = hover !== null ? cats[hover] : null;
@@ -4244,7 +4322,8 @@ export const SpbTimelineChart = ({ data, height = 420 }: Props) => {
 
   return (
     <div ref={ref} style={{ background: THEME.bg, borderRadius: 12, width: "100%", position: "relative" }}>
-      <div ref={scrollRef} style={{ overflowX: "auto", overflowY: "hidden" }}>
+      <ZoomControls zoom={zoom} onIn={zoomIn} onOut={zoomOut} onReset={reset} />
+      <div ref={scrollRef} onScroll={onScroll} style={{ overflowX: "auto", overflowY: "hidden" }}>
         <div style={{ position: "relative", width, height }}>
           <svg width={width} height={height} role="img" aria-label="Grafik garis timeline SPB terkirim dan barang datang">
             <defs>
@@ -4282,22 +4361,22 @@ export const SpbTimelineChart = ({ data, height = 420 }: Props) => {
             {/* Grid vertikal tipis + label X */}
             {cats.map((c, i) => (
               <g key={c.raw}>
-                <line x1={x(i)} x2={x(i)} y1={m.top} y2={m.top + plotH} stroke={THEME.grid} strokeWidth={1} opacity={0.45} />
+                <line x1={x(i)} x2={x(i)} y1={m.top} y2={axisY} stroke={THEME.grid} strokeWidth={1} opacity={0.45} />
                 {i % labelEvery === 0 && (
-                  <text x={x(i)} y={m.top + plotH + 26} textAnchor="middle" fontSize={12} fill={THEME.tick}>
+                  <text x={x(i)} y={axisY + 26} textAnchor="middle" fontSize={12} fill={THEME.tick}>
                     {c.label}
                   </text>
                 )}
               </g>
             ))}
-            <line x1={m.left} x2={width - m.right} y1={m.top + plotH} y2={m.top + plotH} stroke={THEME.axis} strokeWidth={1.5} />
+            <line x1={m.left} x2={width - m.right} y1={axisY} y2={axisY} stroke={THEME.axis} strokeWidth={1.5} />
 
             {/* Garis panduan hover */}
             {hover !== null && (
-              <line x1={x(hover)} x2={x(hover)} y1={m.top} y2={m.top + plotH} stroke="#94a3b8" strokeDasharray="4 4" opacity={0.6} />
+              <line x1={x(hover)} x2={x(hover)} y1={m.top} y2={axisY} stroke="#94a3b8" strokeDasharray="4 4" opacity={0.6} />
             )}
 
-            {/* Garis spline (biru & merah) */}
+            {/* Garis spline */}
             {series.map((s) => (
               <path
                 key={s.key}
@@ -4310,7 +4389,7 @@ export const SpbTimelineChart = ({ data, height = 420 }: Props) => {
               />
             ))}
 
-            {/* Titik berbentuk cincin */}
+            {/* Titik cincin */}
             {series.map((s) =>
               s.pts.map((p) => (
                 <circle
@@ -4325,25 +4404,43 @@ export const SpbTimelineChart = ({ data, height = 420 }: Props) => {
               )),
             )}
 
-            {/* Bubble nilai tertinggi tiap seri */}
-            {(() => {
-              const peaks = series.filter((s) => s.peak);
-              const same = peaks.length === 2 && peaks[0].peak!.i === peaks[1].peak!.i;
-              return peaks.map((s, k) => {
-                const p = s.peak!;
-                const shift = same ? (k === 0 ? -26 : 26) : 0;
-                const cx = p.x + shift;
-                const cy = Math.max(26, p.y - 40);
-                return (
-                  <g key={`bubble-${s.key}`} pointerEvents="none">
-                    <circle cx={cx} cy={cy} r={22} fill={s.color} filter="url(#spb-glow)" opacity={0.95} />
-                    <text x={cx} y={cy + 6} textAnchor="middle" fontSize={16} fontWeight={700} fill="#fff">
-                      {p.d.value}
+            {/* Angka pada SETIAP titik */}
+            <g pointerEvents="none">
+              {labels.map(({ bubble, redLabel }, i) => (
+                <g key={`lbl-${cats[i].raw}`}>
+                  {redLabel && (
+                    <text
+                      x={redLabel.x}
+                      y={redLabel.y}
+                      textAnchor="middle"
+                      fontSize={13}
+                      fontWeight={700}
+                      fill={red.color}
+                      stroke={THEME.bg}
+                      strokeWidth={3}
+                      paintOrder="stroke"
+                    >
+                      {redLabel.v}
                     </text>
-                  </g>
-                );
-              });
-            })()}
+                  )}
+                  {bubble && (
+                    <>
+                      <circle cx={bubble.cx} cy={bubble.cy} r={bubble.r} fill={blue.color} filter="url(#spb-glow)" />
+                      <text
+                        x={bubble.cx}
+                        y={bubble.cy + 5}
+                        textAnchor="middle"
+                        fontSize={13}
+                        fontWeight={700}
+                        fill="#ffffff"
+                      >
+                        {bubble.v}
+                      </text>
+                    </>
+                  )}
+                </g>
+              ))}
+            </g>
 
             {/* Area tangkap mouse per tanggal */}
             <rect
@@ -4357,7 +4454,7 @@ export const SpbTimelineChart = ({ data, height = 420 }: Props) => {
             />
           </svg>
 
-          {/* Tooltip bergaya kartu gelap */}
+          {/* Tooltip kartu gelap */}
           {hc && (hSent || hArr) && (
             <div
               style={{
@@ -4377,16 +4474,16 @@ export const SpbTimelineChart = ({ data, height = 420 }: Props) => {
             >
               <div style={{ fontWeight: 600, fontSize: 14, color: "#f8fafc", marginBottom: 6 }}>{hc.label}</div>
               {hSent && (
-                <div style={{ color: SERIES[0].color, fontSize: 13, marginTop: 4 }}>
-                  ● SPB terkirim: <strong>{hSent.value}</strong> item
+                <div style={{ color: blue.color, fontSize: 13, marginTop: 4 }}>
+                  ● SPB terkirim: <strong>{hSent.value}</strong> SPB
                 </div>
               )}
               {hArr && (
                 <>
-                  <div style={{ color: SERIES[1].color, fontSize: 13, marginTop: 4 }}>
-                    ● Barang datang: <strong>{hArr.value}</strong> item
+                  <div style={{ color: red.color, fontSize: 13, marginTop: 4 }}>
+                    ● Barang datang: <strong>{hArr.value}</strong> barang
                   </div>
-                  <div style={{ color: SERIES[1].color, fontSize: 13, marginTop: 2 }}>
+                  <div style={{ color: red.color, fontSize: 13, marginTop: 2 }}>
                     ● Lama proses: <strong>{hArr.lamaProses ?? "-"}</strong> hari
                   </div>
                 </>
@@ -4400,6 +4497,64 @@ export const SpbTimelineChart = ({ data, height = 420 }: Props) => {
 };
 
 export default SpbTimelineChart;
+
+================================================================================
+FILE: ../src/features/spb/analytics-spb/components/zoom/ZoomControls.tsx
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/analytics-spb/components/zoom/ZoomControls.tsx
+================================================================================
+
+import { ZOOM_MAX, ZOOM_MIN } from "../../hooks/zoom/useZoom";
+
+interface Props {
+  zoom: number;
+  onIn: () => void;
+  onOut: () => void;
+  onReset: () => void;
+  placement?: "top" | "bottom";
+}
+
+const btn: React.CSSProperties = {
+  width: 28,
+  height: 28,
+  border: "1px solid #1e3a5f",
+  borderRadius: 6,
+  background: "#0b2038",
+  color: "#e2e8f0",
+  fontSize: 16,
+  lineHeight: 1,
+  cursor: "pointer",
+};
+
+export const ZoomControls = ({ zoom, onIn, onOut, onReset, placement = "top" }: Props) => (
+  <div
+    style={{
+      position: "absolute",
+      right: 12,
+      [placement]: 10,
+      zIndex: 10,
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      padding: "4px 6px",
+      background: "rgba(15,39,66,.92)",
+      border: "1px solid #1e3a5f",
+      borderRadius: 8,
+    }}
+  >
+    <button type="button" aria-label="Perkecil (zoom out)" title="Perkecil" style={{ ...btn, opacity: zoom <= ZOOM_MIN ? 0.4 : 1 }} onClick={onOut} disabled={zoom <= ZOOM_MIN}>
+      −
+    </button>
+    <span style={{ minWidth: 44, textAlign: "center", fontSize: 12, color: "#9fb0c8", fontVariantNumeric: "tabular-nums" }}>
+      {Math.round(zoom * 100)}%
+    </span>
+    <button type="button" aria-label="Perbesar (zoom in)" title="Perbesar" style={{ ...btn, opacity: zoom >= ZOOM_MAX ? 0.4 : 1 }} onClick={onIn} disabled={zoom >= ZOOM_MAX}>
+      +
+    </button>
+    <button type="button" aria-label="Reset zoom" title="Reset zoom" style={{ ...btn, width: "auto", padding: "0 8px", fontSize: 12 }} onClick={onReset}>
+      Reset
+    </button>
+  </div>
+);
 
 ================================================================================
 FILE: ../src/features/spb/analytics-spb/hooks/useContainerWidth.ts
@@ -4438,6 +4593,46 @@ export const niceTicks = (max: number, target = 4): number[] => {
   const ticks: number[] = [];
   for (let v = 0; v <= top + 1e-9; v += step) ticks.push(v);
   return ticks;
+};
+
+================================================================================
+FILE: ../src/features/spb/analytics-spb/hooks/zoom/useZoom.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/analytics-spb/hooks/zoom/useZoom.ts
+================================================================================
+
+import { useCallback, useEffect, useState, type RefObject } from "react";
+
+export const ZOOM_MIN = 0.5;
+export const ZOOM_MAX = 4;
+const BUTTON_FACTOR = 1.25;
+const WHEEL_FACTOR = 1.1;
+
+const clamp = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(z * 100) / 100));
+
+/**
+ * State zoom + kontrol. Zoom juga bisa lewat Ctrl/Cmd + scroll mouse
+ * (atau pinch di trackpad) pada elemen `targetRef`.
+ */
+export const useZoom = (targetRef: RefObject<HTMLElement | null>) => {
+  const [zoom, setZoom] = useState(1);
+
+  const zoomIn = useCallback(() => setZoom((z) => clamp(z * BUTTON_FACTOR)), []);
+  const zoomOut = useCallback(() => setZoom((z) => clamp(z / BUTTON_FACTOR)), []);
+  const reset = useCallback(() => setZoom(1), []);
+
+  useEffect(() => {
+    const el = targetRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return; // scroll biasa tetap menggulir halaman
+      e.preventDefault();
+      setZoom((z) => clamp(e.deltaY < 0 ? z * WHEEL_FACTOR : z / WHEEL_FACTOR));
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [targetRef]);
+
+  return { zoom, zoomIn, zoomOut, reset };
 };
 
 ================================================================================
@@ -4498,7 +4693,7 @@ export default function SpbAnalyticsPage() {
         </Col>
         <Col xs={12} md={6}>
           <Card variant="borderless" style={{ borderRadius: 12 }}>
-            <Statistic title="Total Item SPB" value={data.totalItems} valueStyle={{ color: "#722ed1" }} />
+            <Statistic title="Total Barang SPB" value={data.totalItems} valueStyle={{ color: "#722ed1" }} />
           </Card>
         </Col>
       </Row>
@@ -4527,7 +4722,7 @@ export default function SpbAnalyticsPage() {
         {data.lineData.length === 0 ? (
           <Empty description={<span style={{ color: "#64748b" }}>Belum ada data timeline</span>} />
         ) : (
-          <SpbTimelineChart data={data.lineData} height={420} />
+          <SpbTimelineChart data={data.lineData} height={440} />
         )}
       </Card>
     </div>
@@ -4541,10 +4736,15 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/analytics-spb/us
 
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { supabaseClient } from "../../../shared/lib/supabaseClient";
-import { TABLES } from "../../../shared/lib/constants";
 import { formatDate } from "../../../shared/lib/format";
-import { canViewRestrictedSpb, filterVisibleSpbRows } from "../spb-monitoring/accessRules";
+import { QUERY_KEYS, STALE_TIMES } from "../../../shared/lib/queryKeys";
+import { canViewRestrictedSpb } from "../spb-monitoring/accessRules";
+import {
+  getSpbStatusCache,
+  isArrivedStatus,
+  selectArrivalEntries,
+  selectSpbOnlyEntries,
+} from "../shared/spbStatusCache";
 
 export interface SpbBarItem {
   label: string;
@@ -4556,6 +4756,7 @@ export interface SpbLinePoint {
   date: string;
   rawDate: string;
   type: string;
+  /** "SPB Terkirim" = jumlah SPB (dokumen); "Barang Datang" = jumlah barang. */
   value: number;
   lamaProses?: number;
 }
@@ -4571,87 +4772,69 @@ export interface SpbAnalyticsData {
 
 export const BAR_COLORS = {
   diajukan: "#faad14", // Kuning
-  po: "#1677ff",       // Biru
-  datang: "#52c41a",   // Hijau
+  po: "#1677ff", // Biru
+  datang: "#52c41a", // Hijau
 } as const;
-
-const fetchAllSpbForAnalytics = async (): Promise<any[]> => {
-  const { data, error } = await supabaseClient
-    .from(TABLES.spb)
-    .select(
-      "id, no_spb, tgl_spb, id_po, qty_permintaan, material_datang_tgl, nama_barang_spb, status"
-    )
-    .range(0, 9999);
-  if (error) throw error;
-  return data ?? [];
-};
-
-const isKeteranganRow = (row: any): boolean => {
-  const name = String(row.nama_barang_spb ?? "").trim().toLowerCase();
-  if (!name) return true;
-  return name.includes("keterangan") || name.includes("catatan");
-};
 
 export const useSpbAnalytics = () => {
   const canViewRestricted = canViewRestrictedSpb();
 
   return useQuery<SpbAnalyticsData>({
-    queryKey: ["spb-analytics", canViewRestricted],
-    queryFn: async (): Promise<SpbAnalyticsData> => {
-      const raw = await fetchAllSpbForAnalytics();
-      const visible = filterVisibleSpbRows(raw, canViewRestricted);
-      const rows = visible.filter((r) => !isKeteranganRow(r));
+    queryKey: QUERY_KEYS.spbAnalytics(canViewRestricted),
+    staleTime: STALE_TIMES.SPB_ANALYTICS,
+    queryFn: async ({ signal }): Promise<SpbAnalyticsData> => {
+      // Status diambil dari cache; distribusi bar menggunakan entri SPB,
+      // sedangkan timeline "Barang Datang" menggunakan seluruh kedatangan aktual (SJ + SPB langsung).
+      const cache = await getSpbStatusCache({ canViewRestricted, signal });
+      const rows = selectSpbOnlyEntries(cache);
+      const arrivalRows = selectArrivalEntries(cache);
 
-      let totalItems = 0;
       let itemsNotPo = 0;
       let itemsWithPoNotArrived = 0;
       let itemsArrived = 0;
 
-      const spbDateMap = new Map<string, number>();
+      // tanggal -> kumpulan NOMOR SPB unik (10, 11, 13, 14 => 4 SPB)
+      const spbDateMap = new Map<string, Set<string>>();
       const arrivalDateMap = new Map<string, { count: number; totalDays: number }>();
 
-      rows.forEach((row) => {
-        totalItems += 1;
-
-        const hasArrival = !!row.material_datang_tgl;
-        const hasPo = !!row.id_po;
-
-        if (hasArrival) {
+      rows.forEach((e) => {
+        if (isArrivedStatus(e.status)) {
           itemsArrived += 1;
-          const arrDate = dayjs(row.material_datang_tgl);
-          if (arrDate.isValid()) {
-            const key = arrDate.format("YYYY-MM-DD");
-            const existing = arrivalDateMap.get(key) ?? { count: 0, totalDays: 0 };
-            existing.count += 1;
-            
-            if (row.tgl_spb) {
-              const start = dayjs(row.tgl_spb);
-              if (start.isValid()) {
-                const days = arrDate.diff(start, "day");
-                if (days >= 0) existing.totalDays += days;
-              }
-            }
-            arrivalDateMap.set(key, existing);
-          }
-        } else if (hasPo) {
+        } else if (e.status === "Sudah PO") {
           itemsWithPoNotArrived += 1;
         } else {
-          // Kategori Diajukan: Belum punya PO dan belum ada tanggal kedatangan
-          itemsNotPo += 1;
+          itemsNotPo += 1; // Belum PO / Belum Diproses
         }
 
-        if (row.tgl_spb) {
-          const spbDate = dayjs(row.tgl_spb);
-          if (spbDate.isValid()) {
-            const key = spbDate.format("YYYY-MM-DD");
-            spbDateMap.set(key, (spbDateMap.get(key) ?? 0) + 1);
+        if (e.tglSpb && e.noSpb) {
+          const d = dayjs(e.tglSpb);
+          if (d.isValid()) {
+            const key = d.format("YYYY-MM-DD");
+            const set = spbDateMap.get(key) ?? new Set<string>();
+            set.add(e.noSpb);
+            spbDateMap.set(key, set);
           }
         }
       });
 
+      arrivalRows.forEach((e) => {
+        const arr = e.tglDatang ? dayjs(e.tglDatang) : null;
+        if (!arr?.isValid()) return;
+        const key = arr.format("YYYY-MM-DD");
+        const cur = arrivalDateMap.get(key) ?? { count: 0, totalDays: 0 };
+        cur.count += 1;
+        if (e.tglSpb) {
+          const start = dayjs(e.tglSpb);
+          if (start.isValid()) {
+            const days = arr.diff(start, "day");
+            if (days >= 0) cur.totalDays += days;
+          }
+        }
+        arrivalDateMap.set(key, cur);
+      });
+
       const totalPo = itemsWithPoNotArrived + itemsArrived;
 
-      // Data untuk Diagram Batang
       const barData: SpbBarItem[] = [
         { label: "Diajukan", value: itemsNotPo, type: "Diajukan" },
         { label: "Sudah PO", value: totalPo, type: "Sudah PO" },
@@ -4662,12 +4845,12 @@ export const useSpbAnalytics = () => {
 
       [...spbDateMap.entries()]
         .sort(([a], [b]) => a.localeCompare(b))
-        .forEach(([rawDate, count]) => {
+        .forEach(([rawDate, spbSet]) => {
           lineData.push({
             date: formatDate(rawDate),
             rawDate,
             type: "SPB Terkirim",
-            value: count,
+            value: spbSet.size,
           });
         });
 
@@ -4684,7 +4867,7 @@ export const useSpbAnalytics = () => {
         });
 
       return {
-        totalItems,
+        totalItems: rows.length,
         itemsNotPo,
         itemsWithPoNotArrived,
         itemsArrived,
@@ -4694,6 +4877,419 @@ export const useSpbAnalytics = () => {
     },
   });
 };
+
+
+================================================================================
+FILE: ../src/features/spb/shared/spbStatusCache.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/shared/spbStatusCache.ts
+================================================================================
+
+// src/features/spb/shared/spbStatusCache.ts
+//
+// Cache status SEMUA barang (tabel spb, po, dan surat_jalan).
+//
+// - Status dihitung dengan fungsi map yang SAMA dengan halaman Monitoring SPB
+//   (mapSpbRow / mapPoRow / mapSjRow), dilengkapi pengayaan relasi lintas tabel
+//   agar barang pada Surat Jalan (mis. SJ 1 = 148 barang, SJ 2 = 54 barang, SJ 3 = 138 barang)
+//   serta SPB/PO selalu memiliki tanggal kedatangan dan status yang akurat.
+// - Disimpan di memori + localStorage (kedaluwarsa 5 menit), jadi membuka
+//   halaman Analitik berulang kali tidak perlu mengambil ulang ribuan baris.
+// - Cache dipisah per hak akses: user publik TIDAK PERNAH menerima/menyimpan
+//   baris berstatus "belum di proses". Cache versi login dihapus otomatis
+//   begitu user tidak lagi login.
+import { fetchMonitoringRawData } from "../spb-monitoring/api";
+import {
+  canViewRestrictedSpb,
+  filterVisibleSpbRows,
+  isRestrictedSpbStatus,
+} from "../spb-monitoring/accessRules";
+import {
+  cleanDocNo,
+  isKeteranganBarang,
+  toIdNumber,
+} from "../spb-monitoring/suratJalanRules";
+import {
+  first,
+  mapPoRow,
+  mapSjRow,
+  mapSpbRow,
+  type Row,
+} from "../spb-monitoring/utils/mapDetailRows";
+
+export type SpbStatusSource = "spb" | "po" | "sj";
+type CacheScope = "restricted" | "public";
+
+export interface SpbStatusEntry {
+  key: string; // mis. "spb-12", "po-5", "sj-9"
+  sumber: SpbStatusSource;
+  id: number | string;
+  /** id SPB yang dimiliki barang ini (null = tidak terhubung ke SPB mana pun). */
+  idSpb: number | null;
+  noSpb: string | null;
+  noPo: string | null;
+  noSuratJalan?: string | null;
+  tglSpb: string | null;
+  tglDatang: string | null;
+  /** Status final: Belum Diproses / Belum PO / Sudah PO / Datang Sesuai / Datang Kurang / Datang Lebih / Datang */
+  status: string;
+  /** true bila baris hanya catatan/keterangan (bukan barang riil). */
+  keterangan: boolean;
+}
+
+export interface SpbStatusCache {
+  version: number;
+  scope: CacheScope;
+  savedAt: number;
+  entries: SpbStatusEntry[];
+}
+
+const CACHE_VERSION = 2;
+const LEGACY_VERSIONS = [1];
+export const SPB_STATUS_CACHE_TTL_MS = 5 * 60 * 1000;
+const storageKey = (scope: CacheScope, version = CACHE_VERSION) =>
+  `spb-status-cache:v${version}:${scope}`;
+
+const memory = new Map<CacheScope, SpbStatusCache>();
+const inflight = new Map<CacheScope, Promise<SpbStatusCache>>();
+
+const purgeLegacyStorage = () => {
+  try {
+    for (const v of LEGACY_VERSIONS) {
+      localStorage.removeItem(storageKey("restricted", v));
+      localStorage.removeItem(storageKey("public", v));
+    }
+  } catch {
+    // ignore
+  }
+};
+
+const readStorage = (scope: CacheScope): SpbStatusCache | null => {
+  try {
+    purgeLegacyStorage();
+    const raw = localStorage.getItem(storageKey(scope));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as SpbStatusCache;
+    if (
+      parsed?.version !== CACHE_VERSION ||
+      parsed.scope !== scope ||
+      !Array.isArray(parsed.entries)
+    ) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const writeStorage = (cache: SpbStatusCache) => {
+  try {
+    localStorage.setItem(storageKey(cache.scope), JSON.stringify(cache));
+  } catch {
+    // kuota penuh / storage dinonaktifkan: cache memori tetap berfungsi
+  }
+};
+
+const removeStorage = (scope: CacheScope) => {
+  try {
+    localStorage.removeItem(storageKey(scope));
+  } catch {
+    // ignore
+  }
+};
+
+const isFresh = (c: SpbStatusCache) =>
+  Date.now() - c.savedAt < SPB_STATUS_CACHE_TTL_MS;
+
+const buildCache = async (
+  canView: boolean,
+  signal?: AbortSignal,
+): Promise<SpbStatusCache> => {
+  const { allSpbData, poData, sjData } = await fetchMonitoringRawData(signal);
+
+  const spbRows = (allSpbData as Row[]) ?? [];
+  const poRows = (poData as Row[]) ?? [];
+  const sjRows = (sjData as Row[]) ?? [];
+
+  // User publik tidak boleh melihat SPB "belum di proses" -> turunannya (PO/SJ) ikut disembunyikan.
+  const hiddenSpbIds = new Set<number>();
+  if (!canView) {
+    spbRows.forEach((r) => {
+      if (isRestrictedSpbStatus(r.status)) {
+        const id = toIdNumber(r.id);
+        if (id !== null) hiddenSpbIds.add(id);
+      }
+    });
+  }
+
+  // Indeks lintas tabel untuk memperkaya relasi SPB <-> PO <-> Surat Jalan
+  const spbById = new Map<number, Row>();
+  spbRows.forEach((r) => {
+    const id = toIdNumber(r.id);
+    if (id !== null) spbById.set(id, r);
+  });
+
+  const poById = new Map<number, Row>();
+  const poBySpbId = new Map<number, Row>();
+  poRows.forEach((p) => {
+    const poId = toIdNumber(p.id);
+    if (poId !== null) poById.set(poId, p);
+    const idSpb = toIdNumber(p.id_spb);
+    if (idSpb !== null && cleanDocNo(p.no_po) && !poBySpbId.has(idSpb)) {
+      poBySpbId.set(idSpb, p);
+    }
+  });
+
+  // Indeks SJ yang sudah memiliki tanggal datang / tanggal surat jalan per id_spb
+  const sjArrivalBySpbId = new Map<
+    number,
+    { tglDatang: string; qtyDatang: number }
+  >();
+  sjRows.forEach((sj) => {
+    const idSpb = toIdNumber(sj.id_spb);
+    if (idSpb === null) return;
+    const tgl = sj.material_datang_tgl || sj.tanggal_surat_jalan || null;
+    if (!tgl) return;
+    const qty = Number(sj.material_datang_qty ?? sj.jumlah ?? 0) || 0;
+    const prev = sjArrivalBySpbId.get(idSpb);
+    if (!prev) {
+      sjArrivalBySpbId.set(idSpb, { tglDatang: tgl, qtyDatang: qty });
+    } else {
+      prev.qtyDatang += qty;
+    }
+  });
+
+  const entries: SpbStatusEntry[] = [];
+
+  filterVisibleSpbRows(spbRows, canView).forEach((r) => {
+    const idSpb = toIdNumber(r.id);
+    const parentPoId = toIdNumber(r.id_po);
+    const fallbackPo =
+      (idSpb !== null ? poBySpbId.get(idSpb) : null) ??
+      (parentPoId !== null ? poById.get(parentPoId) : null) ??
+      null;
+
+    // Jika baris SPB belum punya material_datang_tgl tetapi tercatat di Surat Jalan, warisi kedatangannya
+    let spbInput = r;
+    if (!r.material_datang_tgl && idSpb !== null) {
+      const sjArr = sjArrivalBySpbId.get(idSpb);
+      if (sjArr) {
+        spbInput = {
+          ...r,
+          material_datang_tgl: sjArr.tglDatang,
+          material_datang_qty: r.material_datang_qty ?? sjArr.qtyDatang,
+        };
+      }
+    }
+
+    const it = mapSpbRow(spbInput, fallbackPo);
+    entries.push({
+      key: it.key,
+      sumber: "spb",
+      id: it.id as number | string,
+      idSpb,
+      noSpb: cleanDocNo(r.no_spb),
+      noPo: cleanDocNo(it.no_po),
+      tglSpb: r.tgl_spb ?? null,
+      tglDatang: it.tanggal_datang ?? null,
+      status: it.status ?? "Belum PO",
+      keterangan: isKeteranganBarang(r),
+    });
+  });
+
+  poRows.forEach((r) => {
+    const idSpb = toIdNumber(r.id_spb);
+    if (idSpb !== null && hiddenSpbIds.has(idSpb)) return;
+    const parentSpb = idSpb !== null ? spbById.get(idSpb) : null;
+    const it = mapPoRow(r);
+    entries.push({
+      key: it.key,
+      sumber: "po",
+      id: it.id as number | string,
+      idSpb,
+      noSpb: cleanDocNo(parentSpb?.no_spb),
+      noPo: cleanDocNo(it.no_po),
+      tglSpb: parentSpb?.tgl_spb ?? null,
+      tglDatang: it.tanggal_datang ?? null,
+      status: it.status ?? "Belum PO",
+      keterangan: isKeteranganBarang(r),
+    });
+  });
+
+  sjRows.forEach((r) => {
+    const idSpb = toIdNumber(r.id_spb);
+    if (idSpb !== null && hiddenSpbIds.has(idSpb)) return;
+    const idPo = toIdNumber(r.id_po);
+
+    const spbRel = first(r.spb);
+    const poRel = first(r.po);
+    const parentSpb = idSpb !== null ? spbById.get(idSpb) : null;
+    const parentPo = idPo !== null ? poById.get(idPo) : null;
+
+    const mergedSpb: Row | null =
+      spbRel || parentSpb
+        ? {
+            ...(parentSpb ?? {}),
+            ...(spbRel ?? {}),
+            qty_permintaan:
+              spbRel?.qty_permintaan ?? parentSpb?.qty_permintaan ?? null,
+            tgl_spb: spbRel?.tgl_spb ?? parentSpb?.tgl_spb ?? null,
+          }
+        : null;
+
+    const mergedPo: Row | null =
+      poRel || parentPo
+        ? {
+            ...(parentPo ?? {}),
+            ...(poRel ?? {}),
+          }
+        : null;
+
+    const resolvedTglDatang =
+      r.material_datang_tgl ||
+      r.tanggal_surat_jalan ||
+      mergedSpb?.material_datang_tgl ||
+      mergedPo?.material_datang_tgl ||
+      null;
+
+    const enrichedSjRow: Row = {
+      ...r,
+      material_datang_tgl: resolvedTglDatang,
+      material_datang_qty: r.material_datang_qty ?? r.jumlah ?? null,
+      spb: mergedSpb,
+      po: mergedPo,
+    };
+
+    const it = mapSjRow(enrichedSjRow);
+    entries.push({
+      key: it.key,
+      sumber: "sj",
+      id: it.id as number | string,
+      idSpb,
+      noSpb: cleanDocNo(it.no_spb),
+      noPo: cleanDocNo(it.no_po),
+      noSuratJalan: cleanDocNo(r.no_surat_jalan),
+      tglSpb: mergedSpb?.tgl_spb ?? null,
+      tglDatang: it.tanggal_datang ?? null,
+      status: it.status ?? "Belum Datang",
+      keterangan: isKeteranganBarang(r),
+    });
+  });
+
+  return {
+    version: CACHE_VERSION,
+    scope: canView ? "restricted" : "public",
+    savedAt: Date.now(),
+    entries,
+  };
+};
+
+/**
+ * Ambil cache status semua barang. Dipakai ulang selama < 5 menit;
+ * `force: true` memaksa ambil ulang. Jika server gagal tetapi ada cache lama,
+ * cache lama dipakai agar halaman tidak kosong.
+ */
+export const getSpbStatusCache = async (
+  opts: {
+    force?: boolean;
+    canViewRestricted?: boolean;
+    signal?: AbortSignal;
+  } = {},
+): Promise<SpbStatusCache> => {
+  const canView = opts.canViewRestricted ?? canViewRestrictedSpb();
+  const scope: CacheScope = canView ? "restricted" : "public";
+
+  if (!canView) {
+    memory.delete("restricted");
+    removeStorage("restricted");
+  }
+
+  if (!opts.force) {
+    const hit = memory.get(scope) ?? readStorage(scope);
+    if (hit && isFresh(hit)) {
+      memory.set(scope, hit);
+      return hit;
+    }
+  }
+
+  const pending = inflight.get(scope);
+  if (pending) return pending;
+
+  const job = (async () => {
+    try {
+      const fresh = await buildCache(canView, opts.signal);
+      memory.set(scope, fresh);
+      writeStorage(fresh);
+      return fresh;
+    } catch (err) {
+      if ((err as Error)?.name === "AbortError") throw err;
+      const stale = memory.get(scope) ?? readStorage(scope);
+      if (stale) return stale;
+      throw err;
+    } finally {
+      inflight.delete(scope);
+    }
+  })();
+
+  inflight.set(scope, job);
+  return job;
+};
+
+/** Hapus cache (panggil setelah data SPB/PO/SJ diubah atau diimport agar langsung segar). */
+export const invalidateSpbStatusCache = () => {
+  memory.clear();
+  inflight.clear();
+  purgeLegacyStorage();
+  removeStorage("restricted");
+  removeStorage("public");
+};
+
+export const isArrivedStatus = (status: string): boolean =>
+  status.startsWith("Datang");
+
+/**
+ * Khusus Analitik (Distribusi Bar & Kartu Ringkasan SPB):
+ * Hanya barang yang memiliki id SPB dan berasal dari tabel SPB.
+ * Baris PO / Surat Jalan yang hanya "turunan" barang SPB (atau berdiri sendiri
+ * tanpa SPB) tidak ikut dihitung pada total barang SPB agar satu barang SPB tidak terhitung dua kali.
+ */
+export const selectSpbOnlyEntries = (cache: SpbStatusCache): SpbStatusEntry[] =>
+  cache.entries.filter(
+    (e) => e.sumber === "spb" && e.idSpb !== null && !e.keterangan,
+  );
+
+/**
+ * Khusus Timeline "Barang Datang" pada Analitik:
+ * - Mengutamakan seluruh baris aktual pada Surat Jalan (`sumber === "sj"`) yang sudah datang
+ *   (mis. Surat Jalan No 1 = 148 barang pada 2026-07-28, No 2 = 54 barang pada 2026-09-05, No 3 = 138 barang pada 2026-10-24).
+ * - Ditambah baris SPB (`sumber === "spb"`) yang sudah datang secara langsung namun TIDAK tercatat di Surat Jalan mana pun,
+ *   sehingga tidak ada barang yang terlewat maupun terhitung ganda.
+ */
+export const selectArrivalEntries = (cache: SpbStatusCache): SpbStatusEntry[] => {
+  const sjArrivals = cache.entries.filter(
+    (e) =>
+      e.sumber === "sj" &&
+      !e.keterangan &&
+      isArrivedStatus(e.status) &&
+      !!e.tglDatang,
+  );
+
+  const coveredSpbIds = new Set<number>(
+    sjArrivals.map((e) => e.idSpb).filter((id): id is number => id !== null),
+  );
+
+  const directSpbArrivals = cache.entries.filter(
+    (e) =>
+      e.sumber === "spb" &&
+      !e.keterangan &&
+      isArrivedStatus(e.status) &&
+      !!e.tglDatang &&
+      (e.idSpb === null || !coveredSpbIds.has(e.idSpb)),
+  );
+
+  return [...sjArrivals, ...directSpbArrivals];
+};
+
 
 ================================================================================
 FILE: ../src/features/spb/spb-monitoring/accessRules.ts
@@ -4762,7 +5358,10 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/a
 import { supabaseClient } from "../../../shared/lib/supabaseClient";
 import { TABLES } from "../../../shared/lib/constants";
 import { requirePermission } from "../../../shared/lib/authGuard";
+import { appQueryClient } from "../../../shared/lib/queryClient";
+import { invalidateOnMutation } from "../../../shared/lib/queryKeys";
 import type { SPBItemDetail } from "../../../shared/types";
+import { invalidateSpbStatusCache } from "../shared/spbStatusCache";
 import { canViewRestrictedSpb, filterVisibleSpbRows, isRestrictedSpbStatus } from "./accessRules";
 import { cleanDocNo, hasValue, isIgnoredSuratJalan } from "./suratJalanRules";
 import type { MonitoringDetailItem } from "./types";
@@ -4789,18 +5388,37 @@ const PAGE_SIZE = 1000;
 const SPB_SELECT = `*, po:po!id_po (no_po, tanggal_po, source_file)`;
 const SJ_SELECT = `*, spb:spb!id_spb (no_spb, judul_spb, source_file, qty_permintaan), po:po!id_po (no_po, source_file)`;
 
+const createAbortError = () =>
+  typeof DOMException !== "undefined"
+    ? new DOMException("Request dibatalkan", "AbortError")
+    : Object.assign(new Error("Request dibatalkan"), { name: "AbortError" });
+
 export const fetchAllRows = async (
   table: string,
   select: string,
+  signal?: AbortSignal,
 ): Promise<any[]> => {
   const all: any[] = [];
   let from = 0;
 
   for (let guard = 0; guard < 100; guard += 1) {
-    const { data, error } = await supabaseClient
+    if (signal?.aborted) {
+      throw createAbortError();
+    }
+
+    let query: any = supabaseClient
       .from(table)
       .select(select)
       .range(from, from + PAGE_SIZE - 1);
+
+    if (signal && typeof query?.abortSignal === "function") {
+      query = query.abortSignal(signal);
+    }
+
+    const { data, error } = await query;
+    if (signal?.aborted) {
+      throw createAbortError();
+    }
     if (error) throw error;
 
     const rows = (data as any[]) ?? [];
@@ -4813,7 +5431,7 @@ export const fetchAllRows = async (
   return all;
 };
 
-export const fetchMonitoringRawData = async () => {
+export const fetchMonitoringRawData = async (signal?: AbortSignal) => {
   const [allSpbData, poData, sjData] = await Promise.all([
     fetchAllRows(
       "spb",
@@ -4821,18 +5439,21 @@ export const fetchMonitoringRawData = async () => {
        qty_permintaan, material_datang_qty, nama_barang_spb, status,
        source_file,
        po:po!id_po (no_po, tanggal_po)`,
+      signal,
     ),
     fetchAllRows(
       "po",
       `id, no_po, judul_po, tanggal_po, id_spb, material_datang_tgl,
        material_datang_qty, nama_barang_po, nama_supplier, source_file`,
+      signal,
     ),
     fetchAllRows(
       "surat_jalan",
-      `id, no_surat_jalan, id_spb, id_po, nama_barang,
-       material_datang_tgl, material_datang_qty,
-       spb:spb!id_spb (no_spb, judul_spb),
-       po:po!id_po (no_po)`,
+      `id, no_surat_jalan, id_spb, id_po, nama_barang, jumlah, satuan,
+       tanggal_surat_jalan, material_datang_tgl, material_datang_qty, material_datang_satuan,
+       spb:spb!id_spb (no_spb, judul_spb, tgl_spb, qty_permintaan, material_datang_tgl),
+       po:po!id_po (no_po, tanggal_po, material_datang_tgl)`,
+      signal,
     ),
   ]);
 
@@ -4865,6 +5486,10 @@ export const updateDocumentTitle = async (
       .eq("no_po", docNo);
     if (error) throw error;
   }
+
+  await invalidateOnMutation(appQueryClient, "spb-update", () => {
+    invalidateSpbStatusCache();
+  });
 };
 
 /**
@@ -6366,13 +6991,15 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/h
 
 // src/features/spb/hooks/useSPBItem.ts
 import { useQuery } from "@tanstack/react-query";
+import { QUERY_KEYS, STALE_TIMES } from "../../../../shared/lib/queryKeys";
 import type { SPBItemDetail } from "../../../../shared/types";
 import { fetchSingleItemById } from "../api";
 
 export const useSPBItem = (id: string | undefined, type: string) => {
   const enabled = !!id;
   return useQuery<SPBItemDetail | null, Error>({
-    queryKey: ["spb-item", id, type],
+    queryKey: QUERY_KEYS.spbItem(id, type),
+    staleTime: STALE_TIMES.SPB_ITEM,
     queryFn: async () => {
       if (!id) return null;
       return fetchSingleItemById(id, type);
@@ -6381,7 +7008,6 @@ export const useSPBItem = (id: string | undefined, type: string) => {
     retry: false,
   });
 };
-
 
 
 ================================================================================
@@ -6655,7 +7281,7 @@ export default function MonitoringSPBPage() {
   
   // 🔧 PERBAIKAN: Deteksi layar mobile/desktop
   const screens = Grid.useBreakpoint();
-  const isMobile = !screens.md;
+  const isMobile = Boolean((screens.xs || screens.sm) && !screens.md);
 
   const { data: identity } = useGetIdentity<{ role: UserRole }>();
   const userRole = identity?.role ?? getVerifiedUser()?.role ?? "user";
@@ -6981,6 +7607,7 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/u
 // src/features/spb/useMonitoringSPB.ts
 import { useQuery } from "@tanstack/react-query";
 import { USE_MOCK } from "../../../shared/lib/config";
+import { QUERY_KEYS, STALE_TIMES } from "../../../shared/lib/queryKeys";
 import type { SPBDocumentGroup } from "../../../shared/types";
 import { canViewRestrictedSpb } from "./accessRules";
 import { fetchMonitoringRawData, updateDocumentTitle } from "./api";
@@ -6993,12 +7620,13 @@ export const useMonitoringSPB = () => {
   const canViewRestricted = canViewRestrictedSpb();
 
   const { data, isLoading, error, refetch } = useQuery<SPBDocumentGroup[]>({
-    queryKey: ["monitoring-spb", canViewRestricted],
-    queryFn: async () => {
+    queryKey: QUERY_KEYS.monitoringSpb(canViewRestricted),
+    staleTime: STALE_TIMES.MONITORING_SPB,
+    queryFn: async ({ signal }) => {
       if (USE_MOCK) return [];
 
       const overrides = getTitleOverrides();
-      const { allSpbData, poData, sjData } = await fetchMonitoringRawData();
+      const { allSpbData, poData, sjData } = await fetchMonitoringRawData(signal);
 
       return groupMonitoringData({
         allSpbData,
@@ -7026,6 +7654,7 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/u
 
 // src/features/spb/useMonitoringSPBDetail.ts
 import { useQuery } from "@tanstack/react-query";
+import { QUERY_KEYS, STALE_TIMES } from "../../../shared/lib/queryKeys";
 import { canViewRestrictedSpb } from "./accessRules";
 import {
   fetchDetailByPo,
@@ -7046,14 +7675,14 @@ export const useMonitoringSPBDetail = (
   const canViewRestricted = canViewRestrictedSpb();
 
   const { data, isLoading, error } = useQuery<MonitoringDetailItem[]>({
-    queryKey: [
-      "monitoring-spb-detail",
+    queryKey: QUERY_KEYS.monitoringSpbDetail(
       spbNo,
       poNo,
       sjNo,
       judulSpb,
       canViewRestricted,
-    ],
+    ),
+    staleTime: STALE_TIMES.MONITORING_SPB_DETAIL,
     queryFn: async () => {
       if (spbNo) return fetchDetailBySpb(spbNo, judulSpb, canViewRestricted);
       if (poNo) return fetchDetailByPo(poNo);
@@ -7081,13 +7710,15 @@ PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/spb/spb-monitoring/u
 import { useQuery } from "@tanstack/react-query";
 import { supabaseClient } from "../../../shared/lib/supabaseClient";
 import { TABLES } from "../../../shared/lib/constants";
+import { QUERY_KEYS, STALE_TIMES } from "../../../shared/lib/queryKeys";
 import type { SPBItemDetail } from "../../../shared/types";
 import { canViewRestrictedSpb, isRestrictedSpbStatus } from "./accessRules";
 
 export const useSPBItemDetail = (itemId: string | null) => {
   const enabled = !!itemId;
   const { data, isLoading, error } = useQuery<SPBItemDetail | null>({
-    queryKey: ["spb-item-detail", itemId],
+    queryKey: QUERY_KEYS.spbItemDetail(itemId),
+    staleTime: STALE_TIMES.SPB_ITEM,
     queryFn: async () => {
       if (!itemId) return null;
 
@@ -7866,10 +8497,12 @@ export const mapPoRow = (row: Row): MonitoringDetailItem => {
 };
 
 // 🔧 PERBAIKAN: mapSjRow sekarang menghitung status berdasarkan qty_permintaan dari SPB
+// dan menggunakan fallback tanggal_surat_jalan bila material_datang_tgl kosong (mis. SJ 1 & SJ 2)
 export const mapSjRow = (row: Row): MonitoringDetailItem => {
   const spb = first(row.spb);
   const po = first(row.po);
-  const tgl: string | null = row.material_datang_tgl || null;
+  const tgl: string | null =
+    row.material_datang_tgl || row.tanggal_surat_jalan || null;
   const arr = numOrZero(row.material_datang_qty ?? row.jumlah);
   const req =
     spb?.qty_permintaan !== undefined && spb?.qty_permintaan !== null
@@ -8202,12 +8835,13 @@ FILE: ../src/features/stock-in/useStockEntryMutations.ts
 PATH: /home/ramzboy/vscode/projects/admin-stok/src/features/stock-in/useStockEntryMutations.ts
 ================================================================================
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { App } from "antd";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { USE_MOCK } from "../../shared/lib/config";
 import { requirePermission } from "../../shared/lib/authGuard";
+import { invalidateOnMutation } from "../../shared/lib/queryKeys";
 import type { StockEntry } from "../../shared/types";
 
 export interface CreateStockEntryInput {
@@ -8221,6 +8855,7 @@ export interface CreateStockEntryInput {
 
 export const useCreateStockEntry = () => {
   const { message } = App.useApp();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (input: CreateStockEntryInput) => {
@@ -8250,7 +8885,8 @@ export const useCreateStockEntry = () => {
       if (error) throw error;
       return data as StockEntry;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await invalidateOnMutation(queryClient, "stock-in");
       message.success("Barang masuk berhasil disimpan");
     },
     onError: (error: Error) => {
@@ -8258,6 +8894,7 @@ export const useCreateStockEntry = () => {
     },
   });
 };
+
 
 ================================================================================
 FILE: ../src/features/stock-opname/api.ts
@@ -8636,6 +9273,7 @@ import { mockWorkplaces } from "../../../mocks/entry";
 import { supabaseClient } from "../../../shared/lib/supabaseClient";
 import { USE_MOCK } from "../../../shared/lib/config";
 import { requirePermission } from "../../../shared/lib/authGuard";
+import { invalidateOnMutation } from "../../../shared/lib/queryKeys";
 import { formatNumber } from "../../../shared/lib/format";
 import type { Product, Person, Workplace, OutboundLine } from "../../../shared/types"; // Menggunakan OutboundLine dari types/index
 
@@ -8739,9 +9377,7 @@ export const EntryPage = () => {
         if (error) throw error;
       }
       message.success(`Pengeluaran ${lines.length} jenis barang berhasil disimpan!`);
-      await queryClient.invalidateQueries({ queryKey: ["products"] });
-      await queryClient.invalidateQueries({ queryKey: ["stock-exits"] });
-      await queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      await invalidateOnMutation(queryClient, "stock-out");
       navigate("/dashboard");
     } catch (err: any) {
       message.error(err?.message || "Gagal menyimpan pengeluaran barang (cek stok)");
@@ -8832,11 +9468,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { USE_MOCK } from "../../shared/lib/config";
+import { QUERY_KEYS, STALE_TIMES } from "../../shared/lib/queryKeys";
 import type { Person } from "../../shared/types";
 
 export const usePersons = () => {
   const { data, isLoading, refetch } = useQuery<Person[]>({
-    queryKey: ["persons"],
+    queryKey: QUERY_KEYS.persons,
+    staleTime: STALE_TIMES.PERSONS,
     queryFn: async () => {
       if (USE_MOCK) {
         return [];
@@ -8873,6 +9511,7 @@ import dayjs from "dayjs";
 import { supabaseClient } from "../../shared/lib/supabaseClient";
 import { TABLES } from "../../shared/lib/constants";
 import { USE_MOCK } from "../../shared/lib/config";
+import { QUERY_KEYS, STALE_TIMES } from "../../shared/lib/queryKeys";
 import { mockStockExits } from "../../mocks/stockExitList";
 import { mapStockExits } from "../../shared/lib/mappers";
 import type { StockExit } from "../../shared/types";
@@ -8881,7 +9520,8 @@ interface Options { onlyToday?: boolean; breakdown?: boolean; limit?: number; }
 
 export const useStockExits = ({ onlyToday = false, breakdown, limit = 50 }: Options = {}) => {
   const { data, isLoading, refetch } = useQuery<StockExit[]>({
-    queryKey: ["stock-exits", onlyToday, breakdown, limit],
+    queryKey: QUERY_KEYS.stockExits(onlyToday, breakdown, limit),
+    staleTime: STALE_TIMES.STOCK_EXITS,
     queryFn: async () => {
       if (USE_MOCK) return mockStockExits;
       let query = supabaseClient.from(TABLES.stockExits).select("*").order("created_at", { ascending: false });
@@ -10675,6 +11315,204 @@ export const mapStockExits = (rows: any[]): StockExit[] => {
   }
   return Array.from(grouped.values());
 };
+
+================================================================================
+FILE: ../src/shared/lib/queryClient.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/lib/queryClient.ts
+================================================================================
+
+import { QueryClient, type DefaultOptions } from "@tanstack/react-query";
+
+/**
+ * Konfigurasi default TanStack Query berstandar enterprise untuk aplikasi gudang:
+ * - `staleTime: 60_000` (1 menit): mencegah refetch berulang setiap komponen mount.
+ * - `cacheTime: 5 * 60_000` (5 menit): menyimpan data di memori saat berpindah halaman.
+ * - `refetchOnWindowFocus: false`: mencegah badai request (network amplifier) saat tablet/browser lock-unlock atau pindah tab.
+ * - `refetchOnReconnect: true`: sinkronisasi ulang otomatis saat koneksi kembali aktif.
+ * - `retry: 1`: batasi retry maksimal 1x agar tidak membebani jaringan jika server/Supabase sedang gangguan.
+ */
+export const DEFAULT_QUERY_OPTIONS: DefaultOptions = {
+  queries: {
+    staleTime: 60_000,
+    cacheTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    retry: 1,
+  },
+  mutations: {
+    retry: 0,
+  },
+};
+
+export const createAppQueryClient = (): QueryClient =>
+  new QueryClient({
+    defaultOptions: DEFAULT_QUERY_OPTIONS,
+  });
+
+export const appQueryClient = createAppQueryClient();
+
+
+
+================================================================================
+FILE: ../src/shared/lib/queryKeys.ts
+PATH: /home/ramzboy/vscode/projects/admin-stok/src/shared/lib/queryKeys.ts
+================================================================================
+
+import type { QueryClient } from "@tanstack/react-query";
+
+/**
+ * Durasi `staleTime` terstandarisasi untuk setiap domain query.
+ */
+export const STALE_TIMES = {
+  PRODUCTS: 2 * 60_000, // 2 menit
+  PRODUCT_SEARCH: 30_000, // 30 detik
+  LOW_STOCK: 60_000, // 1 menit
+  STOCK_IN_CHART: 5 * 60_000, // 5 menit (grafik historis 30 hari)
+  DASHBOARD_STATS: 30_000, // 30 detik (dipasangkan dengan refetchInterval: 60_000)
+  STOCK_EXITS: 15_000, // 15 detik (dipasangkan dengan refetchInterval: 30_000)
+  PERSONS: 5 * 60_000, // 5 menit (data master pekerja jarang berubah)
+  MONITORING_SPB: 5 * 60_000, // 5 menit (ribuan baris dokumen SPB/PO/SJ)
+  MONITORING_SPB_DETAIL: 2 * 60_000, // 2 menit
+  SPB_ITEM: 2 * 60_000, // 2 menit
+  SPB_ANALYTICS: 5 * 60_000, // 5 menit (sinkron dengan SPB_STATUS_CACHE_TTL_MS)
+} as const;
+
+/**
+ * Registri terpusat seluruh Query Keys aplikasi agar konsisten antara hook dan invalidasi.
+ */
+export const QUERY_KEYS = {
+  productsAll: ["products"] as const,
+  products: (category?: string) => ["products", category ?? "all"] as const,
+
+  productSearchAll: ["product-search"] as const,
+  productSearch: (keyword: string, limit: number) =>
+    ["product-search", keyword, limit] as const,
+
+  lowStockAll: ["low-stock"] as const,
+  lowStock: (limit: number) => ["low-stock", limit] as const,
+
+  dashboardStats: ["dashboard-stats"] as const,
+
+  stockInChartAll: ["stock-in-chart"] as const,
+  stockInChart: (days: number) => ["stock-in-chart", days] as const,
+
+  stockExitsAll: ["stock-exits"] as const,
+  stockExits: (
+    onlyToday: boolean,
+    breakdown: boolean | undefined,
+    limit: number,
+  ) => ["stock-exits", onlyToday, breakdown, limit] as const,
+
+  persons: ["persons"] as const,
+
+  monitoringSpbAll: ["monitoring-spb"] as const,
+  monitoringSpb: (canViewRestricted: boolean) =>
+    ["monitoring-spb", canViewRestricted] as const,
+
+  monitoringSpbDetailAll: ["monitoring-spb-detail"] as const,
+  monitoringSpbDetail: (
+    spbNo: string | null,
+    poNo: string | null,
+    sjNo: string | null,
+    judulSpb: string | null,
+    canViewRestricted: boolean,
+  ) =>
+    [
+      "monitoring-spb-detail",
+      spbNo,
+      poNo,
+      sjNo,
+      judulSpb,
+      canViewRestricted,
+    ] as const,
+
+  spbItemAll: ["spb-item"] as const,
+  spbItem: (id: string | undefined, type: string) =>
+    ["spb-item", id, type] as const,
+
+  spbItemDetailAll: ["spb-item-detail"] as const,
+  spbItemDetail: (itemId: string | null) =>
+    ["spb-item-detail", itemId] as const,
+
+  spbAnalyticsAll: ["spb-analytics"] as const,
+  spbAnalytics: (canViewRestricted: boolean) =>
+    ["spb-analytics", canViewRestricted] as const,
+} as const;
+
+export type MutationDomainEvent =
+  | "stock-out"
+  | "stock-in"
+  | "product-create"
+  | "product-update"
+  | "product-delete"
+  | "spb-update";
+
+/**
+ * Peta invalidasi lintas fitur yang terpusat (atomic cross-feature cache invalidation).
+ */
+export const MUTATION_INVALIDATION_MAP: Record<
+  MutationDomainEvent,
+  readonly (readonly unknown[])[]
+> = {
+  "stock-out": [
+    QUERY_KEYS.productsAll,
+    QUERY_KEYS.productSearchAll,
+    QUERY_KEYS.lowStockAll,
+    QUERY_KEYS.stockExitsAll,
+    QUERY_KEYS.dashboardStats,
+  ],
+  "stock-in": [
+    QUERY_KEYS.productsAll,
+    QUERY_KEYS.productSearchAll,
+    QUERY_KEYS.lowStockAll,
+    QUERY_KEYS.stockInChartAll,
+    QUERY_KEYS.dashboardStats,
+  ],
+  "product-create": [
+    QUERY_KEYS.productsAll,
+    QUERY_KEYS.productSearchAll,
+    QUERY_KEYS.lowStockAll,
+    QUERY_KEYS.dashboardStats,
+  ],
+  "product-update": [
+    QUERY_KEYS.productsAll,
+    QUERY_KEYS.productSearchAll,
+    QUERY_KEYS.lowStockAll,
+    QUERY_KEYS.dashboardStats,
+  ],
+  "product-delete": [
+    QUERY_KEYS.productsAll,
+    QUERY_KEYS.productSearchAll,
+    QUERY_KEYS.lowStockAll,
+    QUERY_KEYS.dashboardStats,
+  ],
+  "spb-update": [
+    QUERY_KEYS.monitoringSpbAll,
+    QUERY_KEYS.monitoringSpbDetailAll,
+    QUERY_KEYS.spbItemAll,
+    QUERY_KEYS.spbItemDetailAll,
+    QUERY_KEYS.spbAnalyticsAll,
+  ],
+};
+
+/**
+ * Meng-invalidate seluruh query lintas fitur yang terdampak oleh suatu mutasi secara terpusat.
+ */
+export const invalidateOnMutation = async (
+  queryClient: QueryClient,
+  event: MutationDomainEvent,
+  onBeforeInvalidate?: () => void,
+): Promise<void> => {
+  onBeforeInvalidate?.();
+  const targetKeys = MUTATION_INVALIDATION_MAP[event] ?? [];
+  await Promise.all(
+    targetKeys.map((key) =>
+      queryClient.invalidateQueries({ queryKey: [...key] }),
+    ),
+  );
+};
+
+
 
 ================================================================================
 FILE: ../src/shared/lib/supabaseClient.ts
